@@ -40,8 +40,8 @@ export default function PricesPage() {
             <div 
               key={category.id} 
               id={category.id}
-              className="glass-card" 
-              style={{ padding: "36px 32px", border: "1.5px solid var(--border-subtle)" }}
+              className="glass-card responsive-card-padding" 
+              style={{ border: "1.5px solid var(--border-subtle)" }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
                 <div>

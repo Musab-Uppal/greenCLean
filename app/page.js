@@ -199,7 +199,7 @@ export default function HomePage() {
           </div>
 
           {/* Active Category Content Card */}
-          <div className="glass-card" style={{ padding: "36px 32px", border: "1.5px solid var(--emerald-200)", marginBottom: "36px" }}>
+          <div className="glass-card responsive-card-padding" style={{ border: "1.5px solid var(--emerald-200)", marginBottom: "36px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", marginBottom: "28px" }}>
               <div>
                 <span style={{ fontSize: "0.8rem", fontWeight: "700", textTransform: "uppercase", color: "var(--emerald-600)" }}>
@@ -213,7 +213,7 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div style={{ display: "flex", gap: "12px" }}>
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 <Link href={`/services/${currentCategory.slug}`} className="btn btn-secondary btn-sm">
                   <span>Learn More Details</span>
                   <ArrowRight size={14} />
@@ -225,7 +225,7 @@ export default function HomePage() {
             </div>
 
             {/* Grid of items in this category */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "18px" }}>
+            <div className="responsive-card-grid">
               {currentCategory.items.map((item) => (
                 <div 
                   key={item.id}
@@ -309,7 +309,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px" }}>
+          <div className="responsive-three-col">
             {[
               {
                 icon: Sparkles,

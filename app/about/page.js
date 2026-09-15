@@ -27,8 +27,8 @@ export default function AboutPage() {
         </div>
 
         {/* 2-Column Story Section */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "40px", alignItems: "center", marginBottom: "80px" }}>
-          <div className="glass-card" style={{ padding: "40px 32px", border: "1.5px solid var(--emerald-200)" }}>
+        <div className="responsive-two-col" style={{ alignItems: "center", marginBottom: "80px" }}>
+          <div className="glass-card responsive-card-padding" style={{ border: "1.5px solid var(--emerald-200)" }}>
             <h2 style={{ fontSize: "1.8rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "16px" }}>
               The Green Clean Difference
             </h2>

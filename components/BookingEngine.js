@@ -289,7 +289,7 @@ export default function BookingEngine({ initialCategory = "oven" }) {
           {step === 1 && (
             <div>
               {/* Category selector pills */}
-              <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "14px", marginBottom: "24px" }}>
+              <div style={{ display: "flex", gap: "8px", overflowX: "auto", width: "100%", maxWidth: "100%", WebkitOverflowScrolling: "touch", paddingBottom: "14px", marginBottom: "24px" }}>
                 {SERVICE_CATEGORIES.map((cat) => {
                   const Icon = CATEGORY_ICONS[cat.id] || Sparkles;
                   const isActive = activeCategory === cat.id;
@@ -418,7 +418,7 @@ export default function BookingEngine({ initialCategory = "oven" }) {
               STEP 2: CHOOSE DATE & TIME
              ================================================================ */}
           {step === 2 && (
-            <div className="glass-card" style={{ padding: "32px" }}>
+            <div className="glass-card responsive-card-padding">
               <div style={{ marginBottom: "28px" }}>
                 <h3 style={{ fontSize: "1.35rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "6px" }}>
                   Select Your Preferred Date
@@ -527,7 +527,7 @@ export default function BookingEngine({ initialCategory = "oven" }) {
               STEP 3: CONTACT & ADDRESS
              ================================================================ */}
           {step === 3 && (
-            <div className="glass-card" style={{ padding: "32px" }}>
+            <div className="glass-card responsive-card-padding">
               <div style={{ marginBottom: "24px" }}>
                 <h3 style={{ fontSize: "1.35rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "6px" }}>
                   Your Contact &amp; Property Details
@@ -622,7 +622,7 @@ export default function BookingEngine({ initialCategory = "oven" }) {
               STEP 4: PAYMENT & NOTES
              ================================================================ */}
           {step === 4 && (
-            <div className="glass-card" style={{ padding: "32px" }}>
+            <div className="glass-card responsive-card-padding">
               {/* Coupon input */}
               <div style={{ marginBottom: "32px", padding: "20px", background: "var(--emerald-50)", borderRadius: "var(--radius-md)", border: "1px dashed var(--emerald-300)" }}>
                 <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -741,7 +741,7 @@ export default function BookingEngine({ initialCategory = "oven" }) {
               STEP 5: SUMMARY & CONFIRMATION
              ================================================================ */}
           {step === 5 && (
-            <div className="glass-card" style={{ padding: "32px" }}>
+            <div className="glass-card responsive-card-padding">
               <h3 style={{ fontSize: "1.45rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "24px" }}>
                 Please Review Your Booking
               </h3>

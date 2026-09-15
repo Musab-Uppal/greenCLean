@@ -50,10 +50,10 @@ export default function ContactPage() {
         </div>
 
         {/* Contact Grid: Details on Left, Form on Right */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "40px", marginBottom: "60px" }}>
+        <div className="responsive-two-col" style={{ marginBottom: "60px" }}>
           {/* Left Column: Direct Info */}
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-            <div className="glass-card" style={{ padding: "32px", border: "1.5px solid var(--emerald-200)" }}>
+            <div className="glass-card responsive-card-padding" style={{ border: "1.5px solid var(--emerald-200)" }}>
               <h3 style={{ fontSize: "1.35rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "20px" }}>
                 Direct Contact Details
               </h3>

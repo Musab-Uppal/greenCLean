@@ -60,9 +60,8 @@ export default async function ServiceDetailPage({ params }) {
       <div className="container">
         {/* Service Hero Banner */}
         <div 
-          className="green-card" 
+          className="green-card service-hero-padding" 
           style={{ 
-            padding: "50px 40px", 
             marginBottom: "50px", 
             background: "linear-gradient(135deg, #022c22 0%, #064e3b 60%, #0f766e 100%)",
             position: "relative",
@@ -75,7 +74,7 @@ export default async function ServiceDetailPage({ params }) {
               <span>Eco Cleaning Service • Liverpool</span>
             </div>
 
-            <h1 style={{ fontSize: "2.8rem", fontWeight: "850", color: "#ffffff", lineHeight: "1.15", marginBottom: "16px", letterSpacing: "-0.02em" }}>
+            <h1 style={{ fontSize: "clamp(1.85rem, 5vw, 2.8rem)", fontWeight: "850", color: "#ffffff", lineHeight: "1.15", marginBottom: "16px", letterSpacing: "-0.02em" }}>
               {category.title}
             </h1>
 
@@ -106,7 +105,7 @@ export default async function ServiceDetailPage({ params }) {
             </h2>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "20px" }}>
+          <div className="responsive-card-grid" style={{ gap: "20px" }}>
             {category.items.map((item) => (
               <div 
                 key={item.id}
@@ -154,7 +153,7 @@ export default async function ServiceDetailPage({ params }) {
         </div>
 
         {/* The 5-Step Process */}
-        <div className="glass-card" style={{ padding: "40px 32px", border: "1.5px solid var(--emerald-200)", marginBottom: "60px" }}>
+        <div className="glass-card responsive-card-padding" style={{ border: "1.5px solid var(--emerald-200)", marginBottom: "60px" }}>
           <div style={{ textAlign: "center", maxWidth: "640px", margin: "0 auto 36px" }}>
             <span className="section-pill">Our Method</span>
             <h2 style={{ fontSize: "1.8rem", fontWeight: "800", color: "var(--slate-900)" }}>
@@ -165,7 +164,7 @@ export default async function ServiceDetailPage({ params }) {
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px" }}>
+          <div className="responsive-card-grid" style={{ gap: "20px" }}>
             {[
               { step: "01", title: "Inspection & Protection", desc: "We inspect the appliance and place protective floor mats to keep your kitchen spotless." },
               { step: "02", title: "Disassembly", desc: "Removable parts (racks, trays, fan covers, seals) are carefully taken apart for deep immersion." },
@@ -189,7 +188,7 @@ export default async function ServiceDetailPage({ params }) {
         </div>
 
         {/* Benefits Checklist */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "30px", alignItems: "center" }}>
+        <div className="responsive-two-col" style={{ alignItems: "center" }}>
           <div>
             <span className="section-pill">Peace of Mind</span>
             <h2 style={{ fontSize: "1.85rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "14px" }}>

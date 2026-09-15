@@ -284,6 +284,9 @@ button {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   transition: all var(--transition-normal);
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
 }
 
 .glass-card-hover:hover {
@@ -298,6 +301,71 @@ button {
   border-radius: var(--radius-lg);
   border: 1px solid rgba(16, 185, 129, 0.3);
   box-shadow: 0 20px 40px -15px rgba(2, 44, 34, 0.7);
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+/* Responsive padding utilities */
+.responsive-card-padding {
+  padding: 24px 18px;
+}
+
+@media (min-width: 640px) {
+  .responsive-card-padding {
+    padding: 36px 32px;
+  }
+}
+
+.service-hero-padding {
+  padding: 36px 20px;
+}
+
+@media (min-width: 640px) {
+  .service-hero-padding {
+    padding: 50px 40px;
+  }
+}
+
+/* Responsive grid utilities */
+.responsive-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .responsive-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
+.responsive-two-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .responsive-two-col {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+  }
+}
+
+.responsive-three-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .responsive-three-col {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
 }
 
 /* ==========================================================================
@@ -874,11 +942,25 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px;
+  gap: 14px;
+  padding: 16px 18px;
   background: #ffffff;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .booking-item-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+  .booking-item-card .qty-control {
+    align-self: flex-end;
+  }
 }
 
 .booking-item-card:hover {
