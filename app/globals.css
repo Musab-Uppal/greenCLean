@@ -927,6 +927,20 @@ button {
   color: var(--slate-900);
 }
 
+/* Booking Grid Layout */
+.booking-main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 36px;
+}
+
+@media (min-width: 1024px) {
+  .booking-main-grid {
+    grid-template-columns: 1fr 380px;
+    align-items: start;
+  }
+}
+
 /* Sticky Price Summary Sidebar */
 .sticky-summary-card {
   position: sticky;

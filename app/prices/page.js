@@ -67,7 +67,7 @@ export default function PricesPage() {
 
               {/* Responsive Table */}
               <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.95rem" }}>
+                <table style={{ width: "100%", minWidth: "620px", borderCollapse: "collapse", textAlign: "left", fontSize: "0.95rem" }}>
                   <thead>
                     <tr style={{ background: "var(--emerald-600)", color: "#ffffff" }}>
                       <th style={{ padding: "14px 20px", borderTopLeftRadius: "10px", fontWeight: "700" }}>Service Name</th>

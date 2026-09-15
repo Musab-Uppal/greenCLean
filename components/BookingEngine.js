@@ -25,7 +25,8 @@ import {
   Bath,
   Home,
   KeyRound,
-  Printer
+  Printer,
+  X
 } from "lucide-react";
 import { SERVICE_CATEGORIES } from "@/data/servicesData";
 
@@ -49,6 +50,7 @@ export default function BookingEngine({ initialCategory = "oven" }) {
   // Step 2: Date & Time
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTimeSlot, setSelectedTimeSlot] = useState("9:00 - 11:00");
+  const [dateTimeError, setDateTimeError] = useState("");
 
   // Step 3: Contact Info
   const [customer, setCustomer] = useState({
@@ -126,24 +128,51 @@ export default function BookingEngine({ initialCategory = "oven" }) {
   // Validation
   const validateStep3 = () => {
     const errors = {};
-    if (!customer.firstName.trim()) errors.firstName = "First name is required";
-    if (!customer.lastName.trim()) errors.lastName = "Last name is required";
-    if (!customer.phone.trim()) errors.phone = "Phone number is required";
-    if (!customer.email.trim() || !customer.email.includes("@")) errors.email = "Valid email is required";
-    if (!customer.address.trim()) errors.address = "Street address is required";
-    if (!customer.postcode.trim()) errors.postcode = "Postcode is required";
+    if (!customer.firstName.trim()) {
+      errors.firstName = "First name is required";
+    }
+    if (!customer.lastName.trim()) {
+      errors.lastName = "Last name is required";
+    }
+    if (!customer.phone.trim()) {
+      errors.phone = "Phone number is required";
+    } else if (customer.phone.trim().replace(/[\s\-()]/g, "").length < 10) {
+      errors.phone = "Please enter a valid UK phone number";
+    }
+    if (!customer.email.trim() || !customer.email.includes("@") || !customer.email.includes(".")) {
+      errors.email = "Please provide a valid email address";
+    }
+    if (!customer.address.trim()) {
+      errors.address = "Street address is required";
+    }
+    if (!customer.postcode.trim()) {
+      errors.postcode = "Postcode is required";
+    } else if (customer.postcode.trim().length < 3) {
+      errors.postcode = "Please enter a valid UK postcode";
+    }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleNext = () => {
+    // Fail-safe 1: Must always have items and meet the £50 minimum order threshold
+    if (cartItems.length === 0 || subtotal < 50) {
+      setStep(1);
+      window.scrollTo({ top: 180, behavior: "smooth" });
+      return;
+    }
+
     if (step === 1) {
       if (!meetsMinimum) return;
       setStep(2);
       window.scrollTo({ top: 180, behavior: "smooth" });
     } else if (step === 2) {
-      if (!selectedDate || !selectedTimeSlot) return;
+      if (!selectedDate || !selectedTimeSlot) {
+        setDateTimeError("Please select both an appointment date and an arrival time window.");
+        return;
+      }
+      setDateTimeError("");
       setStep(3);
       window.scrollTo({ top: 180, behavior: "smooth" });
     } else if (step === 3) {
@@ -163,6 +192,30 @@ export default function BookingEngine({ initialCategory = "oven" }) {
   };
 
   const handleFinalConfirm = () => {
+    // Zero-loophole fail-safe: Validate every single prior step before confirming
+    if (cartItems.length === 0 || subtotal < 50) {
+      setStep(1);
+      window.scrollTo({ top: 180, behavior: "smooth" });
+      return;
+    }
+    if (!selectedDate || !selectedTimeSlot) {
+      setDateTimeError("Please select both an appointment date and an arrival time window.");
+      setStep(2);
+      window.scrollTo({ top: 180, behavior: "smooth" });
+      return;
+    }
+    if (!validateStep3()) {
+      setStep(3);
+      window.scrollTo({ top: 180, behavior: "smooth" });
+      return;
+    }
+    if (!agreeTerms) {
+      setTermsError(true);
+      setStep(4);
+      window.scrollTo({ top: 180, behavior: "smooth" });
+      return;
+    }
+
     const randomNum = Math.floor(10000 + Math.random() * 90000);
     setBookingRef(`GCG-${randomNum}`);
     setShowConfirmation(true);
@@ -202,23 +255,32 @@ export default function BookingEngine({ initialCategory = "oven" }) {
           { num: 4, label: "4. Payment" },
           { num: 5, label: "5. Review" }
         ].map((node) => (
-          <div 
+          <button 
+            type="button"
             key={node.num}
             className={`step-node ${step === node.num ? "active" : ""} ${step > node.num ? "completed" : ""}`}
             onClick={() => {
               if (step > node.num) setStep(node.num);
             }}
+            disabled={step <= node.num}
+            style={{ 
+              cursor: step > node.num ? "pointer" : "default",
+              border: "none",
+              background: "transparent",
+              padding: 0
+            }}
+            aria-label={`Step ${node.num}: ${node.label}`}
           >
             <div className="step-node-bubble">
               {step > node.num ? <Check size={18} /> : node.num}
             </div>
             <span className="step-node-label">{node.label}</span>
-          </div>
+          </button>
         ))}
       </div>
 
       {/* Main Grid: Wizard Form on Left, Sticky Cart on Right */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "36px" }} className="booking-main-grid">
+      <div className="booking-main-grid">
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "32px" }}>
           
           {/* ================================================================
@@ -379,7 +441,10 @@ export default function BookingEngine({ initialCategory = "oven" }) {
                     <button
                       key={d.full}
                       type="button"
-                      onClick={() => setSelectedDate(d.full)}
+                      onClick={() => {
+                        setSelectedDate(d.full);
+                        setDateTimeError("");
+                      }}
                       style={{
                         padding: "12px 8px",
                         borderRadius: "var(--radius-md)",
@@ -424,7 +489,10 @@ export default function BookingEngine({ initialCategory = "oven" }) {
                     <button
                       key={slot}
                       type="button"
-                      onClick={() => setSelectedTimeSlot(slot)}
+                      onClick={() => {
+                        setSelectedTimeSlot(slot);
+                        setDateTimeError("");
+                      }}
                       className={`time-slot-btn ${isSelected ? "selected" : ""}`}
                     >
                       <Clock size={16} style={{ display: "inline", verticalAlign: "middle", marginRight: "6px" }} />
@@ -433,6 +501,25 @@ export default function BookingEngine({ initialCategory = "oven" }) {
                   );
                 })}
               </div>
+
+              {dateTimeError && (
+                <div style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: "8px", 
+                  padding: "12px 16px", 
+                  borderRadius: "var(--radius-sm)", 
+                  background: "var(--danger-50)", 
+                  color: "var(--danger-500)", 
+                  fontSize: "0.875rem", 
+                  marginTop: "20px", 
+                  fontWeight: "600",
+                  border: "1px solid rgba(239, 68, 68, 0.2)" 
+                }}>
+                  <AlertCircle size={18} />
+                  <span>{dateTimeError}</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -864,9 +951,32 @@ export default function BookingEngine({ initialCategory = "oven" }) {
               textAlign: "center",
               background: "#ffffff",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
-              animation: "dropdownFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+              animation: "dropdownFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+              position: "relative"
             }}
           >
+            <button 
+              type="button" 
+              onClick={() => setShowConfirmation(false)} 
+              aria-label="Close confirmation"
+              style={{
+                position: "absolute",
+                top: "16px",
+                right: "16px",
+                width: "34px",
+                height: "34px",
+                borderRadius: "50%",
+                background: "var(--slate-100)",
+                color: "var(--slate-600)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              <X size={18} />
+            </button>
             <div style={{
               width: "72px",
               height: "72px",
