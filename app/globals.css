@@ -374,6 +374,17 @@ button {
   }
 }
 
+/* Coverage / Map section two-col grid */
+.coverage-grid {
+  grid-template-columns: 1fr !important;
+}
+
+@media (min-width: 900px) {
+  .coverage-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
 /* Service Quick Nav Bar (Single Equal Line) */
 .service-quick-nav {
   display: flex;

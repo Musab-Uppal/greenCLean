@@ -25,6 +25,7 @@ import {
   MoveHorizontal
 } from "lucide-react";
 import AreaChecker from "@/components/AreaChecker";
+import ServiceAreaMap from "@/components/ServiceAreaMap";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import FaqAccordion from "@/components/FaqAccordion";
 import { SERVICE_CATEGORIES } from "@/data/servicesData";
@@ -415,40 +416,87 @@ export default function HomePage() {
       </section>
 
       {/* ====================================================================
-          INTERACTIVE POSTCODE COVERAGE CHECKER
+          SERVICE AREA MAP SECTION
          ==================================================================== */}
-      <section className="section" style={{ background: "radial-gradient(circle at 10% 20%, #ecfdf5, transparent 50%), #f8fafc" }}>
+      <section className="section" style={{ background: "#f8fafc", paddingTop: "80px", paddingBottom: "80px" }}>
         <div className="container">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "48px", alignItems: "center" }} className="coverage-grid">
-            <div>
-              <span className="section-pill">Service Area</span>
-              <h2 className="section-title" style={{ textAlign: "left", marginBottom: "18px" }}>
-                Covering Liverpool, <span className="gradient-text">Merseyside &amp; Beyond</span>
-              </h2>
-              <p style={{ fontSize: "1.1rem", color: "var(--slate-600)", lineHeight: "1.7", marginBottom: "24px" }}>
-                We run daily routes across Liverpool City Centre, Sefton, St Helens, Knowsley, and the Wirral, with weekly routes throughout Cheshire and Greater Manchester.
-              </p>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "28px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <CheckCircle2 size={18} color="#059669" />
-                  <span style={{ fontWeight: "600", color: "var(--slate-800)" }}>All Merseyside (L1 to L39 &amp; CH postcodes)</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <CheckCircle2 size={18} color="#059669" />
-                  <span style={{ fontWeight: "600", color: "var(--slate-800)" }}>Cheshire (Warrington, Widnes, Runcorn, Chester)</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <CheckCircle2 size={18} color="#059669" />
-                  <span style={{ fontWeight: "600", color: "var(--slate-800)" }}>Manchester &amp; Lancashire (Select routes)</span>
-                </div>
+          {/* Section Header */}
+          <div className="section-title-wrap" style={{ marginBottom: "40px" }}>
+            <span className="section-pill">Service Area</span>
+            <h2 className="section-title">
+              Covering Liverpool &amp; <span className="gradient-text">40 Miles Around</span>
+            </h2>
+            <p className="section-desc">
+              We run daily routes across Merseyside and cover the wider North West within a 40-mile radius of Liverpool city centre. Enter your postcode below to confirm we reach you.
+            </p>
+          </div>
+
+          {/* Stats row */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+            gap: "16px",
+            marginBottom: "36px"
+          }}>
+            {[
+              { val: "40 mi", label: "Service radius" },
+              { val: "7+", label: "County areas covered" },
+              { val: "Daily", label: "Merseyside routes" },
+              { val: "Same week", label: "Booking availability" },
+            ].map((s, i) => (
+              <div key={i} className="glass-card" style={{ padding: "20px 16px", textAlign: "center" }}>
+                <div style={{ fontSize: "1.6rem", fontWeight: "900", color: "var(--emerald-700)", marginBottom: "4px" }}>{s.val}</div>
+                <div style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--slate-500)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{s.label}</div>
               </div>
+            ))}
+          </div>
+
+          {/* Full-width interactive map */}
+          <div style={{ marginBottom: "40px" }}>
+            <ServiceAreaMap />
+          </div>
+
+          {/* Two-column: area list + postcode checker */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "32px",
+            alignItems: "start"
+          }} className="coverage-grid">
+
+            {/* Left: area breakdown */}
+            <div>
+              <h3 style={{ fontSize: "1.3rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "18px" }}>
+                Areas We Cover
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px" }}>
+                {[
+                  { label: "All of Merseyside", detail: "L1–L39, CH41–49, WA postcodes" },
+                  { label: "Wirral", detail: "Birkenhead, Wallasey, Heswall, Bebington" },
+                  { label: "St Helens &amp; Knowsley", detail: "WA9–WA11, L34–L36" },
+                  { label: "Warrington &amp; Halton", detail: "Warrington, Runcorn, Widnes" },
+                  { label: "Sefton &amp; West Lancashire", detail: "Southport, Formby, Ormskirk" },
+                  { label: "Chester &amp; North Wales border", detail: "Chester, Ellesmere Port" },
+                ].map((a, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <CheckCircle2 size={17} color="#059669" style={{ flexShrink: 0, marginTop: "2px" }} />
+                    <span style={{ fontSize: "0.92rem", color: "var(--slate-700)" }}>
+                      <strong style={{ color: "var(--slate-900)" }} dangerouslySetInnerHTML={{ __html: a.label }} />{" — "}<span dangerouslySetInnerHTML={{ __html: a.detail }} />
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: "0.87rem", color: "var(--slate-500)", lineHeight: "1.6", padding: "12px 16px", background: "var(--emerald-50)", borderRadius: "10px", border: "1px solid var(--emerald-200)" }}>
+                Not sure if we reach you? Call us on <a href="tel:07359068284" style={{ color: "var(--emerald-700)", fontWeight: "700" }}>07359068284</a> and we&apos;ll confirm straight away.
+              </p>
             </div>
 
-            {/* Interactive Area Checker Tool */}
+            {/* Right: postcode checker */}
             <div>
               <AreaChecker />
             </div>
+
           </div>
         </div>
       </section>

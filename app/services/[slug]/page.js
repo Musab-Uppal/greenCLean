@@ -141,8 +141,8 @@ export async function generateMetadata({ params }) {
   if (!category) return { title: "Service Not Found" };
 
   return {
-    title: `${category.title} in Liverpool | Green Clean Group`,
-    description: `Professional eco-friendly ${category.title.toLowerCase()} in Liverpool and Merseyside. Non-toxic formulas, fixed prices from £${category.items[0]?.price}, and 100% satisfaction guarantee.`,
+    title: `${category.title} in Liverpool & Merseyside | Green Clean Group`,
+    description: `${category.title} in Liverpool, Wirral, Warrington, St Helens, Southport, Chester and surrounding areas. Non-caustic, fume-free cleaning — safe for families and pets. Fixed prices from £${category.items[0]?.price}. Book online or call 07359068284.`,
   };
 }
 
@@ -178,7 +178,7 @@ export default async function ServiceDetailPage({ params }) {
             <div style={{ position: "relative", zIndex: 2 }}>
               <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255, 255, 255, 0.15)", padding: "6px 14px", borderRadius: "var(--radius-full)", fontSize: "0.85rem", fontWeight: "700", marginBottom: "16px", color: "#a7f3d0" }}>
                 <IconComponent size={16} />
-                <span>Eco Cleaning Service • Liverpool</span>
+                <span>Liverpool &amp; Surrounding Areas</span>
               </div>
 
               <h1 style={{ fontSize: "clamp(1.85rem, 4.5vw, 2.7rem)", fontWeight: "850", color: "#ffffff", lineHeight: "1.15", marginBottom: "16px", letterSpacing: "-0.02em" }}>
@@ -186,7 +186,7 @@ export default async function ServiceDetailPage({ params }) {
               </h1>
 
               <p style={{ fontSize: "1.05rem", color: "var(--emerald-100)", lineHeight: "1.65", marginBottom: "24px" }}>
-                {category.shortDesc} We use 100% biodegradable, non-caustic treatments that eliminate baked-on carbon, stubborn grease, and residues without harsh chemical fumes.
+                {category.shortDesc}
               </p>
 
               {/* Trust Badges Pill Row */}
@@ -197,11 +197,11 @@ export default async function ServiceDetailPage({ params }) {
                 </div>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(255, 255, 255, 0.12)", padding: "5px 12px", borderRadius: "var(--radius-full)", fontSize: "0.8rem", color: "#ffffff", fontWeight: "600" }}>
                   <Leaf size={13} color="#34d399" />
-                  <span>100% Non-Toxic</span>
+                  <span>Non-Caustic &amp; Fume-Free</span>
                 </div>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(255, 255, 255, 0.12)", padding: "5px 12px", borderRadius: "var(--radius-full)", fontSize: "0.8rem", color: "#ffffff", fontWeight: "600" }}>
                   <ShieldCheck size={13} color="#34d399" />
-                  <span>DBS Checked Specialists</span>
+                  <span>Fully Insured</span>
                 </div>
               </div>
 
@@ -315,10 +315,10 @@ export default async function ServiceDetailPage({ params }) {
           <div style={{ textAlign: "center", maxWidth: "680px", margin: "0 auto 32px" }}>
             <span className="section-pill">Real Results &amp; Proof</span>
             <h2 style={{ fontSize: "2rem", fontWeight: "800", color: "var(--slate-900)" }}>
-              Showroom Standard In Every Clean
+              Recent Work in Liverpool &amp; Surrounding Areas
             </h2>
             <p style={{ color: "var(--slate-600)", fontSize: "0.95rem" }}>
-              See the immaculate results our Liverpool eco-cleaning specialists deliver every day. Zero toxic fumes, complete food safety.
+              Photos from recent jobs across Liverpool, Merseyside and nearby areas. Every clean uses fume-free, non-caustic products.
             </p>
           </div>
 
@@ -341,9 +341,19 @@ export default async function ServiceDetailPage({ params }) {
               <div style={{ display: "inline-flex", padding: "10px", borderRadius: "10px", background: "var(--emerald-100)", color: "var(--emerald-700)", width: "fit-content" }}>
                 <Leaf size={20} />
               </div>
-              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>100% Plant-Based &amp; Non-Toxic</h4>
+              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>Non-Caustic, Fume-Free &amp; Biodegradable</h4>
               <p style={{ fontSize: "0.85rem", color: "var(--slate-600)", lineHeight: "1.5" }}>
-                Zero caustic soda or fumes. Safe for children, asthma sufferers, pets, and immediate food prep.
+                We don&apos;t use caustic soda or harsh chemicals. Our cleaning products are biodegradable and won&apos;t leave chemical smells in your home.
+              </p>
+            </div>
+
+            <div className="trust-proof-card">
+              <div style={{ display: "inline-flex", padding: "10px", borderRadius: "10px", background: "var(--emerald-100)", color: "var(--emerald-700)", width: "fit-content" }}>
+                <Clock size={20} />
+              </div>
+              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>Safe to Use Straight After</h4>
+              <p style={{ fontSize: "0.85rem", color: "var(--slate-600)", lineHeight: "1.5" }}>
+                Your oven, fridge or appliance can be used again immediately. No waiting for fumes to clear or surfaces to dry out.
               </p>
             </div>
 
@@ -351,9 +361,9 @@ export default async function ServiceDetailPage({ params }) {
               <div style={{ display: "inline-flex", padding: "10px", borderRadius: "10px", background: "var(--emerald-100)", color: "var(--emerald-700)", width: "fit-content" }}>
                 <ShieldCheck size={20} />
               </div>
-              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>£2M Insured &amp; DBS Checked</h4>
+              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>Fully Insured</h4>
               <p style={{ fontSize: "0.85rem", color: "var(--slate-600)", lineHeight: "1.5" }}>
-                Every technician is fully vetted, police-checked, certified, and insured for total peace of mind.
+                We carry full public liability insurance, so you can have us in your home with complete peace of mind.
               </p>
             </div>
 
@@ -361,19 +371,9 @@ export default async function ServiceDetailPage({ params }) {
               <div style={{ display: "inline-flex", padding: "10px", borderRadius: "10px", background: "var(--emerald-100)", color: "var(--emerald-700)", width: "fit-content" }}>
                 <Award size={20} />
               </div>
-              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>100% Satisfaction Guarantee</h4>
+              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>Gentle on Enamel, Glass &amp; Chrome</h4>
               <p style={{ fontSize: "0.85rem", color: "var(--slate-600)", lineHeight: "1.5" }}>
-                If anything is not completely spotless to your satisfaction, we will return and re-clean free of charge.
-              </p>
-            </div>
-
-            <div className="trust-proof-card">
-              <div style={{ display: "inline-flex", padding: "10px", borderRadius: "10px", background: "var(--emerald-100)", color: "var(--emerald-700)", width: "fit-content" }}>
-                <Lock size={20} />
-              </div>
-              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>Transparent Fixed Pricing</h4>
-              <p style={{ fontSize: "0.85rem", color: "var(--slate-600)", lineHeight: "1.5" }}>
-                No surprise call-out fees, parking surcharges, or hourly surprises. The price you book is the price you pay.
+                Our products won&apos;t damage enamel linings, rubber seals, glass or chrome fittings &mdash; common with caustic cleaning.
               </p>
             </div>
           </div>
@@ -384,10 +384,10 @@ export default async function ServiceDetailPage({ params }) {
           <div style={{ textAlign: "center", maxWidth: "640px", margin: "0 auto 36px" }}>
             <span className="section-pill">Our Method</span>
             <h2 style={{ fontSize: "1.8rem", fontWeight: "800", color: "var(--slate-900)" }}>
-              How Our Eco-Cleaning Process Works
+              How We Clean
             </h2>
             <p style={{ color: "var(--slate-600)", fontSize: "0.95rem" }}>
-              A meticulous, multi-stage restoration that brings appliances and rooms back to showroom condition.
+              We follow the same careful process on every job, from protecting your floors to a final check with you before we leave.
             </p>
           </div>
 
@@ -419,12 +419,12 @@ export default async function ServiceDetailPage({ params }) {
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {[
-                "100% biodegradable and non-caustic cleaning solutions",
-                "Completely safe for asthma sufferers, babies, and pets",
-                "Ready to use immediately — zero chemical fumes or residual odors",
-                "Fully insured DBS-checked technicians",
-                "Transparent fixed pricing without hidden fees",
-                "100% Satisfaction Guarantee: Free re-clean if anything is missed"
+                "Non-caustic, fume-free and biodegradable cleaning",
+                "Appliances are safe to use immediately after cleaning",
+                "Gentle on enamel, glass, seals and chrome",
+                "No harsh chemical smells",
+                "Suitable for family homes and pets",
+                "Fully insured",
               ].map((text, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <CheckCircle2 size={18} color="#059669" style={{ flexShrink: 0 }} />
@@ -436,10 +436,10 @@ export default async function ServiceDetailPage({ params }) {
 
           <div className="glass-card" style={{ padding: "32px", textAlign: "center", background: "var(--emerald-50)", border: "1.5px solid var(--emerald-300)" }}>
             <h3 style={{ fontSize: "1.4rem", fontWeight: "800", color: "var(--emerald-950)", marginBottom: "10px" }}>
-              Book in Just 60 Seconds
+              Book Online
             </h3>
             <p style={{ fontSize: "0.95rem", color: "var(--slate-600)", marginBottom: "24px" }}>
-              Pick your time slot, enter your address, and our professional Liverpool cleaner will be at your door.
+              Choose a date and time, enter your address and we&apos;ll confirm your booking. We cover Liverpool and surrounding areas up to 40 miles.
             </p>
             <Link href={`/book?service=${category.id}`} className="btn btn-primary" style={{ width: "100%" }}>
               <Calendar size={16} />
