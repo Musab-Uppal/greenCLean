@@ -79,20 +79,37 @@ export default function TestimonialsCarousel() {
         {/* Author info */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <div style={{
-              width: "48px",
-              height: "48px",
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, var(--emerald-600) 0%, var(--teal-600) 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#ffffff",
-              fontWeight: "800",
-              fontSize: "1.1rem"
-            }}>
-              {current.name.charAt(0)}
-            </div>
+            {current.avatar ? (
+              <img 
+                src={current.avatar} 
+                alt={current.name}
+                style={{
+                  width: "52px",
+                  height: "52px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid var(--emerald-400)",
+                  boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+                  flexShrink: 0
+                }}
+              />
+            ) : (
+              <div style={{
+                width: "52px",
+                height: "52px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, var(--emerald-600) 0%, var(--teal-600) 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#ffffff",
+                fontWeight: "800",
+                fontSize: "1.1rem",
+                flexShrink: 0
+              }}>
+                {current.name.charAt(0)}
+              </div>
+            )}
             <div>
               <div style={{ fontWeight: "800", fontSize: "1.05rem", color: "var(--slate-900)" }}>
                 {current.name}
