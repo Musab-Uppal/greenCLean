@@ -21,14 +21,13 @@ import {
   HeartHandshake,
   Headphones,
   Award,
-  ChevronRight
+  ChevronRight,
+  MoveHorizontal
 } from "lucide-react";
-import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 import AreaChecker from "@/components/AreaChecker";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import FaqAccordion from "@/components/FaqAccordion";
 import { SERVICE_CATEGORIES } from "@/data/servicesData";
-import { TRUST_METRICS } from "@/data/testimonialsData";
 
 const CATEGORY_ICONS = {
   oven: Flame,
@@ -40,10 +39,17 @@ const CATEGORY_ICONS = {
   tenancy: KeyRound
 };
 
-export default function HomePage() {
-  const [selectedCategoryTab, setSelectedCategoryTab] = useState("oven");
+const OVERLAY_TITLES = {
+  oven: "Oven",
+  kitchen: "Kitchen",
+  appliances: "Appliances",
+  bbq: "BBQ",
+  bathroom: "Bathroom",
+  house: "House",
+  tenancy: "Tenancy"
+};
 
-  const currentCategory = SERVICE_CATEGORIES.find(c => c.id === selectedCategoryTab) || SERVICE_CATEGORIES[0];
+export default function HomePage() {
 
   return (
     <div>
@@ -113,39 +119,80 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Col: Interactive Before/After Comparison Showcase */}
-            <div>
-              <div style={{ marginBottom: "14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--emerald-800)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Interactive Live Transformation
-                </span>
-                <span style={{ fontSize: "0.8rem", color: "var(--slate-500)" }}>
-                  Slide left/right to reveal
-                </span>
+            {/* Right Col: Real High Quality Transformation Image */}
+            <div style={{ position: "relative" }}>
+              <div 
+                style={{ 
+                  borderRadius: "var(--radius-lg)", 
+                  overflow: "hidden", 
+                  boxShadow: "0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(16, 185, 129, 0.2)",
+                  background: "#ffffff",
+                  position: "relative"
+                }}
+              >
+                <img 
+                  src="/hero-before-after.jpg" 
+                  alt="Real Oven Cleaning Before and After in Liverpool"
+                  style={{
+                    width: "100%",
+                    height: "auto",
+                    maxHeight: "520px",
+                    objectFit: "cover",
+                    display: "block"
+                  }}
+                />
+
+                {/* Floating Verified Transformation Overlay */}
+                <div 
+                  style={{
+                    position: "absolute",
+                    bottom: "16px",
+                    left: "16px",
+                    right: "16px",
+                    background: "rgba(15, 23, 42, 0.88)",
+                    backdropFilter: "blur(10px)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "12px 18px",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                    flexWrap: "wrap"
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "var(--radius-full)", background: "var(--emerald-500)", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", flexShrink: 0 }}>
+                      <Sparkles size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "0.875rem", fontWeight: "700", color: "#ffffff" }}>
+                        Real Liverpool Transformation
+                      </div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--emerald-200)" }}>
+                        100% Non-Toxic Van Dip Tank Clean
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(16, 185, 129, 0.2)", border: "1px solid rgba(52, 211, 153, 0.3)", padding: "4px 10px", borderRadius: "var(--radius-full)", color: "#34d399", fontSize: "0.75rem", fontWeight: "700" }}>
+                    <CheckCircle2 size={13} />
+                    <span>Verified Result</span>
+                  </div>
+                </div>
               </div>
 
-              <BeforeAfterSlider />
+              {/* Sub-caption note */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "12px", padding: "0 4px", fontSize: "0.82rem", color: "var(--slate-600)" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <CheckCircle2 size={15} color="#059669" />
+                  <strong>Real Customer Result</strong> • Zero Toxic Fumes
+                </span>
+                <span style={{ color: "var(--slate-500)" }}>
+                  Ready to cook in immediately
+                </span>
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ====================================================================
-          TRUST METRICS BANNER
-         ==================================================================== */}
-      <section style={{ background: "#ffffff", padding: "40px 0", borderTop: "1px solid var(--border-subtle)", borderBottom: "1px solid var(--border-subtle)" }}>
-        <div className="container">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "24px", textAlign: "center" }}>
-            {TRUST_METRICS.map((metric, i) => (
-              <div key={i} style={{ padding: "10px" }}>
-                <div style={{ fontSize: "2.2rem", fontWeight: "850", color: "var(--emerald-700)", letterSpacing: "-0.02em" }}>
-                  {metric.value}
-                </div>
-                <div style={{ fontSize: "0.9rem", color: "var(--slate-600)", fontWeight: "600", marginTop: "4px" }}>
-                  {metric.label}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -165,127 +212,119 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Category Tabs */}
-          <div style={{ display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap", marginBottom: "40px" }}>
+          {/* Quick Jump Bar */}
+          <div className="service-quick-nav">
             {SERVICE_CATEGORIES.map((cat) => {
               const Icon = CATEGORY_ICONS[cat.id] || Sparkles;
-              const isActive = selectedCategoryTab === cat.id;
-
               return (
-                <button
+                <a
                   key={cat.id}
-                  onClick={() => setSelectedCategoryTab(cat.id)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "12px 20px",
-                    borderRadius: "var(--radius-full)",
-                    background: isActive ? "var(--emerald-600)" : "#ffffff",
-                    color: isActive ? "#ffffff" : "var(--slate-700)",
-                    fontWeight: "700",
-                    fontSize: "0.925rem",
-                    border: `1.5px solid ${isActive ? "var(--emerald-600)" : "var(--slate-200)"}`,
-                    boxShadow: isActive ? "var(--shadow-green-sm)" : "var(--shadow-sm)",
-                    cursor: "pointer",
-                    transition: "all 0.2s"
-                  }}
+                  href={`#service-${cat.id}`}
+                  className="service-quick-pill"
                 >
-                  <Icon size={16} />
+                  <Icon size={14} color="#059669" />
                   <span>{cat.title}</span>
-                </button>
+                </a>
               );
             })}
           </div>
 
-          {/* Active Category Content Card */}
-          <div className="glass-card responsive-card-padding" style={{ border: "1.5px solid var(--emerald-200)", marginBottom: "36px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", marginBottom: "28px" }}>
-              <div>
-                <span style={{ fontSize: "0.8rem", fontWeight: "700", textTransform: "uppercase", color: "var(--emerald-600)" }}>
-                  Category Details
-                </span>
-                <h3 style={{ fontSize: "1.75rem", fontWeight: "800", color: "var(--slate-900)" }}>
-                  {currentCategory.title}
-                </h3>
-                <p style={{ color: "var(--slate-600)", fontSize: "0.95rem", maxWidth: "600px", marginTop: "4px" }}>
-                  {currentCategory.shortDesc}
-                </p>
-              </div>
+          {/* Sequential Alternating Service Showcase Blocks */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {SERVICE_CATEGORIES.map((category, index) => {
+              // Alternating: even indices (0, 2, 4...) have reverse (picture left), odd (1, 3, 5...) have normal (content left)
+              // This makes BBQ (index 3) Content Left, Picture Right, and Bathroom (index 4) Picture Left, Content Right (matching user screenshot)
+              const isReverse = index % 2 === 0;
 
-              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-                <Link href={`/services/${currentCategory.slug}`} className="btn btn-secondary btn-sm">
-                  <span>Learn More Details</span>
-                  <ArrowRight size={14} />
-                </Link>
-                <Link href="/book" className="btn btn-primary btn-sm">
-                  <span>Book This Service</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Grid of items in this category */}
-            <div className="responsive-card-grid">
-              {currentCategory.items.map((item) => (
+              return (
                 <div 
-                  key={item.id}
-                  style={{
-                    padding: "20px",
-                    borderRadius: "var(--radius-md)",
-                    background: "#ffffff",
-                    border: "1px solid var(--border-subtle)",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    transition: "transform 0.2s, box-shadow 0.2s"
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.transform = "translateY(-3px)";
-                    e.currentTarget.style.boxShadow = "var(--shadow-md)";
-                    e.currentTarget.style.borderColor = "var(--emerald-300)";
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "none";
-                    e.currentTarget.style.borderColor = "var(--border-subtle)";
-                  }}
+                  key={category.id} 
+                  id={`service-${category.id}`}
+                  className={`showcase-block ${isReverse ? "reverse" : ""}`}
                 >
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <h4 style={{ fontWeight: "700", fontSize: "1.05rem", color: "var(--slate-900)" }}>
-                        {item.name}
-                      </h4>
-                      {item.popular && (
-                        <span style={{ fontSize: "0.7rem", fontWeight: "700", padding: "2px 8px", borderRadius: "4px", background: "var(--emerald-100)", color: "var(--emerald-800)" }}>
-                          Popular
-                        </span>
-                      )}
-                    </div>
-
-                    <div style={{ fontSize: "0.85rem", color: "var(--slate-500)", display: "flex", flexDirection: "column", gap: "4px", marginBottom: "16px" }}>
-                      {item.width && <span>📐 {item.width}</span>}
-                      {item.duration && <span>⏱️ {item.duration}</span>}
-                      {item.racks ? <span>🔹 {item.racks} Racks &amp; {item.doors} Door(s)</span> : null}
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "12px", borderTop: "1px solid var(--slate-100)" }}>
+                  {/* Cleaning Options Grid Side */}
+                  <div className="showcase-content">
                     <div>
-                      <span style={{ fontSize: "0.75rem", color: "var(--slate-400)", textTransform: "uppercase" }}>Fixed Price</span>
-                      <div style={{ fontSize: "1.35rem", fontWeight: "850", color: "var(--emerald-700)" }}>
-                        £{item.price}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                        <div>
+                          <span style={{ fontSize: "0.75rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--emerald-600)" }}>
+                            Service Packages
+                          </span>
+                          <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--slate-900)" }}>
+                            {category.title}
+                          </h3>
+                        </div>
+                        <span style={{ fontSize: "0.75rem", fontWeight: "700", padding: "4px 10px", borderRadius: "var(--radius-full)", background: "var(--emerald-100)", color: "var(--emerald-800)" }}>
+                          {category.badge}
+                        </span>
+                      </div>
+
+                      {/* 2-Column Options Grid */}
+                      <div className="showcase-grid">
+                        {category.items.map((item) => (
+                          <div key={item.id} className="showcase-item">
+                            <div>
+                              <div className="showcase-item-title">{item.name}</div>
+                              <div className="showcase-item-meta">
+                                {item.width && (
+                                  <div className="showcase-meta-row">
+                                    <MoveHorizontal size={13} />
+                                    <span>Width: {item.width}</span>
+                                  </div>
+                                )}
+                                {item.duration && (
+                                  <div className="showcase-meta-row">
+                                    <Clock size={13} />
+                                    <span>Avg. duration: {item.duration}</span>
+                                  </div>
+                                )}
+                                {item.racks ? (
+                                  <div className="showcase-meta-row">
+                                    <span>🔹 {item.racks} racks, {item.doors} door</span>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                            <div className="showcase-price-badge">
+                              Price: £{item.price}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <Link href="/book" className="btn btn-primary btn-sm" style={{ padding: "8px 16px" }}>
-                      Book Now
-                    </Link>
+
+                    {/* Action Buttons */}
+                    <div className="showcase-actions">
+                      <Link href={`/services/${category.slug}`} className="showcase-btn-details">
+                        <span>More details</span>
+                      </Link>
+                      <Link href={`/book?service=${category.id}`} className="showcase-btn-book">
+                        <span>Book a service</span>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Picture Side with centered typography overlay */}
+                  <div className="showcase-media">
+                    <img 
+                      src={category.heroImage} 
+                      alt={`${category.title} Eco Cleaning Liverpool`} 
+                      loading="lazy" 
+                    />
+                    <div className="showcase-media-overlay">
+                      <div className="showcase-media-title">
+                        <span>{OVERLAY_TITLES[category.id] || category.title}</span>
+                        <Sparkles size={28} className="sparkle-icon" />
+                      </div>
+                      <div className="showcase-media-subtitle">cleaning</div>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
-          <div style={{ textAlign: "center" }}>
+          <div style={{ textAlign: "center", marginTop: "24px" }}>
             <Link href="/prices" className="btn btn-secondary">
               <span>View Full Price List &amp; Comparison Table</span>
               <ChevronRight size={16} />

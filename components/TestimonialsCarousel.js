@@ -1,11 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Star, ChevronLeft, ChevronRight, Quote, CheckCircle } from "lucide-react";
 import { TESTIMONIALS } from "@/data/testimonialsData";
 
 export default function TestimonialsCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Auto slideshow every 4.5 seconds (pauses on hover)
+  useEffect(() => {
+    if (isPaused) return;
+
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev === TESTIMONIALS.length - 1 ? 0 : prev + 1));
+    }, 4500);
+
+    return () => clearInterval(timer);
+  }, [isPaused]);
 
   const prev = () => {
     setCurrentIndex((prev) => (prev === 0 ? TESTIMONIALS.length - 1 : prev - 1));
@@ -15,16 +27,27 @@ export default function TestimonialsCarousel() {
     setCurrentIndex((prev) => (prev === TESTIMONIALS.length - 1 ? 0 : prev + 1));
   };
 
+  const current = TESTIMONIALS[currentIndex];
+
   return (
-    <div style={{ position: "relative", maxWidth: "920px", margin: "0 auto" }}>
+    <div 
+      style={{ position: "relative", maxWidth: "920px", margin: "0 auto" }}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      role="region"
+      aria-label="Customer Testimonials Carousel"
+    >
       {/* Testimonial Card */}
       <div 
+        key={current.id}
         className="glass-card"
         style={{
           padding: "44px 36px",
           border: "1.5px solid var(--emerald-200)",
           background: "linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 253, 244, 0.6) 100%)",
-          position: "relative"
+          position: "relative",
+          animation: "fadeIn 0.4s ease",
+          transition: "all 0.3s ease"
         }}
       >
         <Quote 
@@ -35,7 +58,7 @@ export default function TestimonialsCarousel() {
 
         {/* Rating Stars */}
         <div style={{ display: "flex", gap: "4px", marginBottom: "18px" }}>
-          {[...Array(TESTIMONIALS[currentIndex].rating)].map((_, i) => (
+          {[...Array(current.rating)].map((_, i) => (
             <Star key={i} size={20} fill="#f59e0b" color="#f59e0b" />
           ))}
         </div>
@@ -47,9 +70,10 @@ export default function TestimonialsCarousel() {
           lineHeight: "1.7",
           color: "var(--slate-800)",
           marginBottom: "28px",
-          fontStyle: "italic"
+          fontStyle: "italic",
+          minHeight: "75px"
         }}>
-          "{TESTIMONIALS[currentIndex].text}"
+          "{current.text}"
         </p>
 
         {/* Author info */}
@@ -67,17 +91,17 @@ export default function TestimonialsCarousel() {
               fontWeight: "800",
               fontSize: "1.1rem"
             }}>
-              {TESTIMONIALS[currentIndex].name.charAt(0)}
+              {current.name.charAt(0)}
             </div>
             <div>
               <div style={{ fontWeight: "800", fontSize: "1.05rem", color: "var(--slate-900)" }}>
-                {TESTIMONIALS[currentIndex].name}
+                {current.name}
               </div>
               <div style={{ fontSize: "0.85rem", color: "var(--slate-500)", display: "flex", alignItems: "center", gap: "6px" }}>
-                <span>{TESTIMONIALS[currentIndex].location}</span>
+                <span>{current.location}</span>
                 <span>•</span>
                 <span style={{ color: "var(--emerald-600)", fontWeight: "600", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                  <CheckCircle size={13} /> {TESTIMONIALS[currentIndex].service}
+                  <CheckCircle size={13} /> {current.service}
                 </span>
               </div>
             </div>
@@ -91,7 +115,7 @@ export default function TestimonialsCarousel() {
             fontSize: "0.8rem",
             fontWeight: "700"
           }}>
-            {TESTIMONIALS[currentIndex].badge}
+            {current.badge}
           </span>
         </div>
       </div>

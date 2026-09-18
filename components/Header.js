@@ -3,18 +3,18 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  Sparkles, 
-  Phone, 
-  ChevronDown, 
-  Menu, 
-  X, 
-  Flame, 
-  UtensilsCrossed, 
-  Refrigerator, 
-  Beef, 
-  Bath, 
-  Home, 
+import {
+  Sparkles,
+  Phone,
+  ChevronDown,
+  Menu,
+  X,
+  Flame,
+  UtensilsCrossed,
+  Refrigerator,
+  Beef,
+  Bath,
+  Home,
   KeyRound,
   Calendar,
   Tag
@@ -48,14 +48,14 @@ export default function Header() {
               </div>
               <div className="brand-logo-text">
                 <span className="brand-title">Green Clean</span>
-                <span className="brand-subtitle">Group Liverpool</span>
+                <span className="brand-subtitle">Group</span>
               </div>
             </Link>
 
             {/* Desktop Navigation */}
             <nav className="nav-links">
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className={`nav-link-item ${pathname === "/" ? "active" : ""}`}
               >
                 Home
@@ -71,8 +71,8 @@ export default function Header() {
                   {SERVICE_CATEGORIES.map((cat) => {
                     const IconComponent = SERVICE_ICONS[cat.icon] || Sparkles;
                     return (
-                      <Link 
-                        key={cat.id} 
+                      <Link
+                        key={cat.id}
                         href={`/services/${cat.slug}`}
                         className="dropdown-item"
                       >
@@ -89,22 +89,22 @@ export default function Header() {
                 </div>
               </div>
 
-              <Link 
-                href="/prices" 
+              <Link
+                href="/prices"
                 className={`nav-link-item ${pathname === "/prices" ? "active" : ""}`}
               >
                 Prices
               </Link>
 
-              <Link 
-                href="/about" 
+              <Link
+                href="/about"
                 className={`nav-link-item ${pathname === "/about" ? "active" : ""}`}
               >
                 About Us
               </Link>
 
-              <Link 
-                href="/contact" 
+              <Link
+                href="/contact"
                 className={`nav-link-item ${pathname === "/contact" ? "active" : ""}`}
               >
                 Contact
@@ -124,7 +124,7 @@ export default function Header() {
               </Link>
 
               {/* Mobile Hamburger Toggle */}
-              <button 
+              <button
                 className="mobile-toggle-btn"
                 onClick={() => setMobileMenuOpen(true)}
                 aria-label="Open mobile menu"
@@ -137,11 +137,11 @@ export default function Header() {
       </header>
 
       {/* Mobile Drawer Navigation */}
-      <div 
-        className={`mobile-drawer ${mobileMenuOpen ? "open" : ""}`} 
+      <div
+        className={`mobile-drawer ${mobileMenuOpen ? "open" : ""}`}
         onClick={() => setMobileMenuOpen(false)}
       >
-        <div 
+        <div
           className="mobile-drawer-content"
           onClick={(e) => e.stopPropagation()}
         >
@@ -152,7 +152,7 @@ export default function Header() {
               </div>
               <span style={{ fontWeight: "800", color: "var(--emerald-900)" }}>Green Clean</span>
             </div>
-            <button 
+            <button
               onClick={() => setMobileMenuOpen(false)}
               style={{ padding: "6px", color: "var(--slate-500)" }}
               aria-label="Close menu"
@@ -162,7 +162,7 @@ export default function Header() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <Link 
+            <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
               style={{
@@ -178,7 +178,7 @@ export default function Header() {
 
             {/* Mobile Services Accordion */}
             <div>
-              <button 
+              <button
                 onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
                 style={{
                   display: "flex",
@@ -192,8 +192,8 @@ export default function Header() {
                 }}
               >
                 <span>Cleaning Services</span>
-                <ChevronDown 
-                  size={16} 
+                <ChevronDown
+                  size={16}
                   style={{ transform: mobileServicesOpen ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }}
                 />
               </button>
@@ -219,7 +219,7 @@ export default function Header() {
               )}
             </div>
 
-            <Link 
+            <Link
               href="/prices"
               onClick={() => setMobileMenuOpen(false)}
               style={{
@@ -233,7 +233,7 @@ export default function Header() {
               Prices & Packages
             </Link>
 
-            <Link 
+            <Link
               href="/about"
               onClick={() => setMobileMenuOpen(false)}
               style={{
@@ -247,7 +247,7 @@ export default function Header() {
               About Us
             </Link>
 
-            <Link 
+            <Link
               href="/contact"
               onClick={() => setMobileMenuOpen(false)}
               style={{
@@ -263,8 +263,8 @@ export default function Header() {
           </div>
 
           <div style={{ marginTop: "auto", paddingTop: "24px", borderTop: "1px solid var(--border-subtle)" }}>
-            <Link 
-              href="/book" 
+            <Link
+              href="/book"
               className="btn btn-primary"
               onClick={() => setMobileMenuOpen(false)}
               style={{ width: "100%", marginBottom: "14px" }}
@@ -273,7 +273,7 @@ export default function Header() {
               <span>Book Appointment Now</span>
             </Link>
 
-            <a 
+            <a
               href="tel:07359068284"
               className="btn btn-secondary"
               style={{ width: "100%" }}
