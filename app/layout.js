@@ -32,7 +32,9 @@ export const metadata = {
   ],
   authors: [{ name: "Green Clean Group" }],
   icons: {
-    icon: "/favicon.ico",
+    icon: "/fav.jpg",
+    shortcut: "/fav.jpg",
+    apple: "/fav.jpg",
   },
   openGraph: {
     title: "Green Clean Group | Eco-Friendly Cleaning in Liverpool",

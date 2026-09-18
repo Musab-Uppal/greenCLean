@@ -1317,16 +1317,17 @@ button {
   font-weight: 700;
 }
 
-/* Service Item Card in Booking */
+/* Service Item Card in Booking - Small 2-Column Grid */
 .service-booking-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: 12px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 600px) {
   .service-booking-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 }
 
@@ -1334,21 +1335,22 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 16px 18px;
+  gap: 12px;
+  padding: 12px 14px;
   background: #ffffff;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
   width: 100%;
   box-sizing: border-box;
+  min-width: 0;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 440px) {
   .booking-item-card {
     flex-direction: column;
     align-items: flex-start;
-    padding: 16px;
+    padding: 12px;
   }
   .booking-item-card .qty-control {
     align-self: flex-end;
@@ -1368,36 +1370,38 @@ button {
 .qty-control {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   background: #ffffff;
-  padding: 4px 8px;
+  padding: 3px 6px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
 }
 
 .qty-btn {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--slate-100);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--slate-700);
   transition: all var(--transition-fast);
 }
 
-.qty-btn:hover {
+.qty-btn:hover:not(:disabled) {
   background: var(--emerald-600);
   color: #ffffff;
 }
 
 .qty-number {
-  min-width: 20px;
+  min-width: 18px;
   text-align: center;
   font-weight: 700;
+  font-size: 0.95rem;
   color: var(--slate-900);
 }
 
@@ -1405,25 +1409,49 @@ button {
 .booking-main-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 36px;
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 960px) {
   .booking-main-grid {
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: minmax(0, 1fr) 340px;
     align-items: start;
+    gap: 24px;
   }
+}
+
+@media (min-width: 1200px) {
+  .booking-main-grid {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 28px;
+  }
+}
+
+.booking-form-col {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.booking-sidebar-col {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Sticky Price Summary Sidebar */
 .sticky-summary-card {
   position: sticky;
-  top: 100px;
+  top: 90px;
   background: #ffffff;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 20px;
   box-shadow: var(--shadow-lg);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Time Slots Grid */

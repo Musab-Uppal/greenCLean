@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Sparkles,
@@ -42,14 +43,15 @@ export default function Header() {
         <div className="container">
           <div className="header-inner">
             {/* Brand Logo */}
-            <Link href="/" className="brand-logo">
-              <div className="brand-logo-badge">
-                <Sparkles size={22} />
-              </div>
-              <div className="brand-logo-text">
-                <span className="brand-title">Green Clean</span>
-                <span className="brand-subtitle">Group</span>
-              </div>
+            <Link href="/" className="brand-logo" style={{ textDecoration: "none" }}>
+              <Image
+                src="/logo.png"
+                alt="Green Clean Group"
+                width={190}
+                height={45}
+                priority
+                style={{ height: "42px", width: "auto", objectFit: "contain", display: "block" }}
+              />
             </Link>
 
             {/* Desktop Navigation */}
@@ -146,12 +148,15 @@ export default function Header() {
           onClick={(e) => e.stopPropagation()}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div className="brand-logo-badge" style={{ width: "36px", height: "36px" }}>
-                <Sparkles size={18} />
-              </div>
-              <span style={{ fontWeight: "800", color: "var(--emerald-900)" }}>Green Clean</span>
-            </div>
+            <Link href="/" onClick={() => setMobileMenuOpen(false)} style={{ display: "flex", alignItems: "center" }}>
+              <Image
+                src="/logo.png"
+                alt="Green Clean Group"
+                width={160}
+                height={38}
+                style={{ height: "36px", width: "auto", objectFit: "contain", display: "block" }}
+              />
+            </Link>
             <button
               onClick={() => setMobileMenuOpen(false)}
               style={{ padding: "6px", color: "var(--slate-500)" }}

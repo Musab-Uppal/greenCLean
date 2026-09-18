@@ -2,14 +2,14 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { 
-  Sparkles, 
-  Calendar, 
-  Phone, 
-  ShieldCheck, 
-  Clock, 
-  CheckCircle2, 
-  Star, 
+import {
+  Sparkles,
+  Calendar,
+  Phone,
+  ShieldCheck,
+  Clock,
+  CheckCircle2,
+  Star,
   ArrowRight,
   Flame,
   UtensilsCrossed,
@@ -122,17 +122,17 @@ export default function HomePage() {
 
             {/* Right Col: Real High Quality Transformation Image */}
             <div style={{ position: "relative" }}>
-              <div 
-                style={{ 
-                  borderRadius: "var(--radius-lg)", 
-                  overflow: "hidden", 
+              <div
+                style={{
+                  borderRadius: "var(--radius-lg)",
+                  overflow: "hidden",
                   boxShadow: "0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(16, 185, 129, 0.2)",
                   background: "#ffffff",
                   position: "relative"
                 }}
               >
-                <img 
-                  src="/hero-before-after.jpg" 
+                <img
+                  src="/hero-before-after.jpg"
                   alt="Real Oven Cleaning Before and After in Liverpool"
                   style={{
                     width: "100%",
@@ -144,7 +144,7 @@ export default function HomePage() {
                 />
 
                 {/* Floating Verified Transformation Overlay */}
-                <div 
+                <div
                   style={{
                     position: "absolute",
                     bottom: "16px",
@@ -238,8 +238,8 @@ export default function HomePage() {
               const isReverse = index % 2 === 0;
 
               return (
-                <div 
-                  key={category.id} 
+                <div
+                  key={category.id}
                   id={`service-${category.id}`}
                   className={`showcase-block ${isReverse ? "reverse" : ""}`}
                 >
@@ -307,10 +307,10 @@ export default function HomePage() {
 
                   {/* Picture Side with centered typography overlay */}
                   <div className="showcase-media">
-                    <img 
-                      src={category.heroImage} 
-                      alt={`${category.title} Eco Cleaning Liverpool`} 
-                      loading="lazy" 
+                    <img
+                      src={category.heroImage}
+                      alt={`${category.title} Eco Cleaning Liverpool`}
+                      loading="lazy"
                     />
                     <div className="showcase-media-overlay">
                       <div className="showcase-media-title">
@@ -384,8 +384,8 @@ export default function HomePage() {
             ].map((feature, i) => {
               const Icon = feature.icon;
               return (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className="glass-card glass-card-hover"
                   style={{ padding: "32px 28px" }}
                 >
@@ -432,25 +432,6 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Stats row */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-            gap: "16px",
-            marginBottom: "36px"
-          }}>
-            {[
-              { val: "40 mi", label: "Service radius" },
-              { val: "7+", label: "County areas covered" },
-              { val: "Daily", label: "Merseyside routes" },
-              { val: "Same week", label: "Booking availability" },
-            ].map((s, i) => (
-              <div key={i} className="glass-card" style={{ padding: "20px 16px", textAlign: "center" }}>
-                <div style={{ fontSize: "1.6rem", fontWeight: "900", color: "var(--emerald-700)", marginBottom: "4px" }}>{s.val}</div>
-                <div style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--slate-500)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
 
           {/* Full-width interactive map */}
           <div style={{ marginBottom: "40px" }}>

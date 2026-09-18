@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { 
   Sparkles, 
   Phone, 
@@ -22,14 +23,15 @@ export default function Footer() {
         <div className="footer-grid">
           {/* Col 1: Brand & Mission */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-              <div className="brand-logo-badge" style={{ width: "38px", height: "38px" }}>
-                <Sparkles size={20} />
-              </div>
-              <span style={{ fontSize: "1.35rem", fontWeight: "800", color: "#ffffff" }}>
-                Green Clean <span style={{ color: "var(--emerald-400)" }}>Group</span>
-              </span>
-            </div>
+            <Link href="/" style={{ display: "inline-block", background: "#ffffff", padding: "8px 16px", borderRadius: "10px", marginBottom: "18px" }}>
+              <Image
+                src="/logo.png"
+                alt="Green Clean Group"
+                width={170}
+                height={40}
+                style={{ height: "36px", width: "auto", objectFit: "contain", display: "block" }}
+              />
+            </Link>
 
             <p style={{ fontSize: "0.925rem", lineHeight: "1.7", color: "var(--slate-400)", marginBottom: "20px" }}>
               Liverpool’s specialist in non-toxic, eco-friendly oven, kitchen, and deep home cleaning. 

@@ -279,71 +279,75 @@ export default function BookingEngine({ initialCategory = "oven" }) {
         ))}
       </div>
 
+      {/* Category selector pills (Full Width above Main Grid) */}
+      {step === 1 && (
+        <div style={{ marginBottom: "24px", width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "6px" }}>
+          <div style={{ display: "flex", gap: "8px", width: "max-content", minWidth: "100%" }}>
+            {SERVICE_CATEGORIES.map((cat) => {
+              const Icon = CATEGORY_ICONS[cat.id] || Sparkles;
+              const isActive = activeCategory === cat.id;
+              const countInCat = cat.items.reduce((acc, it) => acc + (cart[it.id]?.qty || 0), 0);
+
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "9px 16px",
+                    borderRadius: "var(--radius-full)",
+                    background: isActive ? "var(--emerald-600)" : "#ffffff",
+                    color: isActive ? "#ffffff" : "var(--slate-700)",
+                    fontWeight: "600",
+                    fontSize: "0.875rem",
+                    border: `1.5px solid ${isActive ? "var(--emerald-600)" : "var(--slate-200)"}`,
+                    boxShadow: isActive ? "var(--shadow-green-sm)" : "var(--shadow-sm)",
+                    whiteSpace: "nowrap",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  <Icon size={15} />
+                  <span>{cat.title}</span>
+                  {countInCat > 0 && (
+                    <span style={{
+                      background: isActive ? "#ffffff" : "var(--emerald-600)",
+                      color: isActive ? "var(--emerald-700)" : "#ffffff",
+                      fontSize: "0.75rem",
+                      fontWeight: "800",
+                      padding: "2px 7px",
+                      borderRadius: "var(--radius-full)"
+                    }}>
+                      {countInCat}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Main Grid: Wizard Form on Left, Sticky Cart on Right */}
       <div className="booking-main-grid">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "32px" }}>
+        <div className="booking-form-col">
           
           {/* ================================================================
               STEP 1: SELECT SERVICES
              ================================================================ */}
           {step === 1 && (
             <div>
-              {/* Category selector pills */}
-              <div style={{ display: "flex", gap: "8px", overflowX: "auto", width: "100%", maxWidth: "100%", WebkitOverflowScrolling: "touch", paddingBottom: "14px", marginBottom: "24px" }}>
-                {SERVICE_CATEGORIES.map((cat) => {
-                  const Icon = CATEGORY_ICONS[cat.id] || Sparkles;
-                  const isActive = activeCategory === cat.id;
-                  const countInCat = cat.items.reduce((acc, it) => acc + (cart[it.id]?.qty || 0), 0);
-
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveCategory(cat.id)}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "10px 18px",
-                        borderRadius: "var(--radius-full)",
-                        background: isActive ? "var(--emerald-600)" : "#ffffff",
-                        color: isActive ? "#ffffff" : "var(--slate-700)",
-                        fontWeight: "600",
-                        fontSize: "0.9rem",
-                        border: `1.5px solid ${isActive ? "var(--emerald-600)" : "var(--slate-200)"}`,
-                        boxShadow: isActive ? "var(--shadow-green-sm)" : "var(--shadow-sm)",
-                        whiteSpace: "nowrap",
-                        transition: "all 0.2s"
-                      }}
-                    >
-                      <Icon size={16} />
-                      <span>{cat.title}</span>
-                      {countInCat > 0 && (
-                        <span style={{
-                          background: isActive ? "#ffffff" : "var(--emerald-600)",
-                          color: isActive ? "var(--emerald-700)" : "#ffffff",
-                          fontSize: "0.75rem",
-                          fontWeight: "800",
-                          padding: "2px 7px",
-                          borderRadius: "var(--radius-full)"
-                        }}>
-                          {countInCat}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
               {/* Items for selected category */}
               {SERVICE_CATEGORIES.filter(c => c.id === activeCategory).map((cat) => (
                 <div key={cat.id}>
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: "16px" }}>
-                    <h3 style={{ fontSize: "1.4rem", fontWeight: "800", color: "var(--slate-900)" }}>
+                  <div style={{ marginBottom: "16px" }}>
+                    <h3 style={{ fontSize: "1.35rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "4px" }}>
                       {cat.title} Options
                     </h3>
-                    <span style={{ fontSize: "0.85rem", color: "var(--slate-500)" }}>
+                    <p style={{ fontSize: "0.85rem", color: "var(--slate-500)", lineHeight: "1.5" }}>
                       {cat.shortDesc}
-                    </span>
+                    </p>
                   </div>
 
                   <div className="service-booking-grid">
@@ -354,14 +358,14 @@ export default function BookingEngine({ initialCategory = "oven" }) {
                           key={item.id} 
                           className={`booking-item-card ${qty > 0 ? "has-quantity" : ""}`}
                         >
-                          <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                              <h4 style={{ fontWeight: "700", fontSize: "1rem", color: "var(--slate-900)" }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px", flexWrap: "wrap" }}>
+                              <h4 style={{ fontWeight: "700", fontSize: "0.95rem", color: "var(--slate-900)", lineHeight: 1.3 }}>
                                 {item.name}
                               </h4>
                               {item.popular && (
                                 <span style={{
-                                  fontSize: "0.68rem",
+                                  fontSize: "0.65rem",
                                   fontWeight: "700",
                                   padding: "2px 6px",
                                   borderRadius: "4px",
@@ -373,12 +377,12 @@ export default function BookingEngine({ initialCategory = "oven" }) {
                               )}
                             </div>
 
-                            <div style={{ fontSize: "0.825rem", color: "var(--slate-500)", display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "6px" }}>
+                            <div style={{ fontSize: "0.78rem", color: "var(--slate-500)", display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "4px" }}>
                               {item.width && <span>📐 {item.width}</span>}
                               {item.duration && <span>⏱️ {item.duration}</span>}
                             </div>
 
-                            <div style={{ fontWeight: "800", fontSize: "1.15rem", color: "var(--emerald-700)" }}>
+                            <div style={{ fontWeight: "800", fontSize: "1.1rem", color: "var(--emerald-700)" }}>
                               £{item.price}
                             </div>
                           </div>
@@ -393,7 +397,7 @@ export default function BookingEngine({ initialCategory = "oven" }) {
                               aria-label={`Decrease ${item.name}`}
                               style={{ opacity: qty === 0 ? 0.35 : 1 }}
                             >
-                              <Minus size={14} />
+                              <Minus size={13} />
                             </button>
                             <span className="qty-number">{qty}</span>
                             <button 
@@ -402,7 +406,7 @@ export default function BookingEngine({ initialCategory = "oven" }) {
                               className="qty-btn"
                               aria-label={`Increase ${item.name}`}
                             >
-                              <Plus size={14} />
+                              <Plus size={13} />
                             </button>
                           </div>
                         </div>
@@ -820,29 +824,16 @@ export default function BookingEngine({ initialCategory = "oven" }) {
             </div>
           )}
 
-          {/* Navigation Controls (Back & Next) */}
-          {step < 5 && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "16px" }}>
-              {step > 1 ? (
-                <button 
-                  type="button" 
-                  onClick={() => setStep(step - 1)} 
-                  className="btn btn-secondary"
-                >
-                  <ChevronLeft size={16} />
-                  <span>Back</span>
-                </button>
-              ) : <div />}
-
+          {/* Navigation Controls (Back) */}
+          {step > 1 && step < 5 && (
+            <div style={{ display: "flex", alignItems: "center", marginTop: "16px" }}>
               <button 
                 type="button" 
-                onClick={handleNext} 
-                disabled={step === 1 && !meetsMinimum}
-                className="btn btn-primary"
-                style={{ opacity: (step === 1 && !meetsMinimum) ? 0.5 : 1 }}
+                onClick={() => setStep(step - 1)} 
+                className="btn btn-secondary"
               >
-                <span>Continue to Step {step + 1}</span>
-                <ChevronRight size={16} />
+                <ChevronLeft size={16} />
+                <span>Back to Step {step - 1}</span>
               </button>
             </div>
           )}
@@ -851,7 +842,7 @@ export default function BookingEngine({ initialCategory = "oven" }) {
         {/* ================================================================
             STICKY CART / ORDER SUMMARY SIDEBAR
            ================================================================ */}
-        <div>
+        <div className="booking-sidebar-col">
           <div className="sticky-summary-card">
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18px", paddingBottom: "14px", borderBottom: "1px solid var(--slate-200)" }}>
               <ShoppingBag size={20} color="#059669" />
@@ -921,6 +912,38 @@ export default function BookingEngine({ initialCategory = "oven" }) {
                 <div style={{ marginTop: "20px", padding: "14px", borderRadius: "var(--radius-sm)", background: "var(--emerald-50)", fontSize: "0.8rem", color: "var(--emerald-900)", lineHeight: "1.5" }}>
                   <strong>🔒 100% Satisfaction Guarantee:</strong> If anything isn't spotless, our technicians return and re-clean free of charge.
                 </div>
+              </div>
+            )}
+
+            {/* Action Button: Directly Below Summary */}
+            {step < 5 && (
+              <div style={{ marginTop: "20px" }}>
+                <button 
+                  type="button" 
+                  onClick={handleNext} 
+                  disabled={step === 1 && !meetsMinimum}
+                  className="btn btn-primary"
+                  style={{ 
+                    width: "100%", 
+                    padding: "14px 20px", 
+                    fontSize: "1rem", 
+                    fontWeight: "700",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    opacity: (step === 1 && !meetsMinimum) ? 0.5 : 1,
+                    cursor: (step === 1 && !meetsMinimum) ? "not-allowed" : "pointer"
+                  }}
+                >
+                  <span>Continue to Step {step + 1}</span>
+                  <ChevronRight size={18} />
+                </button>
+                {step === 1 && !meetsMinimum && (
+                  <p style={{ textAlign: "center", fontSize: "0.78rem", color: "var(--slate-500)", marginTop: "8px" }}>
+                    Select services (£50 min order) to proceed
+                  </p>
+                )}
               </div>
             )}
           </div>

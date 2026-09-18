@@ -462,8 +462,8 @@ export default function AboutPage() {
           {/* Image side */}
           <div className="about-story-img">
             <Image
-              src="/work done/b-a-img.jpg"
-              alt="Green Clean Group - Before & After"
+              src="/car.jpg"
+              alt="Green Clean Group team member and company van"
               fill
               style={{ objectFit: "cover" }}
               sizes="(max-width: 900px) 100vw, 50vw"
