@@ -1,13 +1,16 @@
 import BookingEngine from "@/components/BookingEngine";
 import { Sparkles, ShieldCheck, CreditCard, Clock } from "lucide-react";
+import { getDbCategoriesWithServices } from "@/lib/servicesDb";
 
 export const metadata = {
   title: "Book a Service Online | Green Clean Group Liverpool",
   description: "Book your eco-friendly oven and home cleaning in Liverpool in 5 simple steps. Real-time availability, instant pricing, and flexible time slots.",
 };
 
-export default function BookPage({ searchParams }) {
-  const serviceQuery = searchParams?.service || "oven";
+export default async function BookPage({ searchParams }) {
+  const sp = await searchParams;
+  const serviceQuery = sp?.service || "oven";
+  const categories = getDbCategoriesWithServices();
 
   return (
     <div style={{ background: "linear-gradient(180deg, #f0fdf4 0%, #f8fafc 400px)", padding: "50px 0 90px" }}>
@@ -24,7 +27,7 @@ export default function BookPage({ searchParams }) {
           </h1>
 
           <p style={{ fontSize: "1.1rem", color: "var(--slate-600)", lineHeight: "1.6" }}>
-            Select your cleaning services below, pick your preferred arrival slot, and we'll handle the rest with 100% non-toxic care.
+            Select your cleaning services below, pick your preferred arrival slot, and we&apos;ll handle the rest with 100% non-toxic care.
           </p>
 
           {/* Value Badges */}
@@ -45,7 +48,7 @@ export default function BookPage({ searchParams }) {
         </div>
 
         {/* 5-Step Booking Engine */}
-        <BookingEngine initialCategory={serviceQuery} />
+        <BookingEngine initialCategory={serviceQuery} initialCategories={categories} />
       </div>
     </div>
   );

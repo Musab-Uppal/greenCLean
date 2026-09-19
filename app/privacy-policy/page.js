@@ -1,95 +1,254 @@
-import Link from 'next/link';
-import { Shield, Lock, Eye, FileText, CheckCircle2 } from 'lucide-react';
+import React from "react";
+import Link from "next/link";
+import { Shield, ArrowLeft, Calendar, FileText } from "lucide-react";
 
 export const metadata = {
-  title: 'Privacy Policy | Green Clean Group UK',
-  description: 'Learn how Green Clean Group protects and manages your personal data under UK GDPR.',
+  title: "Privacy Policy | Green Clean Group",
+  description: "Privacy policy and data protection information for Green Clean Group.",
 };
 
 export default function PrivacyPolicyPage() {
   return (
-    <div style={{ padding: '4rem 1.5rem', minHeight: '80vh', background: 'var(--bg-main)' }}>
-      <div className="container" style={{ maxWidth: '840px', background: 'var(--bg-card)', padding: '3.5rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-        
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 1rem', background: 'var(--primary-light)', color: 'var(--primary-dark)', borderRadius: 'var(--radius-full)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '1.25rem' }}>
-          <Shield size={16} /> Data Protection & Compliance
+    <div style={{ background: "linear-gradient(180deg, #f0fdf4 0%, #f8fafc 400px)", minHeight: "85vh", padding: "48px 16px 80px" }}>
+      <div className="container" style={{ maxWidth: "860px" }}>
+
+        {/* Breadcrumb */}
+        <div style={{ marginBottom: "16px" }}>
+          <Link
+            href="/"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "0.85rem",
+              color: "var(--emerald-700)",
+              fontWeight: "600",
+              textDecoration: "none"
+            }}
+          >
+            <ArrowLeft size={15} />
+            <span>Back to Home</span>
+          </Link>
         </div>
-        
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>Privacy Policy</h1>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem', fontSize: '0.95rem' }}>
-          Last Updated: 15 September 2026 | Compliant with UK Data Protection Act 2018 & UK GDPR
-        </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', lineHeight: '1.7', color: 'var(--text-muted)' }}>
-          <section>
-            <h2 style={{ fontSize: '1.35rem', color: 'var(--text-main)', marginBottom: '0.75rem' }}>1. Introduction</h2>
-            <p>
-              Green Clean Group (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) provides eco-friendly domestic and commercial cleaning services across Liverpool, Merseyside, and neighboring areas. We are committed to safeguarding the privacy and security of your personal information when you visit our website (<strong>greencleangroup.co.uk</strong>) or book our professional services.
-            </p>
-          </section>
-
-          <section>
-            <h2 style={{ fontSize: '1.35rem', color: 'var(--text-main)', marginBottom: '0.75rem' }}>2. Information We Collect</h2>
-            <p style={{ marginBottom: '0.75rem' }}>When you interact with our website or submit a booking reservation, we may collect the following personal details:</p>
-            <ul style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <li><strong>Contact Information:</strong> Full name, telephone/mobile number, and email address.</li>
-              <li><strong>Service Address:</strong> Property address, postcode, access instructions, and parking details.</li>
-              <li><strong>Booking Details:</strong> Selected cleaning packages, chosen date and arrival time slots, special appliance requests, and optional notes.</li>
-              <li><strong>Technical Data:</strong> Browser user agent, approximate geographic location, and device analytics collected via cookies to enhance user navigation.</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 style={{ fontSize: '1.35rem', color: 'var(--text-main)', marginBottom: '0.75rem' }}>3. How We Use Your Data</h2>
-            <p style={{ marginBottom: '0.75rem' }}>We collect and process your personal data strictly for lawful business purposes:</p>
-            <ul style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <li>To confirm, schedule, and execute your booked eco-cleaning service appointment.</li>
-              <li>To dispatch technician notifications (e.g. arrival ETA or access confirmation).</li>
-              <li>To provide clear booking invoices, receipts, and customer service follow-ups.</li>
-              <li>To process payments securely upon job completion (cash, card, or invoice).</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 style={{ fontSize: '1.35rem', color: 'var(--text-main)', marginBottom: '0.75rem' }}>4. Data Security & Storage</h2>
-            <p>
-              We implement industry-standard encryption, SSL protocols, and access controls to ensure your sensitive contact details and booking information remain protected against unauthorized access, loss, or disclosure. We never sell, rent, or trade your personal data to third-party marketing companies.
-            </p>
-          </section>
-
-          <section>
-            <h2 style={{ fontSize: '1.35rem', color: 'var(--text-main)', marginBottom: '0.75rem' }}>5. Your Statutory Rights</h2>
-            <p style={{ marginBottom: '0.75rem' }}>Under the UK GDPR, you have the legal right to:</p>
-            <ul style={{ paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <li>Request copies of the personal data we hold about you.</li>
-              <li>Request correction of inaccurate or incomplete records.</li>
-              <li>Request deletion or restriction of your personal data when no longer required for booking fulfillment.</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 style={{ fontSize: '1.35rem', color: 'var(--text-main)', marginBottom: '0.75rem' }}>6. Contact Us Regarding Your Privacy</h2>
-            <p>
-              If you have questions regarding this Privacy Policy or wish to exercise your data rights, please contact our Data Representative at:
-            </p>
-            <div style={{ marginTop: '1rem', padding: '1.25rem', background: 'var(--bg-main)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-              <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-main)' }}>Green Clean Group</p>
-              <p style={{ margin: '0.25rem 0' }}>Email: <a href="mailto:contact@greencleangroup.co.uk" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>contact@greencleangroup.co.uk</a></p>
-              <p style={{ margin: 0 }}>Telephone: <a href="tel:07359068284" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>07359 068 284</a></p>
-              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem' }}>Service Headquarters: Liverpool, Merseyside, UK</p>
+        {/* Main Card */}
+        <div
+          className="glass-card"
+          style={{
+            background: "#ffffff",
+            borderRadius: "var(--radius-lg)",
+            border: "1.5px solid var(--border-subtle)",
+            boxShadow: "var(--shadow-lg)",
+            padding: "40px 36px"
+          }}
+        >
+          {/* Header */}
+          <div style={{ borderBottom: "1px solid var(--slate-200)", paddingBottom: "24px", marginBottom: "28px" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "var(--emerald-50)",
+                border: "1px solid var(--emerald-200)",
+                padding: "4px 12px",
+                borderRadius: "var(--radius-full)",
+                color: "var(--emerald-800)",
+                fontSize: "0.75rem",
+                fontWeight: "700",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                marginBottom: "12px"
+              }}
+            >
+              <Shield size={13} color="#059669" />
+              <span>Data Protection</span>
             </div>
-          </section>
-        </div>
 
-        <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <Link href="/" className="btn btn-secondary">
-            &larr; Back to Home
-          </Link>
-          <Link href="/terms-and-conditions" style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.95rem' }}>
-            View Terms & Conditions &rarr;
-          </Link>
-        </div>
+            <h1 style={{ fontSize: "2.1rem", fontWeight: "850", color: "var(--slate-900)", letterSpacing: "-0.025em", marginBottom: "8px" }}>
+              Privacy Policy
+            </h1>
 
+            <p style={{ fontSize: "0.9rem", color: "var(--slate-500)", margin: 0 }}>
+              Green Clean Group &bull; greencleangroup.co.uk
+            </p>
+          </div>
+
+          {/* Body Content */}
+          <div
+            style={{
+              fontSize: "0.925rem",
+              lineHeight: "1.75",
+              color: "var(--slate-700)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px"
+            }}
+          >
+
+            {/* Who we are */}
+            <section>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "750", color: "var(--slate-900)", marginBottom: "8px" }}>
+                Who we are
+              </h2>
+              <p>
+                Our website address is: <a href="https://greencleangroup.co.uk" target="_blank" rel="noopener noreferrer" style={{ color: "var(--emerald-600)", fontWeight: "600" }}>https://greencleangroup.co.uk</a>
+              </p>
+            </section>
+
+            {/* Comments */}
+            <section>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "750", color: "var(--slate-900)", marginBottom: "8px" }}>
+                Comments
+              </h2>
+              <p style={{ marginBottom: "10px" }}>
+                When visitors leave comments on the site we collect the data shown in the comments form, and also the visitor’s IP address and browser user agent string to help spam detection.
+              </p>
+              <p>
+                An anonymized string created from your email address (also called a hash) may be provided to the Gravatar service to see if you are using it. The Gravatar service privacy policy is available here: <a href="https://automattic.com/privacy/" target="_blank" rel="noopener noreferrer" style={{ color: "var(--emerald-600)", textDecoration: "underline" }}>https://automattic.com/privacy/</a>. After approval of your comment, your profile picture is visible to the public in the context of your comment.
+              </p>
+            </section>
+
+            {/* Media */}
+            <section>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "750", color: "var(--slate-900)", marginBottom: "8px" }}>
+                Media
+              </h2>
+              <p>
+                If you upload images to the website, you should avoid uploading images with embedded location data (EXIF GPS) included. Visitors to the website can download and extract any location data from images on the website.
+              </p>
+            </section>
+
+            {/* Cookies */}
+            <section>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "750", color: "var(--slate-900)", marginBottom: "8px" }}>
+                Cookies
+              </h2>
+              <p style={{ marginBottom: "10px" }}>
+                If you leave a comment on our site you may opt-in to saving your name, email address and website in cookies. These are for your convenience so that you do not have to fill in your details again when you leave another comment. These cookies will last for one year.
+              </p>
+              <p style={{ marginBottom: "10px" }}>
+                If you visit our login page, we will set a temporary cookie to determine if your browser accepts cookies. This cookie contains no personal data and is discarded when you close your browser.
+              </p>
+              <p style={{ marginBottom: "10px" }}>
+                When you log in, we will also set up several cookies to save your login information and your screen display choices. Login cookies last for two days, and screen options cookies last for a year. If you select &ldquo;Remember Me&rdquo;, your login will persist for two weeks. If you log out of your account, the login cookies will be removed.
+              </p>
+              <p>
+                If you edit or publish an article, an additional cookie will be saved in your browser. This cookie includes no personal data and simply indicates the post ID of the article you just edited. It expires after 1 day.
+              </p>
+            </section>
+
+            {/* Embedded content from other websites */}
+            <section>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "750", color: "var(--slate-900)", marginBottom: "8px" }}>
+                Embedded content from other websites
+              </h2>
+              <p style={{ marginBottom: "10px" }}>
+                Articles on this site may include embedded content (e.g. videos, images, articles, etc.). Embedded content from other websites behaves in the exact same way as if the visitor has visited the other website.
+              </p>
+              <p>
+                These websites may collect data about you, use cookies, embed additional third-party tracking, and monitor your interaction with that embedded content, including tracking your interaction with the embedded content if you have an account and are logged in to that website.
+              </p>
+            </section>
+
+            {/* Who we share your data with */}
+            <section>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "750", color: "var(--slate-900)", marginBottom: "8px" }}>
+                Who we share your data with
+              </h2>
+              <p>
+                If you request a password reset, your IP address will be included in the reset email.
+              </p>
+            </section>
+
+            {/* How long we retain your data */}
+            <section>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "750", color: "var(--slate-900)", marginBottom: "8px" }}>
+                How long we retain your data
+              </h2>
+              <p style={{ marginBottom: "10px" }}>
+                If you leave a comment, the comment and its metadata are retained indefinitely. This is so we can recognize and approve any follow-up comments automatically instead of holding them in a moderation queue.
+              </p>
+              <p>
+                For users that register on our website (if any), we also store the personal information they provide in their user profile. All users can see, edit, or delete their personal information at any time (except they cannot change their username). Website administrators can also see and edit that information.
+              </p>
+            </section>
+
+            {/* What rights you have over your data */}
+            <section>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "750", color: "var(--slate-900)", marginBottom: "8px" }}>
+                What rights you have over your data
+              </h2>
+              <p>
+                If you have an account on this site, or have left comments, you can request to receive an exported file of the personal data we hold about you, including any data you have provided to us. You can also request that we erase any personal data we hold about you. This does not include any data we are obliged to keep for administrative, legal, or security purposes.
+              </p>
+            </section>
+
+            {/* Where your data is sent */}
+            <section>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "750", color: "var(--slate-900)", marginBottom: "8px" }}>
+                Where your data is sent
+              </h2>
+              <p>
+                Visitor comments may be checked through an automated spam detection service.
+              </p>
+            </section>
+
+            {/* Contact & Inquiries */}
+            <section style={{ marginTop: "8px" }}>
+              <div
+                style={{
+                  background: "var(--slate-50)",
+                  border: "1px solid var(--slate-200)",
+                  borderLeft: "4px solid var(--emerald-500)",
+                  padding: "16px 20px",
+                  borderRadius: "0 var(--radius-sm) var(--radius-sm) 0"
+                }}
+              >
+                <h3 style={{ fontSize: "0.95rem", fontWeight: "700", color: "var(--slate-900)", marginBottom: "6px" }}>
+                  Contact Information
+                </h3>
+                <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--slate-600)" }}>
+                  If you have any questions or data requests regarding this Privacy Policy, please contact us at:
+                  <br />
+                  Email: <a href="mailto:info@greencleangroup.co.uk" style={{ color: "var(--emerald-600)", fontWeight: "600" }}>info@greencleangroup.co.uk</a> / <a href="mailto:contact@greencleangroup.co.uk" style={{ color: "var(--emerald-600)", fontWeight: "600" }}>contact@greencleangroup.co.uk</a>
+                  <br />
+                  Phone: <a href="tel:07359068284" style={{ color: "var(--emerald-600)", fontWeight: "600" }}>07359 068 284</a>
+                </p>
+              </div>
+            </section>
+
+          </div>
+
+          {/* Action Row */}
+          <div
+            style={{
+              marginTop: "36px",
+              paddingTop: "24px",
+              borderTop: "1px solid var(--slate-200)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "12px"
+            }}
+          >
+            <Link href="/" className="btn btn-secondary btn-sm">
+              &larr; Back to Home
+            </Link>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <Link href="/terms-and-conditions" className="btn btn-secondary btn-sm">
+                <FileText size={14} />
+                <span>Terms and Conditions</span>
+              </Link>
+              <Link href="/book" className="btn btn-primary btn-sm">
+                <Calendar size={14} />
+                <span>Book a Service</span>
+              </Link>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   );

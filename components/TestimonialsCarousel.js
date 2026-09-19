@@ -203,7 +203,7 @@ export default function TestimonialsCarousel() {
               </div>
 
               {/* Review text */}
-              <p className="tcard-text">"{t.text}"</p>
+              <p className="tcard-text">&ldquo;{t.text}&rdquo;</p>
 
               {/* Badge */}
               <span className="tcard-badge">{t.badge}</span>

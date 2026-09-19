@@ -537,7 +537,7 @@ export default function AboutPage() {
             </span>
             <h2>The Green Clean Difference</h2>
             <p>
-              Everything we do is built around your family's safety, your home's wellbeing, and
+              Everything we do is built around your family&apos;s safety, your home&apos;s wellbeing, and
               your complete peace of mind.
             </p>
           </div>

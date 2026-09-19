@@ -3,6 +3,8 @@ import "./globals.css";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { getDbCategoriesWithServices } from "@/lib/servicesDb";
+import { AuthProvider } from "@/context/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,13 +49,17 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const categories = getDbCategoriesWithServices();
+
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
-        <AnnouncementBar />
-        <Header />
-        <main>{children}</main>
-        <Footer />
+        <AuthProvider>
+          <AnnouncementBar />
+          <Header categories={categories} />
+          <main>{children}</main>
+          <Footer categories={categories} />
+        </AuthProvider>
       </body>
     </html>
   );

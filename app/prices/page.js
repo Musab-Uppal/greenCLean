@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Sparkles, Calendar, Check, ShieldCheck, ArrowRight, HelpCircle } from "lucide-react";
-import { SERVICE_CATEGORIES } from "@/data/servicesData";
+import { getDbCategoriesWithServices } from "@/lib/servicesDb";
 
 export const metadata = {
   title: "Transparent Prices & Cleaning Packages | Green Clean Group Liverpool",
@@ -8,6 +8,8 @@ export const metadata = {
 };
 
 export default function PricesPage() {
+  const categories = getDbCategoriesWithServices();
+
   return (
     <div style={{ background: "var(--bg-body)", padding: "60px 0 100px" }}>
       <div className="container">
@@ -36,7 +38,7 @@ export default function PricesPage() {
 
         {/* Pricing Tables Section */}
         <div style={{ display: "flex", flexDirection: "column", gap: "48px" }}>
-          {SERVICE_CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <div 
               key={category.id} 
               id={category.id}

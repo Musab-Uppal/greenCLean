@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -18,9 +18,11 @@ import {
   Home,
   KeyRound,
   Calendar,
-  Tag
+  Tag,
+  User,
+  LogOut
 } from "lucide-react";
-import { SERVICE_CATEGORIES } from "@/data/servicesData";
+import { useAuth } from "@/context/AuthContext";
 
 const SERVICE_ICONS = {
   "Flame": Flame,
@@ -32,10 +34,23 @@ const SERVICE_ICONS = {
   "KeyRound": KeyRound
 };
 
-export default function Header() {
+export default function Header({ categories: initialCategories = [] }) {
+  const { user, logout } = useAuth();
+  const [categories, setCategories] = useState(initialCategories);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!initialCategories || initialCategories.length === 0) {
+      fetch("/api/services")
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) setCategories(data);
+        })
+        .catch((err) => console.error("Failed to load header services:", err));
+    }
+  }, [initialCategories]);
 
   return (
     <>
@@ -70,11 +85,11 @@ export default function Header() {
                   <ChevronDown size={15} />
                 </button>
                 <div className="nav-dropdown-menu">
-                  {SERVICE_CATEGORIES.map((cat) => {
+                  {categories.map((cat) => {
                     const IconComponent = SERVICE_ICONS[cat.icon] || Sparkles;
                     return (
                       <Link
-                        key={cat.id}
+                        key={cat.id || cat.slug}
                         href={`/services/${cat.slug}`}
                         className="dropdown-item"
                       >
@@ -83,7 +98,7 @@ export default function Header() {
                         </div>
                         <div>
                           <div style={{ fontWeight: "600", fontSize: "0.9rem" }}>{cat.title}</div>
-                          <div style={{ fontSize: "0.75rem", color: "var(--slate-500)" }}>From £{cat.items[0]?.price}</div>
+                          <div style={{ fontSize: "0.75rem", color: "var(--slate-500)" }}>From £{cat.items?.[0]?.price || "--"}</div>
                         </div>
                       </Link>
                     );
@@ -115,10 +130,60 @@ export default function Header() {
 
             {/* Actions / CTA */}
             <div className="header-actions">
-              <a href="tel:07359068284" className="header-phone-link" title="Call Green Clean Group">
-                <Phone size={15} color="#059669" />
-                <span>07359068284</span>
-              </a>
+
+
+              {user ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "6px 12px",
+                    borderRadius: "var(--radius-full)",
+                    background: "var(--emerald-50)",
+                    border: "1px solid var(--emerald-200)",
+                    color: "var(--emerald-900)",
+                    fontSize: "0.825rem",
+                    fontWeight: "700"
+                  }}>
+                    <User size={13} color="#059669" />
+                    <span>{user.email.split("@")[0]}</span>
+                  </span>
+                  <button
+                    onClick={logout}
+                    title="Sign Out"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "6px 8px",
+                      color: "var(--slate-500)",
+                      fontSize: "0.8rem",
+                      cursor: "pointer"
+                    }}
+                  >
+                    <LogOut size={14} />
+                    <span>Exit</span>
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "6px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    color: "var(--slate-700)",
+                    fontWeight: "600",
+                    fontSize: "0.875rem"
+                  }}
+                >
+                  <User size={15} color="#059669" />
+                  <span>Log In</span>
+                </Link>
+              )}
 
               <Link href="/book" className="btn btn-primary btn-sm">
                 <Calendar size={15} />
@@ -205,9 +270,9 @@ export default function Header() {
 
               {mobileServicesOpen && (
                 <div style={{ paddingLeft: "14px", marginTop: "4px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                  {SERVICE_CATEGORIES.map((cat) => (
+                  {categories.map((cat) => (
                     <Link
-                      key={cat.id}
+                      key={cat.id || cat.slug}
                       href={`/services/${cat.slug}`}
                       onClick={() => setMobileMenuOpen(false)}
                       style={{
@@ -267,12 +332,36 @@ export default function Header() {
             </Link>
           </div>
 
-          <div style={{ marginTop: "auto", paddingTop: "24px", borderTop: "1px solid var(--border-subtle)" }}>
+          <div style={{ marginTop: "auto", paddingTop: "20px", borderTop: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: "10px" }}>
+            {user ? (
+              <div style={{ padding: "10px 14px", borderRadius: "var(--radius-sm)", background: "var(--emerald-50)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--emerald-900)" }}>
+                  👤 {user.email}
+                </span>
+                <button
+                  onClick={() => { logout(); setMobileMenuOpen(false); }}
+                  style={{ color: "var(--danger-500)", fontSize: "0.8rem", fontWeight: "700" }}
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="btn btn-secondary"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{ width: "100%" }}
+              >
+                <User size={16} />
+                <span>Customer Sign In / Register</span>
+              </Link>
+            )}
+
             <Link
               href="/book"
               className="btn btn-primary"
               onClick={() => setMobileMenuOpen(false)}
-              style={{ width: "100%", marginBottom: "14px" }}
+              style={{ width: "100%" }}
             >
               <Calendar size={16} />
               <span>Book Appointment Now</span>

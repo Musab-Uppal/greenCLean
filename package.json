@@ -2,13 +2,16 @@
   "name": "work",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed": "node scripts/seed-db.js"
   },
   "dependencies": {
+    "better-sqlite3": "^13.0.3",
     "lucide-react": "^1.46.0",
     "next": "16.3.5",
     "react": "19.2.8",

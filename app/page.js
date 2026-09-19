@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import {
   Sparkles,
@@ -22,13 +20,15 @@ import {
   Headphones,
   Award,
   ChevronRight,
-  MoveHorizontal
+  MoveHorizontal,
+  Heart,
+  Users
 } from "lucide-react";
 import AreaChecker from "@/components/AreaChecker";
 import ServiceAreaMap from "@/components/ServiceAreaMap";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import FaqAccordion from "@/components/FaqAccordion";
-import { SERVICE_CATEGORIES } from "@/data/servicesData";
+import { getDbCategoriesWithServices } from "@/lib/servicesDb";
 
 const CATEGORY_ICONS = {
   oven: Flame,
@@ -51,6 +51,7 @@ const OVERLAY_TITLES = {
 };
 
 export default function HomePage() {
+  const categories = getDbCategoriesWithServices();
 
   return (
     <div>
@@ -67,9 +68,9 @@ export default function HomePage() {
                 <span>Liverpool’s #1 Eco-Friendly Cleaning Specialist</span>
               </div>
 
-              <h1 className="hero-headline">
+              <h3 className="hero-headline">
                 Professional <span className="gradient-text">Oven &amp; Home</span> Cleaning in Liverpool
-              </h1>
+              </h3>
 
               <p className="hero-subtitle">
                 Experience spotless perfection without toxic fumes. Our 100% plant-based dipping tank method removes burnt-on carbon and grease while keeping your family, pets, and food completely safe.
@@ -203,19 +204,11 @@ export default function HomePage() {
          ==================================================================== */}
       <section className="section" style={{ background: "var(--bg-body)" }}>
         <div className="container">
-          <div className="section-title-wrap">
-            <span className="section-pill">Our Services</span>
-            <h2 className="section-title">
-              Specialist Cleaning For <span className="gradient-text">Every Need</span>
-            </h2>
-            <p className="section-desc">
-              All services include non-caustic, food-safe sanitization and spotless detailing. Transparent fixed pricing with zero hidden fees.
-            </p>
-          </div>
+
 
           {/* Quick Jump Bar */}
           <div className="service-quick-nav">
-            {SERVICE_CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const Icon = CATEGORY_ICONS[cat.id] || Sparkles;
               return (
                 <a
@@ -232,7 +225,7 @@ export default function HomePage() {
 
           {/* Sequential Alternating Service Showcase Blocks */}
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {SERVICE_CATEGORIES.map((category, index) => {
+            {categories.map((category, index) => {
               // Alternating: even indices (0, 2, 4...) have reverse (picture left), odd (1, 3, 5...) have normal (content left)
               // This makes BBQ (index 3) Content Left, Picture Right, and Bathroom (index 4) Picture Left, Content Right (matching user screenshot)
               const isReverse = index % 2 === 0;
@@ -339,78 +332,47 @@ export default function HomePage() {
          ==================================================================== */}
       <section className="section" style={{ background: "#ffffff" }}>
         <div className="container">
-          <div className="section-title-wrap">
-            <span className="section-pill">Why Green Clean Group</span>
-            <h2 className="section-title">
-              The Safe, Professional <span className="gradient-text">Liverpool Choice</span>
+          <div style={{ textAlign: "center", marginBottom: "48px" }}>
+            <h2 style={{ fontSize: "2.5rem", fontWeight: "850", color: "#000000", letterSpacing: "-0.02em" }}>
+              We guarantee
             </h2>
-            <p className="section-desc">
-              We started Green Clean Group because harsh chemicals have no place where you cook and live. Here is why thousands of Liverpool homes trust us year after year.
-            </p>
           </div>
 
-          <div className="responsive-three-col">
-            {[
-              {
-                icon: Sparkles,
-                title: "100% Green & Safe",
-                desc: "Our non-toxic, eco-friendly formulas ensure zero caustic fumes or chemical residues. Cook in your oven the moment we finish!"
-              },
-              {
-                icon: Clock,
-                title: "Punctual & Flexible",
-                desc: "Choose convenient 2-hour arrival windows 7 days a week, fitting seamlessly into your work and family schedule."
-              },
-              {
-                icon: ShieldCheck,
-                title: "Fully Insured Guarantee",
-                desc: "Every technician carries comprehensive public liability insurance covering your property and appliances for total peace of mind."
-              },
-              {
-                icon: HeartHandshake,
-                title: "Pleasant & Trustworthy",
-                desc: "Family-run ethos. All technicians are DBS background-checked, polite, respectful, and treat your home like their own."
-              },
-              {
-                icon: Headphones,
-                title: "Dedicated Local Support",
-                desc: "Our Liverpool customer support team is always just a phone call or message away. Transparent quotes with no surprise extras."
-              },
-              {
-                icon: Award,
-                title: "100% Results Guarantee",
-                desc: "We stand by our craft. If any corner or rack isn’t completely sparkling clean, we return and re-clean it without charge."
-              }
-            ].map((feature, i) => {
-              const Icon = feature.icon;
-              return (
-                <div
-                  key={i}
-                  className="glass-card glass-card-hover"
-                  style={{ padding: "32px 28px" }}
-                >
-                  <div style={{
-                    width: "50px",
-                    height: "50px",
-                    borderRadius: "var(--radius-md)",
-                    background: "var(--emerald-100)",
-                    color: "var(--emerald-700)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: "20px"
-                  }}>
-                    <Icon size={24} />
-                  </div>
-                  <h3 style={{ fontSize: "1.25rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "10px" }}>
-                    {feature.title}
-                  </h3>
-                  <p style={{ fontSize: "0.95rem", color: "var(--slate-600)", lineHeight: "1.65" }}>
-                    {feature.desc}
-                  </p>
-                </div>
-              );
-            })}
+          <div className="guarantee-grid">
+            <div className="guarantee-item">
+              <Heart size={28} strokeWidth={1.8} color="#000000" />
+              <h3 className="guarantee-item-title">Satisfied customers</h3>
+              <p className="guarantee-item-desc">
+                All Shining Oven customers are satisfied from start to finish.
+              </p>
+            </div>
+
+            <div className="guarantee-item">
+              <ShieldCheck size={28} strokeWidth={1.8} color="#000000" />
+              <h3 className="guarantee-item-title">Insured</h3>
+              <p className="guarantee-item-desc">
+                Technicians carry full insurance cover. The items that we are cleaning are also covered for your total peace of mind.
+              </p>
+            </div>
+
+            <div className="guarantee-item">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 20L11 6L14 11L17 7L21 20H3Z" />
+                <path d="M11 6V2L14 3.5L11 5" />
+              </svg>
+              <h3 className="guarantee-item-title">Results guarantee</h3>
+              <p className="guarantee-item-desc">
+                We guarantee that our cleaning services will exceed your expectations.
+              </p>
+            </div>
+
+            <div className="guarantee-item">
+              <Users size={28} strokeWidth={1.8} color="#000000" />
+              <h3 className="guarantee-item-title">Dedicated team</h3>
+              <p className="guarantee-item-desc">
+                Experienced and dedicated staff will ensure the best results.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -504,64 +466,12 @@ export default function HomePage() {
       {/* ====================================================================
           FAQS SECTION
          ==================================================================== */}
-      <section className="section" style={{ background: "var(--bg-body)" }}>
-        <div className="container">
-          <div className="section-title-wrap">
-            <span className="section-pill">Got Questions?</span>
-            <h2 className="section-title">
-              Frequently Asked <span className="gradient-text">Questions</span>
-            </h2>
-            <p className="section-desc">
-              Everything you need to know about our eco-friendly techniques, scheduling, and guarantees.
-            </p>
-          </div>
 
-          <FaqAccordion />
-        </div>
-      </section>
 
       {/* ====================================================================
           FINAL ACTION BANNER
          ==================================================================== */}
-      <section style={{ padding: "80px 0", background: "linear-gradient(135deg, #022c22 0%, #064e3b 50%, #047857 100%)", color: "#ffffff" }}>
-        <div className="container" style={{ textAlign: "center", maxWidth: "800px" }}>
-          <span style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "rgba(255, 255, 255, 0.15)",
-            padding: "6px 16px",
-            borderRadius: "var(--radius-full)",
-            fontSize: "0.85rem",
-            fontWeight: "700",
-            marginBottom: "20px",
-            border: "1px solid rgba(255, 255, 255, 0.25)"
-          }}>
-            <Sparkles size={16} />
-            <span>Ready in Just 60 Seconds</span>
-          </span>
 
-          <h2 style={{ fontSize: "2.6rem", fontWeight: "850", lineHeight: "1.2", marginBottom: "18px", letterSpacing: "-0.02em" }}>
-            Ready for a Sparkling Clean Space?
-          </h2>
-
-          <p style={{ fontSize: "1.15rem", color: "var(--emerald-100)", lineHeight: "1.65", marginBottom: "36px" }}>
-            Book online today or call our friendly Liverpool team. No harsh chemicals, flexible arrival slots, and satisfaction guaranteed.
-          </p>
-
-          <div style={{ display: "flex", justifyContent: "center", gap: "16px", flexWrap: "wrap" }}>
-            <Link href="/book" className="btn btn-primary btn-lg" style={{ background: "#ffffff", color: "var(--emerald-900)", border: "none" }}>
-              <Calendar size={18} color="#059669" />
-              <span>Book an Appointment Now</span>
-            </Link>
-
-            <a href="tel:07359068284" className="btn btn-outline-white btn-lg">
-              <Phone size={18} />
-              <span>Call: 07359068284</span>
-            </a>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

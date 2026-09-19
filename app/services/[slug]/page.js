@@ -20,7 +20,7 @@ import {
   Leaf,
   Lock
 } from "lucide-react";
-import { SERVICE_CATEGORIES } from "@/data/servicesData";
+import { getDbCategoriesWithServices, getDbCategoryBySlug } from "@/lib/servicesDb";
 
 const CATEGORY_ICONS = {
   oven: Flame,
@@ -130,14 +130,15 @@ const SERVICE_PROCESSES = {
 };
 
 export async function generateStaticParams() {
-  return SERVICE_CATEGORIES.map((cat) => ({
+  const categories = getDbCategoriesWithServices();
+  return categories.map((cat) => ({
     slug: cat.slug,
   }));
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const category = SERVICE_CATEGORIES.find((c) => c.slug === slug);
+  const category = getDbCategoryBySlug(slug);
   if (!category) return { title: "Service Not Found" };
 
   return {
@@ -148,7 +149,7 @@ export async function generateMetadata({ params }) {
 
 export default async function ServiceDetailPage({ params }) {
   const { slug } = await params;
-  const category = SERVICE_CATEGORIES.find((c) => c.slug === slug);
+  const category = getDbCategoryBySlug(slug);
 
   if (!category) {
     notFound();
