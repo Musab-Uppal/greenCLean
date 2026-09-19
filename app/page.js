@@ -455,7 +455,7 @@ export default function HomePage() {
               What Our Clients Are <span className="gradient-text">Saying</span>
             </h2>
             <p className="section-desc">
-              Over 3,500 glowing transformations and 5-star recommendations across Liverpool.
+              Over 3,500 glowing transformations and verified reviews on Trustpilot &amp; Google across Liverpool.
             </p>
           </div>
 

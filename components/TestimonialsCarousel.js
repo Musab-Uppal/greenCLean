@@ -172,6 +172,12 @@ export default function TestimonialsCarousel() {
           border: 1px solid;
         }
 
+        .tcard-source.trustpilot {
+          background: #e8f9f2;
+          color: #005b3d;
+          border-color: #a3e7cd;
+        }
+
         .tcard-source.google {
           background: #fff8f6;
           color: #c5221f;
@@ -216,18 +222,33 @@ export default function TestimonialsCarousel() {
           className={`tcarousel-track${playing ? " playing" : ""}`}
         >
           {CARDS.map((t, i) => {
-            const isGoogle = t.id % 2 === 1;
-            const platform = isGoogle ? "google" : "facebook";
+            const platform = t.platform || (t.id % 2 === 1 ? "google" : "facebook");
+            const isTrustpilot = platform === "trustpilot";
+            const isGoogle = platform === "google";
+            const starColor = isTrustpilot ? "#00b67a" : "#f59e0b";
             return (
               <div key={`${t.id}-${i}`} className="tcard">
                 {/* Decorative quote */}
                 <Quote size={52} className="tcard-quote" color="#10b981" />
 
                 {/* Stars */}
-                <div className="tcard-stars">
-                  {[...Array(t.rating)].map((_, s) => (
-                    <Star key={s} size={16} fill="#f59e0b" color="#f59e0b" />
-                  ))}
+                <div className="tcard-stars" style={{ alignItems: "center" }}>
+                  <div style={{ display: "flex", gap: "3px" }}>
+                    {[...Array(5)].map((_, s) => {
+                      const isFilled = s < t.rating;
+                      return (
+                        <Star
+                          key={s}
+                          size={16}
+                          fill={isFilled ? starColor : "#e2e8f0"}
+                          color={isFilled ? starColor : "#cbd5e1"}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span style={{ fontSize: "0.8rem", fontWeight: "700", color: isTrustpilot ? "#007a52" : "#b45309", marginLeft: "6px" }}>
+                    {t.rating}.0
+                  </span>
                 </div>
 
                 {/* Review text */}
@@ -257,21 +278,26 @@ export default function TestimonialsCarousel() {
                     </div>
                     {/* Platform source badge */}
                     <span className={`tcard-source ${platform}`}>
-                      {isGoogle ? (
-                        /* Google G icon */
+                      {isTrustpilot && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 2l2.9 6.8 7.5.7-5.6 5 1.7 7.3L12 18l-6.5 3.8 1.7-7.3-5.6-5 7.5-.7L12 2z" fill="#00B67A"/>
+                          <path d="M14.9 8.8L12 2v16l6.5 3.8-1.7-7.3 5.6-5-7.5-.7z" fill="#005128" opacity="0.35"/>
+                        </svg>
+                      )}
+                      {isGoogle && (
                         <svg width="11" height="11" viewBox="0 0 488 488" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M488 252c0-17-1.5-33.5-4.3-49.5H249v93.7h134.7c-5.8 31.3-23.3 57.8-49.7 75.6v62.8h80.4C463 386 488 323.6 488 252z" fill="#4285F4"/>
                           <path d="M249 488c67.5 0 124.2-22.4 165.6-60.7l-80.4-62.8c-22.3 15-50.8 23.9-85.2 23.9-65.5 0-121-44.2-140.8-103.6H25.2v64.8C66.4 433.9 152.1 488 249 488z" fill="#34A853"/>
                           <path d="M108.2 285.8A146.6 146.6 0 0 1 102.8 249c0-12.8 2-25.2 5.4-37.2v-64.8H25.2A244.5 244.5 0 0 0 0 249c0 39.5 9.4 76.8 25.2 110.2l83-63.4z" fill="#FBBC04"/>
                           <path d="M249 98.2c36.9 0 70 12.7 96.1 37.6l71.9-71.9C374.1 24.3 316.8 0 249 0 152.1 0 66.4 54.1 25.2 138.8l83 64.8C128 143.4 183.5 98.2 249 98.2z" fill="#EA4335"/>
                         </svg>
-                      ) : (
-                        /* Facebook f icon */
+                      )}
+                      {!isTrustpilot && !isGoogle && (
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="#1877f2" xmlns="http://www.w3.org/2000/svg">
                           <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
                         </svg>
                       )}
-                      {isGoogle ? "Google Review" : "Facebook Review"}
+                      {isTrustpilot ? "Trustpilot Review" : isGoogle ? "Google Review" : "Facebook Review"}
                     </span>
                   </div>
                 </div>
