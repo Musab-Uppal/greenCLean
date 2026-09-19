@@ -934,6 +934,117 @@ button {
 }
 
 /* Header CTAs */
+/* ── User account hover dropdown ── */
+.user-menu-wrap {
+  position: relative;
+}
+
+.user-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--emerald-50);
+  border: 1px solid var(--emerald-200);
+  color: var(--emerald-900);
+  font-size: 0.825rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.user-menu-trigger:hover {
+  background: var(--emerald-100);
+  border-color: var(--emerald-400);
+}
+
+.user-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 215px;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-xl);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 120;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, visibility 0s linear 0.18s, transform 0.18s ease, pointer-events 0s linear 0.18s;
+}
+
+.user-menu-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition: opacity 0.18s ease, visibility 0s linear 0s, transform 0.18s ease, pointer-events 0s linear 0s;
+}
+
+.user-menu-header {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 4px;
+}
+
+.user-menu-label {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.user-menu-email {
+  font-size: 0.8rem;
+  color: #0f172a;
+  font-weight: 700;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.855rem;
+  font-weight: 600;
+  color: var(--slate-700);
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  text-decoration: none;
+}
+
+.user-menu-item:hover {
+  background: var(--emerald-50);
+  color: var(--emerald-800);
+}
+
+.user-menu-signout {
+  color: #dc2626;
+}
+
+.user-menu-signout:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* Header CTAs */
+
 .header-actions {
   display: flex;
   align-items: center;

@@ -2,21 +2,21 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  Check, 
-  ChevronRight, 
-  ChevronLeft, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  Calendar as CalendarIcon, 
-  Clock, 
-  User, 
-  CreditCard, 
-  Sparkles, 
-  AlertCircle, 
-  Tag, 
-  CheckCircle2, 
+import {
+  Check,
+  ChevronRight,
+  ChevronLeft,
+  Plus,
+  Minus,
+  Trash2,
+  Calendar as CalendarIcon,
+  Clock,
+  User,
+  CreditCard,
+  Sparkles,
+  AlertCircle,
+  Tag,
+  CheckCircle2,
   ShoppingBag,
   Flame,
   UtensilsCrossed,
@@ -28,7 +28,8 @@ import {
   X,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  KeyRound
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -322,9 +323,9 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
       {/* 5-Step Progress Stepper */}
       <div className="booking-stepper-wrap">
         <div className="stepper-progress-bar">
-          <div 
-            className="stepper-progress-fill" 
-            style={{ width: `${((step - 1) / 4) * 100}%` }} 
+          <div
+            className="stepper-progress-fill"
+            style={{ width: `${((step - 1) / 4) * 100}%` }}
           />
         </div>
 
@@ -335,7 +336,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
           { num: 4, label: "4. Payment" },
           { num: 5, label: "5. Review" }
         ].map((node) => (
-          <button 
+          <button
             type="button"
             key={node.num}
             className={`step-node ${step === node.num ? "active" : ""} ${step > node.num ? "completed" : ""}`}
@@ -343,7 +344,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               if (step > node.num) setStep(node.num);
             }}
             disabled={step <= node.num}
-            style={{ 
+            style={{
               cursor: step > node.num ? "pointer" : "default",
               border: "none",
               background: "transparent",
@@ -412,7 +413,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
       {/* Main Grid: Wizard Form on Left, Sticky Cart on Right */}
       <div className="booking-main-grid">
         <div className="booking-form-col">
-          
+
           {/* ================================================================
               STEP 1: SELECT SERVICES
              ================================================================ */}
@@ -434,8 +435,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                     {cat.items.map((item) => {
                       const qty = cart[item.id]?.qty || 0;
                       return (
-                        <div 
-                          key={item.id} 
+                        <div
+                          key={item.id}
                           className={`booking-item-card ${qty > 0 ? "has-quantity" : ""}`}
                         >
                           <div style={{ flex: 1, minWidth: 0 }}>
@@ -469,8 +470,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
                           {/* Counter */}
                           <div className="qty-control">
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               onClick={() => updateQty(item, -1)}
                               disabled={qty === 0}
                               className="qty-btn"
@@ -480,8 +481,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                               <Minus size={13} />
                             </button>
                             <span className="qty-number">{qty}</span>
-                            <button 
-                              type="button" 
+                            <button
+                              type="button"
                               onClick={() => updateQty(item, 1)}
                               className="qty-btn"
                               aria-label={`Increase ${item.name}`}
@@ -587,18 +588,18 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               </div>
 
               {dateTimeError && (
-                <div style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: "8px", 
-                  padding: "12px 16px", 
-                  borderRadius: "var(--radius-sm)", 
-                  background: "var(--danger-50)", 
-                  color: "var(--danger-500)", 
-                  fontSize: "0.875rem", 
-                  marginTop: "20px", 
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "12px 16px",
+                  borderRadius: "var(--radius-sm)",
+                  background: "var(--danger-50)",
+                  color: "var(--danger-500)",
+                  fontSize: "0.875rem",
+                  marginTop: "20px",
                   fontWeight: "600",
-                  border: "1px solid rgba(239, 68, 68, 0.2)" 
+                  border: "1px solid rgba(239, 68, 68, 0.2)"
                 }}>
                   <AlertCircle size={18} />
                   <span>{dateTimeError}</span>
@@ -625,7 +626,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
                   <div className="form-group">
                     <label className="form-label">First Name *</label>
-                    <input 
+                    <input
                       type="text"
                       value={customer.firstName}
                       onChange={(e) => setCustomer({ ...customer, firstName: e.target.value })}
@@ -637,7 +638,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
                   <div className="form-group">
                     <label className="form-label">Last Name *</label>
-                    <input 
+                    <input
                       type="text"
                       value={customer.lastName}
                       onChange={(e) => setCustomer({ ...customer, lastName: e.target.value })}
@@ -651,7 +652,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
                   <div className="form-group">
                     <label className="form-label">Phone Number *</label>
-                    <input 
+                    <input
                       type="tel"
                       value={customer.phone !== "" ? customer.phone : (user?.phone || "")}
                       onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
@@ -663,7 +664,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
                   <div className="form-group">
                     <label className="form-label">Email Address *</label>
-                    <input 
+                    <input
                       type="email"
                       value={customer.email !== "" ? customer.email : (user?.email || "")}
                       onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
@@ -676,7 +677,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
                 <div className="form-group">
                   <label className="form-label">Street Address *</label>
-                  <input 
+                  <input
                     type="text"
                     value={customer.address}
                     onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
@@ -688,7 +689,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
                 <div className="form-group">
                   <label className="form-label">Postcode (Liverpool / Merseyside) *</label>
-                  <input 
+                  <input
                     type="text"
                     value={customer.postcode}
                     onChange={(e) => setCustomer({ ...customer, postcode: e.target.value })}
@@ -714,7 +715,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                   <span>Have a promo code? (Try: ECO10)</span>
                 </label>
                 <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
-                  <input 
+                  <input
                     type="text"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
@@ -742,7 +743,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                     { id: "paypal", title: "PayPal Online", desc: "Safe, encrypted checkout with your PayPal account or PayPal Pay in 3." },
                     { id: "card", title: "Credit / Debit Card", desc: "Pay securely online with Visa, Mastercard, or American Express." }
                   ].map((pm) => (
-                    <label 
+                    <label
                       key={pm.id}
                       style={{
                         display: "flex",
@@ -756,8 +757,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                         transition: "all 0.2s"
                       }}
                     >
-                      <input 
-                        type="radio" 
+                      <input
+                        type="radio"
                         name="paymentMethod"
                         value={pm.id}
                         checked={paymentMethod === pm.id}
@@ -783,7 +784,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               {/* Special Notes */}
               <div className="form-group" style={{ marginBottom: "28px" }}>
                 <label className="form-label">Any specific parking or access notes for the cleaner?</label>
-                <textarea 
+                <textarea
                   rows={3}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -795,7 +796,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               {/* Agreement */}
               <div>
                 <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer" }}>
-                  <input 
+                  <input
                     type="checkbox"
                     checked={agreeTerms}
                     onChange={(e) => {
@@ -892,10 +893,10 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                 </div>
               </div>
 
-              <button 
-                type="button" 
-                onClick={handleFinalConfirm} 
-                className="btn btn-primary btn-lg" 
+              <button
+                type="button"
+                onClick={handleFinalConfirm}
+                className="btn btn-primary btn-lg"
                 style={{ width: "100%", fontSize: "1.15rem" }}
               >
                 <CheckCircle2 size={20} />
@@ -907,9 +908,9 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
           {/* Navigation Controls (Back) */}
           {step > 1 && step < 5 && (
             <div style={{ display: "flex", alignItems: "center", marginTop: "16px" }}>
-              <button 
-                type="button" 
-                onClick={() => setStep(step - 1)} 
+              <button
+                type="button"
+                onClick={() => setStep(step - 1)}
                 className="btn btn-secondary"
               >
                 <ChevronLeft size={16} />
@@ -948,9 +949,9 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <span style={{ fontWeight: "700", color: "var(--slate-900)" }}>£{it.price * it.qty}</span>
-                        <button 
-                          type="button" 
-                          onClick={() => updateQty(it, -it.qty)} 
+                        <button
+                          type="button"
+                          onClick={() => updateQty(it, -it.qty)}
                           style={{ color: "var(--slate-400)", padding: "2px" }}
                           aria-label={`Remove ${it.name}`}
                         >
@@ -988,25 +989,22 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                   </div>
                 )}
 
-                {/* Trust Guarantee Box */}
-                <div style={{ marginTop: "20px", padding: "14px", borderRadius: "var(--radius-sm)", background: "var(--emerald-50)", fontSize: "0.8rem", color: "var(--emerald-900)", lineHeight: "1.5" }}>
-                  <strong>🔒 100% Satisfaction Guarantee:</strong> If anything isn&apos;t spotless, our technicians return and re-clean free of charge.
-                </div>
+
               </div>
             )}
 
             {/* Action Button: Directly Below Summary */}
             {step < 5 && (
               <div style={{ marginTop: "20px" }}>
-                <button 
-                  type="button" 
-                  onClick={handleNext} 
+                <button
+                  type="button"
+                  onClick={handleNext}
                   disabled={step === 1 && !meetsMinimum}
                   className="btn btn-primary"
-                  style={{ 
-                    width: "100%", 
-                    padding: "14px 20px", 
-                    fontSize: "1rem", 
+                  style={{
+                    width: "100%",
+                    padding: "14px 20px",
+                    fontSize: "1rem",
                     fontWeight: "700",
                     display: "flex",
                     alignItems: "center",
@@ -1045,8 +1043,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
           zIndex: 9999,
           padding: "20px"
         }}>
-          <div 
-            className="glass-card" 
+          <div
+            className="glass-card"
             style={{
               maxWidth: "520px",
               width: "100%",
@@ -1058,9 +1056,9 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               position: "relative"
             }}
           >
-            <button 
-              type="button" 
-              onClick={() => setShowConfirmation(false)} 
+            <button
+              type="button"
+              onClick={() => setShowConfirmation(false)}
               aria-label="Close confirmation"
               style={{
                 position: "absolute",
@@ -1124,16 +1122,16 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
             </div>
 
             <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => window.print()}
                 className="btn btn-secondary btn-sm"
               >
                 <Printer size={15} />
                 <span>Print Receipt</span>
               </button>
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className="btn btn-primary btn-sm"
               >
                 Return to Homepage

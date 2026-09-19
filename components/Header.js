@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -20,7 +20,8 @@ import {
   Calendar,
   Tag,
   User,
-  LogOut
+  LogOut,
+  Package,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -39,7 +40,20 @@ export default function Header({ categories: initialCategories = [] }) {
   const [categories, setCategories] = useState(initialCategories);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
   const pathname = usePathname();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!initialCategories || initialCategories.length === 0) {
@@ -133,38 +147,30 @@ export default function Header({ categories: initialCategories = [] }) {
 
 
               {user ? (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "6px 12px",
-                    borderRadius: "var(--radius-full)",
-                    background: "var(--emerald-50)",
-                    border: "1px solid var(--emerald-200)",
-                    color: "var(--emerald-900)",
-                    fontSize: "0.825rem",
-                    fontWeight: "700"
-                  }}>
+                <div className="user-menu-wrap" ref={userMenuRef}>
+                  <button
+                    className="user-menu-trigger"
+                    onClick={() => setUserMenuOpen((o) => !o)}
+                    aria-expanded={userMenuOpen}
+                  >
                     <User size={13} color="#059669" />
                     <span>{user.email.split("@")[0]}</span>
-                  </span>
-                  <button
-                    onClick={logout}
-                    title="Sign Out"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      padding: "6px 8px",
-                      color: "var(--slate-500)",
-                      fontSize: "0.8rem",
-                      cursor: "pointer"
-                    }}
-                  >
-                    <LogOut size={14} />
-                    <span>Exit</span>
+                    <ChevronDown
+                      size={12}
+                      color="#059669"
+                      style={{ transform: userMenuOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+                    />
                   </button>
+                  <div className={`user-menu-dropdown${userMenuOpen ? " open" : ""}`}>
+                    <Link href="/dashboard" className="user-menu-item" onClick={() => setUserMenuOpen(false)}>
+                      <Package size={14} />
+                      <span>My Dashboard</span>
+                    </Link>
+                    <button onClick={() => { setUserMenuOpen(false); logout(); }} className="user-menu-item user-menu-signout">
+                      <LogOut size={14} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <Link
