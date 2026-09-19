@@ -297,6 +297,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
         address: `${customer.address}, ${customer.postcode}`,
         phoneno: customer.phone || user?.phone,
         items: cartItems.map((item) => ({ id: item.id, db_id: item.db_id, name: item.name })),
+        scheduled_date: `${selectedDate} ${selectedTimeSlot}`,
         status: "confirmed"
       })
     }).catch((err) => console.error("Failed to persist booking to database:", err));

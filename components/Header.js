@@ -191,10 +191,7 @@ export default function Header({ categories: initialCategories = [] }) {
                 </Link>
               )}
 
-              <Link href="/book" className="btn btn-primary btn-sm">
-                <Calendar size={15} />
-                <span>Book a Service</span>
-              </Link>
+
 
               {/* Mobile Hamburger Toggle */}
               <button

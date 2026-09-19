@@ -24,9 +24,10 @@ export async function POST(request) {
       phone, 
       password = "guest_default_password", 
       product_service_id, 
-      items = [], // if multiple items selected in cart
+      items = [],
       address, 
       phoneno,
+      scheduled_date = null,
       status = "confirmed"
     } = body;
 
@@ -67,7 +68,8 @@ export async function POST(request) {
             customer_id: user.id,
             address,
             phoneno,
-            status
+            status,
+            scheduled_date
           });
           createdOrders.push(orderRes.lastInsertRowid);
         }
@@ -78,7 +80,8 @@ export async function POST(request) {
         customer_id: user.id,
         address,
         phoneno,
-        status
+        status,
+        scheduled_date
       });
       createdOrders.push(orderRes.lastInsertRowid);
     } else {

@@ -28,22 +28,105 @@ const STATUS_CONFIG = {
   cancelled: { label: "Cancelled", icon: XCircle, color: "#dc2626", bg: "#fef2f2", border: "#fca5a5" },
 };
 
+const TIME_SLOTS = ["9:00 - 11:00", "11:00 - 13:00", "13:00 - 15:00", "15:00 - 17:00"];
+
 function isToday(dateStr) {
   if (!dateStr) return false;
-  const d = new Date(dateStr);
+  // scheduled_date may be "YYYY-MM-DD HH:MM - HH:MM", extract just the date part
+  const datePart = dateStr.split(" ")[0];
+  const parts = datePart.split("-");
+  if (parts.length !== 3) return false;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+
   const now = new Date();
   return (
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate()
+    now.getFullYear() === year &&
+    now.getMonth() === month &&
+    now.getDate() === day
   );
+}
+
+function isPastDate(dateStr) {
+  if (!dateStr) return false;
+  const datePart = dateStr.split(" ")[0];
+  const parts = datePart.split("-");
+  if (parts.length !== 3) return false;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+
+  const scheduledDate = new Date(year, month, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return scheduledDate < today;
+}
+
+function extractDatePart(dateStr) {
+  if (!dateStr) return "";
+  const firstSpace = dateStr.indexOf(" ");
+  return firstSpace !== -1 ? dateStr.slice(0, firstSpace) : dateStr;
+}
+
+function getMinScheduleDate() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const year = tomorrow.getFullYear();
+  const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+  const day = String(tomorrow.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function extractTimeSlot(dateStr) {
+  if (!dateStr) return TIME_SLOTS[0];
+  const firstSpace = dateStr.indexOf(" ");
+  if (firstSpace === -1) return TIME_SLOTS[0];
+  const rawAfter = dateStr.slice(firstSpace + 1).trim();
+  return rawAfter.includes(" - ") ? rawAfter : TIME_SLOTS[0];
+}
+
+function formatDateOnly(dateStr) {
+  if (!dateStr) return "—";
+  const firstSpace = dateStr.indexOf(" ");
+  const datePart = firstSpace !== -1 ? dateStr.slice(0, firstSpace) : dateStr;
+  const parts = datePart.split("-");
+  if (parts.length === 3) {
+    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    return d.toLocaleDateString("en-GB", {
+      day: "numeric", month: "long", year: "numeric",
+    });
+  }
+  return new Date(datePart).toLocaleDateString("en-GB", {
+    day: "numeric", month: "long", year: "numeric",
+  });
 }
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-GB", {
-    day: "numeric", month: "long", year: "numeric",
-  });
+  // scheduled_date is stored as "YYYY-MM-DD HH:MM - HH:MM"
+  // created_at fallback may be "YYYY-MM-DD HH:MM:SS" — we only want the date part
+  const firstSpace = dateStr.indexOf(" ");
+  const datePart = firstSpace !== -1 ? dateStr.slice(0, firstSpace) : dateStr;
+  // Everything after the date is the time slot (e.g. "9:00 - 11:00")
+  // but ignore raw timestamps like "12:36:34"
+  const rawAfter = firstSpace !== -1 ? dateStr.slice(firstSpace + 1) : "";
+  // A time slot contains " - "; a raw timestamp does not
+  const timePart = rawAfter.includes(" - ") ? rawAfter : "";
+  const parts = datePart.split("-");
+  let formatted = datePart;
+  if (parts.length === 3) {
+    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    formatted = d.toLocaleDateString("en-GB", {
+      day: "numeric", month: "long", year: "numeric",
+    });
+  } else {
+    formatted = new Date(datePart).toLocaleDateString("en-GB", {
+      day: "numeric", month: "long", year: "numeric",
+    });
+  }
+  return timePart ? `${formatted}, ${timePart}` : formatted;
 }
 
 function OrderCard({ order, onSaved }) {
@@ -51,14 +134,20 @@ function OrderCard({ order, onSaved }) {
   const StatusIcon = status.icon;
 
   const isCompleted = order.status === "completed";
-  const bookedToday = isToday(order.created_at);
-  const canEdit = !isCompleted && !bookedToday;
+  const bookedToday = isToday(order.scheduled_date);
+  const pastDate    = isPastDate(order.scheduled_date);
+  const canEdit     = !isCompleted && !bookedToday && !pastDate;
 
   const [editing, setEditing] = useState(false);
-  const [address, setAddress] = useState(order.address || "");
-  const [phone, setPhone] = useState(order.order_phone || "");
+  const [selectedDate, setSelectedDate] = useState(() => extractDatePart(order.scheduled_date || order.created_at));
+  const [selectedTime, setSelectedTime] = useState(() => extractTimeSlot(order.scheduled_date));
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState(null);
+
+  useEffect(() => {
+    setSelectedDate(extractDatePart(order.scheduled_date || order.created_at));
+    setSelectedTime(extractTimeSlot(order.scheduled_date));
+  }, [order.scheduled_date, order.created_at]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -67,12 +156,12 @@ function OrderCard({ order, onSaved }) {
       const res = await fetch(`/api/dashboard/orders/${order.order_id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address, phoneno: phone }),
+        body: JSON.stringify({ date: selectedDate, time: selectedTime }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save");
       setEditing(false);
-      onSaved({ ...order, address, order_phone: phone });
+      onSaved({ ...order, scheduled_date: data.scheduled_date });
     } catch (err) {
       setSaveErr(err.message);
     } finally {
@@ -81,11 +170,12 @@ function OrderCard({ order, onSaved }) {
   };
 
   const handleCancel = () => {
-    setAddress(order.address || "");
-    setPhone(order.order_phone || "");
+    setSelectedDate(extractDatePart(order.scheduled_date || order.created_at));
+    setSelectedTime(extractTimeSlot(order.scheduled_date));
     setSaveErr(null);
     setEditing(false);
   };
+
 
   return (
     <div
@@ -128,13 +218,19 @@ function OrderCard({ order, onSaved }) {
               <Ban size={11} />
               Can&apos;t change today&apos;s order
             </span>
+          ) : pastDate ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "5px 12px", borderRadius: "99px", background: "#f8fafc", color: "#94a3b8", border: "1px solid #e2e8f0", fontSize: "0.72rem", fontWeight: "700", flexShrink: 0 }}>
+              <Ban size={11} />
+              Service date has passed
+            </span>
           ) : !editing ? (
+
             <button
               onClick={() => setEditing(true)}
               style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "5px 12px", borderRadius: "99px", background: "#eff6ff", color: "#2563eb", border: "1px solid #93c5fd", fontSize: "0.72rem", fontWeight: "700", cursor: "pointer", flexShrink: 0 }}
             >
-              <Pencil size={11} />
-              Edit
+              <Calendar size={11} />
+              Reschedule
             </button>
           ) : (
             <div style={{ display: "flex", gap: "6px" }}>
@@ -170,52 +266,99 @@ function OrderCard({ order, onSaved }) {
       {/* Details grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "12px", paddingTop: "12px", borderTop: "1px solid #f1f5f9" }}>
 
-        {/* Address */}
+        {/* Address (Read-only) */}
         <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-          <MapPin size={14} color="#94a3b8" style={{ marginTop: editing ? "28px" : "2px", flexShrink: 0 }} />
+          <MapPin size={14} color="#94a3b8" style={{ marginTop: "2px", flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Address</div>
-            {editing ? (
-              <input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                style={{ marginTop: "6px", width: "100%", padding: "7px 10px", borderRadius: "8px", border: "1.5px solid #6ee7b7", fontSize: "0.85rem", color: "#0f172a", outline: "none" }}
-              />
-            ) : (
-              <div style={{ fontSize: "0.85rem", color: "#334155", fontWeight: "500", marginTop: "2px" }}>{order.address || "—"}</div>
-            )}
+            <div style={{ fontSize: "0.85rem", color: "#334155", fontWeight: "500", marginTop: "2px" }}>{order.address || "—"}</div>
           </div>
         </div>
 
-        {/* Phone */}
+        {/* Phone (Read-only) */}
         <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-          <Phone size={14} color="#94a3b8" style={{ marginTop: editing ? "28px" : "2px", flexShrink: 0 }} />
+          <Phone size={14} color="#94a3b8" style={{ marginTop: "2px", flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Phone</div>
+            <div style={{ fontSize: "0.85rem", color: "#334155", fontWeight: "500", marginTop: "2px" }}>{order.order_phone || "—"}</div>
+          </div>
+        </div>
+
+        {/* Appointment date & time (Date & time are editable, address & phone are not) */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+          <Calendar size={14} color={editing ? "#059669" : "#94a3b8"} style={{ marginTop: editing ? "3px" : "2px", flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: "0.7rem", color: editing ? "#059669" : "#94a3b8", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Booked For
+            </div>
             {editing ? (
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                style={{ marginTop: "6px", width: "100%", padding: "7px 10px", borderRadius: "8px", border: "1.5px solid #6ee7b7", fontSize: "0.85rem", color: "#0f172a", outline: "none" }}
-              />
+              <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div>
+                  <div style={{ fontSize: "0.68rem", color: "#64748b", fontWeight: "600", marginBottom: "3px" }}>Date</div>
+                  <input
+                    type="date"
+                    min={getMinScheduleDate()}
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    style={{
+                      width: "100%",
+                      maxWidth: "180px",
+                      padding: "5px 8px",
+                      borderRadius: "8px",
+                      border: "1.5px solid #6ee7b7",
+                      fontSize: "0.82rem",
+                      color: "#0f172a",
+                      background: "#fff",
+                      outline: "none",
+                      fontWeight: "600",
+                    }}
+                  />
+                </div>
+                <div>
+                  <div style={{ fontSize: "0.68rem", color: "#64748b", fontWeight: "600", marginBottom: "3px" }}>Arrival Window</div>
+                  <div style={{ position: "relative", display: "inline-block", width: "100%", maxWidth: "180px" }}>
+                    <select
+                      value={selectedTime}
+                      onChange={(e) => setSelectedTime(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "5px 26px 5px 8px",
+                        borderRadius: "8px",
+                        border: "1.5px solid #6ee7b7",
+                        fontSize: "0.82rem",
+                        color: "#0f172a",
+                        background: "#fff",
+                        outline: "none",
+                        cursor: "pointer",
+                        fontWeight: "600",
+                        appearance: "none",
+                      }}
+                    >
+                      {TIME_SLOTS.map((slot) => (
+                        <option key={slot} value={slot}>
+                          {slot}
+                        </option>
+                      ))}
+                      {!TIME_SLOTS.includes(selectedTime) && (
+                        <option value={selectedTime}>{selectedTime}</option>
+                      )}
+                    </select>
+                    <Clock size={12} color="#059669" style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                  </div>
+                </div>
+              </div>
             ) : (
-              <div style={{ fontSize: "0.85rem", color: "#334155", fontWeight: "500", marginTop: "2px" }}>{order.order_phone || "—"}</div>
+              <div style={{ fontSize: "0.85rem", color: "#334155", fontWeight: "500", marginTop: "2px" }}>
+                {formatDate(order.scheduled_date || order.created_at)}
+              </div>
             )}
           </div>
         </div>
 
-        {/* Booked on */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-          <Calendar size={14} color="#94a3b8" style={{ marginTop: "2px", flexShrink: 0 }} />
-          <div>
-            <div style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Booked On</div>
-            <div style={{ fontSize: "0.85rem", color: "#334155", fontWeight: "500", marginTop: "2px" }}>{formatDate(order.created_at)}</div>
-          </div>
-        </div>
 
-        {/* Price */}
+        {/* Price (Read-only) */}
         <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-          <Sparkles size={14} color="#94a3b8" style={{ marginTop: "2px", flexShrink: 0 }} />
+          <span style={{ fontSize: "0.85rem", color: "#94a3b8", fontWeight: "700", marginTop: "2px", flexShrink: 0, lineHeight: 1 }}>£</span>
           <div>
             <div style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Price</div>
             <div style={{ fontSize: "0.85rem", color: "#059669", fontWeight: "700", marginTop: "2px" }}>£{order.service_price ?? "—"}</div>
@@ -225,6 +368,7 @@ function OrderCard({ order, onSaved }) {
     </div>
   );
 }
+
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
