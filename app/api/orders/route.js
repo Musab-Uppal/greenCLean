@@ -28,7 +28,11 @@ export async function POST(request) {
       address, 
       phoneno,
       scheduled_date = null,
-      status = "confirmed"
+      status = "confirmed",
+      payment_method = "local",
+      payment_status = "pending",
+      stripe_session_id = null,
+      total_amount = null
     } = body;
 
     if (!email || !address || !phoneno) {
@@ -63,13 +67,18 @@ export async function POST(request) {
         }
 
         if (resolvedServiceId) {
+          const itemPrice = item.price ? Number(item.price) : null;
           const orderRes = createOrder({
             product_service_id: resolvedServiceId,
             customer_id: user.id,
             address,
             phoneno,
             status,
-            scheduled_date
+            scheduled_date,
+            payment_method,
+            payment_status,
+            stripe_session_id,
+            total_amount: total_amount !== null ? total_amount : itemPrice
           });
           createdOrders.push(orderRes.lastInsertRowid);
         }
@@ -81,7 +90,11 @@ export async function POST(request) {
         address,
         phoneno,
         status,
-        scheduled_date
+        scheduled_date,
+        payment_method,
+        payment_status,
+        stripe_session_id,
+        total_amount
       });
       createdOrders.push(orderRes.lastInsertRowid);
     } else {

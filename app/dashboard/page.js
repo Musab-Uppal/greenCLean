@@ -19,6 +19,7 @@ import {
   X,
   Check,
   Ban,
+  CreditCard,
 } from "lucide-react";
 
 import {
@@ -319,6 +320,17 @@ function OrderCard({ order, onSaved }) {
           <div>
             <div style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Price</div>
             <div style={{ fontSize: "0.85rem", color: "#059669", fontWeight: "700", marginTop: "2px" }}>£{order.service_price ?? "—"}</div>
+          </div>
+        </div>
+
+        {/* Payment Method */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+          <CreditCard size={14} color="#94a3b8" style={{ marginTop: "2px", flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Payment</div>
+            <div style={{ fontSize: "0.82rem", color: order.payment_status === "paid" ? "#059669" : "#d97706", fontWeight: "600", marginTop: "2px" }}>
+              {order.payment_method === "creditcard" ? (order.payment_status === "paid" ? "Paid via Card" : "Card (Pending)") : "Pay on Arrival"}
+            </div>
           </div>
         </div>
       </div>

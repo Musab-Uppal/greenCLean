@@ -8,14 +8,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:seed": "node scripts/seed-db.js"
+    "db:seed": "node scripts/seed-db.js",
+    "pdf:guide": "node scripts/generate-uk-client-guide.js"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
     "lucide-react": "^1.46.0",
     "next": "16.3.5",
+    "pdfkit": "^0.20.2",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "stripe": "^22.6.2"
   },
   "devDependencies": {
     "eslint": "^9",

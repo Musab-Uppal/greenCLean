@@ -996,82 +996,6 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* Prominent Pending Changes Reminder Banner */}
-      {totalPendingCount > 0 && (
-        <div style={{
-          background: "linear-gradient(90deg, rgba(16, 185, 129, 0.2), rgba(6, 95, 70, 0.4))",
-          borderBottom: "1px solid rgba(16, 185, 129, 0.4)",
-          padding: "10px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "12px",
-          color: "#34d399",
-          fontSize: "0.88rem",
-          fontWeight: 600,
-          position: "sticky",
-          top: "65px",
-          zIndex: 49,
-          backdropFilter: "blur(8px)"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "22px",
-              height: "22px",
-              borderRadius: "50%",
-              background: "#10b981",
-              color: "#022c22",
-              fontSize: "0.75rem",
-              fontWeight: 800
-            }}>
-              {totalPendingCount}
-            </span>
-            <span>
-              You have <strong>{totalPendingCount} unsaved change{totalPendingCount > 1 ? "s" : ""}</strong> across orders, services, or categories. Click <strong>&quot;Save Changes&quot;</strong> in the header to save them to the database.
-            </span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <button
-              onClick={handleSaveChanges}
-              disabled={savingChanges}
-              style={{
-                background: "linear-gradient(135deg, #059669, #10b981)",
-                color: "#ffffff",
-                border: "none",
-                padding: "6px 14px",
-                borderRadius: "6px",
-                fontSize: "0.82rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                boxShadow: "0 2px 10px rgba(16, 185, 129, 0.35)"
-              }}
-            >
-              {savingChanges ? "Saving..." : "Save Changes Now"}
-            </button>
-            <button
-              onClick={handleDiscardChanges}
-              disabled={savingChanges}
-              style={{
-                background: "transparent",
-                border: "1px solid rgba(239, 68, 68, 0.4)",
-                color: "#fca5a5",
-                padding: "6px 12px",
-                borderRadius: "6px",
-                fontSize: "0.82rem",
-                fontWeight: 600,
-                cursor: "pointer"
-              }}
-            >
-              Discard
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Floating Action Feedback Notification */}
       {feedback && (
         <div style={{
@@ -1256,6 +1180,7 @@ export default function AdminPage() {
                       <th style={{ padding: "12px 10px", fontWeight: 600 }}>Service</th>
                       <th style={{ padding: "12px 10px", fontWeight: 600 }}>Customer Contact</th>
                       <th style={{ padding: "12px 10px", fontWeight: 600 }}>Price</th>
+                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Payment</th>
                       <th style={{ padding: "12px 10px", fontWeight: 600 }}>Scheduled Date</th>
                       <th style={{ padding: "12px 10px", fontWeight: 600 }}>Service Address</th>
                       <th style={{ padding: "12px 10px", fontWeight: 600 }}>Status</th>
@@ -1265,7 +1190,7 @@ export default function AdminPage() {
                   <tbody>
                     {filteredOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={8} style={{ padding: "36px", textAlign: "center", color: "#64748b" }}>
+                        <td colSpan={9} style={{ padding: "36px", textAlign: "center", color: "#64748b" }}>
                           No orders found matching criteria.
                         </td>
                       </tr>
@@ -1318,6 +1243,30 @@ export default function AdminPage() {
                             </td>
                             <td style={{ padding: "12px 10px", fontWeight: 700, color: "#10b981" }}>
                               £{order.service_price}
+                            </td>
+                            <td style={{ padding: "12px 10px" }}>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                <span style={{
+                                  fontSize: "0.72rem",
+                                  fontWeight: 700,
+                                  padding: "2px 8px",
+                                  borderRadius: "4px",
+                                  background: order.payment_method === "creditcard" ? "rgba(16, 185, 129, 0.15)" : "rgba(148, 163, 184, 0.15)",
+                                  color: order.payment_method === "creditcard" ? "#34d399" : "#cbd5e1",
+                                  border: `1px solid ${order.payment_method === "creditcard" ? "rgba(16, 185, 129, 0.3)" : "rgba(148, 163, 184, 0.3)"}`,
+                                  width: "fit-content",
+                                  whiteSpace: "nowrap"
+                                }}>
+                                  {order.payment_method === "creditcard" ? "💳 Stripe Card" : "💵 Pay Locally"}
+                                </span>
+                                <span style={{
+                                  fontSize: "0.68rem",
+                                  fontWeight: 600,
+                                  color: order.payment_status === "paid" ? "#34d399" : "#fbbf24"
+                                }}>
+                                  {order.payment_status === "paid" ? "● Paid Online" : "○ Pending Collection"}
+                                </span>
+                              </div>
                             </td>
                             <td style={{ padding: "12px 10px" }}>
                               {order.scheduled_date ? (
