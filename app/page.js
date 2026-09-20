@@ -28,7 +28,10 @@ import AreaChecker from "@/components/AreaChecker";
 import ServiceAreaMap from "@/components/ServiceAreaMap";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import FaqAccordion from "@/components/FaqAccordion";
+import JsonLd from "@/components/JsonLd";
 import { getDbCategoriesWithServices } from "@/lib/servicesDb";
+import { getLocalBusinessSchema, getFaqSchema } from "@/lib/schema";
+import { FAQS } from "@/data/faqsData";
 
 const CATEGORY_ICONS = {
   oven: Flame,
@@ -52,9 +55,12 @@ const OVERLAY_TITLES = {
 
 export default function HomePage() {
   const categories = getDbCategoriesWithServices();
+  const businessSchema = getLocalBusinessSchema();
+  const faqSchema = getFaqSchema(FAQS);
 
   return (
     <div>
+      <JsonLd data={[businessSchema, faqSchema]} />
       {/* ====================================================================
           HERO SECTION
          ==================================================================== */}
@@ -343,7 +349,7 @@ export default function HomePage() {
               <Heart size={28} strokeWidth={1.8} color="#000000" />
               <h3 className="guarantee-item-title">Satisfied customers</h3>
               <p className="guarantee-item-desc">
-                All Shining Oven customers are satisfied from start to finish.
+                All Green Clean Group customers are satisfied from start to finish.
               </p>
             </div>
 
@@ -466,7 +472,21 @@ export default function HomePage() {
       {/* ====================================================================
           FAQS SECTION
          ==================================================================== */}
+      <section className="section" style={{ background: "var(--bg-body)", paddingTop: "80px", paddingBottom: "80px" }}>
+        <div className="container">
+          <div className="section-title-wrap" style={{ marginBottom: "40px" }}>
+            <span className="section-pill">Got Questions?</span>
+            <h2 className="section-title">
+              Frequently Asked <span className="gradient-text">Questions</span>
+            </h2>
+            <p className="section-desc">
+              Everything you need to know about our eco-friendly techniques, scheduling, and guarantees.
+            </p>
+          </div>
 
+          <FaqAccordion />
+        </div>
+      </section>
 
       {/* ====================================================================
           FINAL ACTION BANNER

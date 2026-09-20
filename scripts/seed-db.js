@@ -18,15 +18,14 @@ const getCategoryByNameStmt = db.prepare(`
 `);
 
 const insertProductServiceStmt = db.prepare(`
-  INSERT INTO product_service (name, category_id, price, width, time, slug, popular)
-  VALUES (@name, @category_id, @price, @width, @time, @slug, @popular)
+  INSERT INTO product_service (name, category_id, price, width, time, slug)
+  VALUES (@name, @category_id, @price, @width, @time, @slug)
   ON CONFLICT(slug) DO UPDATE SET
     name = excluded.name,
     category_id = excluded.category_id,
     price = excluded.price,
     width = excluded.width,
-    time = excluded.time,
-    popular = excluded.popular
+    time = excluded.time
 `);
 
 const seedTransaction = db.transaction(() => {
@@ -50,8 +49,7 @@ const seedTransaction = db.transaction(() => {
         price: item.price,
         width: item.width || null,
         time: item.duration || "1 hr",
-        slug: item.id,
-        popular: item.popular ? 1 : 0
+        slug: item.id
       });
       serviceCount++;
     }

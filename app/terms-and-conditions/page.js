@@ -363,7 +363,7 @@ export default function TermsAndConditionsPage() {
                 <li><strong>13.2.6.</strong> for any liability under a jurisdiction’s applicable services liability legislation.</li>
               </ul>
               <p>
-                <strong>13.3.</strong> Because certain states or jurisdictions do not allow for exclusion or limitation of liability for certain types of losses or damages, in such states or jurisdictions, the liability of GreenClean Group shall be limited to the fullest extent permitted by applicable law.
+                <strong>13.3.</strong> To the extent that applicable law does not allow for exclusion or limitation of liability for certain types of losses or damages under the laws of England and Wales, the liability of GreenClean Group shall be limited to the fullest extent permitted by applicable law.
               </p>
             </section>
 
@@ -376,7 +376,7 @@ export default function TermsAndConditionsPage() {
                 <strong>14.1.</strong> GreenClean Group and you hereby agree to first attempt to informally negotiate any claim or dispute for at least 30 /thirty/ days.
               </p>
               <p style={{ marginBottom: "8px" }}>
-                <strong>14.2.</strong> You shall notify GreenClean Group of any claims that you have by sending a notice to <a href="mailto:info@greencleangroup.co.uk" style={{ color: "var(--emerald-600)", fontWeight: "600" }}>info@greencleangroup.co.uk</a>.
+                <strong>14.2.</strong> You shall notify GreenClean Group of any claims that you have by sending a notice to <a href="mailto:contact@greencleangroup.co.uk" style={{ color: "var(--emerald-600)", fontWeight: "600" }}>contact@greencleangroup.co.uk</a>.
               </p>
               <p>
                 <strong>14.3.</strong> This clause shall have no effect on any statutory rights to initiate a court proceeding in case of a dispute and shall not suspend any statutory limitation periods applicable to the bringing of a claim.
@@ -435,7 +435,7 @@ export default function TermsAndConditionsPage() {
                 19. Your concerns
               </h2>
               <p style={{ marginBottom: "16px" }}>
-                <strong>19.1.</strong> If you have any concerns about material which appears on our site, please contact <a href="mailto:info@greencleangroup.co.uk" style={{ color: "var(--emerald-600)", fontWeight: "600" }}>info@greencleangroup.co.uk</a>.
+                <strong>19.1.</strong> If you have any concerns about material which appears on our site, please contact <a href="mailto:contact@greencleangroup.co.uk" style={{ color: "var(--emerald-600)", fontWeight: "600" }}>contact@greencleangroup.co.uk</a>.
               </p>
               <div
                 style={{

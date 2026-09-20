@@ -32,6 +32,15 @@ import {
   KeyRound
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import {
+  UK_TIMEZONE,
+  UK_TIME_SLOTS,
+  getUkTomorrowDateString,
+  getUkDateString,
+  formatUkDate,
+  normalizeTimeSlot,
+} from "@/lib/dateUtils";
+import { SERVICE_AREAS } from "@/data/faqsData";
 
 const CATEGORY_ICONS = {
   oven: Flame,
@@ -73,13 +82,9 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
   // Cart: object of { [itemId]: { ...item, qty: number } }
   const [cart, setCart] = useState({});
 
-  // Step 2: Date & Time
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split("T")[0];
-  });
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState("9:00 - 11:00");
+  // Step 2: Date & Time (strictly locked to Europe/London - Liverpool, UK)
+  const [selectedDate, setSelectedDate] = useState(() => getUkTomorrowDateString());
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(UK_TIME_SLOTS[0]);
   const [dateTimeError, setDateTimeError] = useState("");
 
   // Step 3: Contact Info
@@ -202,10 +207,27 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
     if (!customer.address.trim()) {
       errors.address = "Street address is required";
     }
-    if (!customer.postcode.trim()) {
+
+    // 40-mile Liverpool & North West coverage validation
+    const cleanPostcode = (customer.postcode || "").trim().toUpperCase().replace(/\s+/g, "");
+    if (!cleanPostcode) {
       errors.postcode = "Postcode is required";
-    } else if (customer.postcode.trim().length < 3) {
+    } else if (cleanPostcode.length < 3) {
       errors.postcode = "Please enter a valid UK postcode";
+    } else {
+      // Check whether it falls within our core 40-mile service routes
+      const isDirectlyCovered = SERVICE_AREAS.some((area) =>
+        area.postcodes.some((p) => cleanPostcode.startsWith(p))
+      );
+      if (!isDirectlyCovered) {
+        // Extended North West UK prefixes within/near Liverpool 40-mile radius
+        const extended40Miles = ["L", "CH", "WA", "WN", "PR", "M", "BL", "SK", "CW", "FY", "BB", "LL"];
+        const matchPrefix = cleanPostcode.match(/^([A-Z]{1,2})/);
+        const prefixArea = matchPrefix ? matchPrefix[1] : "";
+        if (!extended40Miles.includes(prefixArea)) {
+          errors.postcode = "We only service within a 40-mile radius of Liverpool. Call 07359 068284 to check special dispatch availability.";
+        }
+      }
     }
 
     setFormErrors(errors);
@@ -303,17 +325,18 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
     }).catch((err) => console.error("Failed to persist booking to database:", err));
   };
 
-  // Available upcoming 14 days
+  // Available upcoming 14 days strictly locked to Europe/London (Liverpool, UK)
   const getAvailableDates = () => {
     const dates = [];
     for (let i = 1; i <= 14; i++) {
       const d = new Date();
-      d.setDate(d.getDate() + i);
+      d.setTime(d.getTime() + i * 24 * 60 * 60 * 1000);
+      const ukDate = getUkDateString(d);
       dates.push({
-        full: d.toISOString().split("T")[0],
-        dayName: d.toLocaleDateString("en-GB", { weekday: "short" }),
-        dayNum: d.getDate(),
-        month: d.toLocaleDateString("en-GB", { month: "short" })
+        full: ukDate,
+        dayName: d.toLocaleDateString("en-GB", { timeZone: UK_TIMEZONE, weekday: "short" }),
+        dayNum: parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: UK_TIMEZONE, day: "numeric" }).format(d), 10),
+        month: d.toLocaleDateString("en-GB", { timeZone: UK_TIMEZONE, month: "short" })
       });
     }
     return dates;
@@ -569,7 +592,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               </div>
 
               <div className="time-slots-grid">
-                {["9:00 - 11:00", "11:00 - 13:00", "13:00 - 15:00", "15:00 - 17:00"].map((slot) => {
+                {UK_TIME_SLOTS.map((slot) => {
                   const isSelected = selectedTimeSlot === slot;
                   return (
                     <button
@@ -860,7 +883,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                     </button>
                   </div>
                   <p style={{ fontSize: "0.95rem", color: "var(--emerald-800)", fontWeight: "600" }}>
-                    📅 {selectedDate} | ⏰ {selectedTimeSlot}
+                    📅 {formatUkDate(selectedDate, true)} | ⏰ {selectedTimeSlot}
                   </p>
                 </div>
 
@@ -1110,7 +1133,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
                 <span style={{ color: "var(--slate-500)" }}>Date &amp; Slot:</span>
-                <strong>{selectedDate} ({selectedTimeSlot})</strong>
+                <strong>{formatUkDate(selectedDate, true)} ({selectedTimeSlot})</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
                 <span style={{ color: "var(--slate-500)" }}>Total Amount:</span>

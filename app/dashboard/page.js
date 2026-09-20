@@ -21,6 +21,14 @@ import {
   Ban,
 } from "lucide-react";
 
+import {
+  UK_TIME_SLOTS,
+  getUkDateString,
+  getUkTomorrowDateString,
+  normalizeTimeSlot,
+  formatUkDate,
+} from "@/lib/dateUtils";
+
 const STATUS_CONFIG = {
   confirmed: { label: "Confirmed", icon: CheckCircle2, color: "#059669", bg: "#ecfdf5", border: "#6ee7b7" },
   pending: { label: "Pending", icon: Clock, color: "#d97706", bg: "#fffbeb", border: "#fcd34d" },
@@ -28,40 +36,18 @@ const STATUS_CONFIG = {
   cancelled: { label: "Cancelled", icon: XCircle, color: "#dc2626", bg: "#fef2f2", border: "#fca5a5" },
 };
 
-const TIME_SLOTS = ["9:00 - 11:00", "11:00 - 13:00", "13:00 - 15:00", "15:00 - 17:00"];
+const TIME_SLOTS = UK_TIME_SLOTS;
 
 function isToday(dateStr) {
   if (!dateStr) return false;
-  // scheduled_date may be "YYYY-MM-DD HH:MM - HH:MM", extract just the date part
   const datePart = dateStr.split(" ")[0];
-  const parts = datePart.split("-");
-  if (parts.length !== 3) return false;
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10) - 1;
-  const day = parseInt(parts[2], 10);
-
-  const now = new Date();
-  return (
-    now.getFullYear() === year &&
-    now.getMonth() === month &&
-    now.getDate() === day
-  );
+  return datePart === getUkDateString();
 }
 
 function isPastDate(dateStr) {
   if (!dateStr) return false;
   const datePart = dateStr.split(" ")[0];
-  const parts = datePart.split("-");
-  if (parts.length !== 3) return false;
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10) - 1;
-  const day = parseInt(parts[2], 10);
-
-  const scheduledDate = new Date(year, month, day);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  return scheduledDate < today;
+  return datePart < getUkDateString();
 }
 
 function extractDatePart(dateStr) {
@@ -71,12 +57,7 @@ function extractDatePart(dateStr) {
 }
 
 function getMinScheduleDate() {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const year = tomorrow.getFullYear();
-  const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
-  const day = String(tomorrow.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return getUkTomorrowDateString();
 }
 
 function extractTimeSlot(dateStr) {
@@ -84,49 +65,25 @@ function extractTimeSlot(dateStr) {
   const firstSpace = dateStr.indexOf(" ");
   if (firstSpace === -1) return TIME_SLOTS[0];
   const rawAfter = dateStr.slice(firstSpace + 1).trim();
-  return rawAfter.includes(" - ") ? rawAfter : TIME_SLOTS[0];
+  return rawAfter.includes(" - ") || rawAfter.includes(" – ")
+    ? normalizeTimeSlot(rawAfter)
+    : TIME_SLOTS[0];
 }
 
 function formatDateOnly(dateStr) {
-  if (!dateStr) return "—";
-  const firstSpace = dateStr.indexOf(" ");
-  const datePart = firstSpace !== -1 ? dateStr.slice(0, firstSpace) : dateStr;
-  const parts = datePart.split("-");
-  if (parts.length === 3) {
-    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-    return d.toLocaleDateString("en-GB", {
-      day: "numeric", month: "long", year: "numeric",
-    });
-  }
-  return new Date(datePart).toLocaleDateString("en-GB", {
-    day: "numeric", month: "long", year: "numeric",
-  });
+  return formatUkDate(dateStr, false);
 }
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
-  // scheduled_date is stored as "YYYY-MM-DD HH:MM - HH:MM"
-  // created_at fallback may be "YYYY-MM-DD HH:MM:SS" — we only want the date part
   const firstSpace = dateStr.indexOf(" ");
   const datePart = firstSpace !== -1 ? dateStr.slice(0, firstSpace) : dateStr;
-  // Everything after the date is the time slot (e.g. "9:00 - 11:00")
-  // but ignore raw timestamps like "12:36:34"
-  const rawAfter = firstSpace !== -1 ? dateStr.slice(firstSpace + 1) : "";
-  // A time slot contains " - "; a raw timestamp does not
-  const timePart = rawAfter.includes(" - ") ? rawAfter : "";
-  const parts = datePart.split("-");
-  let formatted = datePart;
-  if (parts.length === 3) {
-    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-    formatted = d.toLocaleDateString("en-GB", {
-      day: "numeric", month: "long", year: "numeric",
-    });
-  } else {
-    formatted = new Date(datePart).toLocaleDateString("en-GB", {
-      day: "numeric", month: "long", year: "numeric",
-    });
-  }
-  return timePart ? `${formatted}, ${timePart}` : formatted;
+  const rawAfter = firstSpace !== -1 ? dateStr.slice(firstSpace + 1).trim() : "";
+  const timePart = rawAfter.includes(" - ") || rawAfter.includes(" – ")
+    ? normalizeTimeSlot(rawAfter)
+    : "";
+  const formattedDate = formatUkDate(datePart, false);
+  return timePart ? `${formattedDate}, ${timePart}` : formattedDate;
 }
 
 function OrderCard({ order, onSaved }) {

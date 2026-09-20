@@ -3,22 +3,15 @@ import { cookies } from "next/headers";
 import { verifyToken, COOKIE_NAME } from "@/lib/auth";
 import { getOrderById, updateOrderScheduleTime } from "@/lib/db";
 
+import { getUkDateString, normalizeTimeSlot } from "@/lib/dateUtils";
+
 export const dynamic = "force-dynamic";
 
 function isTodayOrPast(dateStr) {
   if (!dateStr) return false;
   const datePart = dateStr.split(" ")[0];
-  const parts = datePart.split("-");
-  if (parts.length !== 3) return false;
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10) - 1;
-  const day = parseInt(parts[2], 10);
-
-  const scheduledDate = new Date(year, month, day);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  return scheduledDate <= today;
+  const todayInUk = getUkDateString();
+  return datePart <= todayInUk;
 }
 
 export async function PATCH(request, { params }) {
@@ -86,23 +79,17 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: "Invalid date format. Expected YYYY-MM-DD." }, { status: 400 });
     }
 
-    const year = parseInt(dateParts[0], 10);
-    const month = parseInt(dateParts[1], 10) - 1;
-    const day = parseInt(dateParts[2], 10);
-
-    const targetDate = new Date(year, month, day);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // New date cannot be today or in the past
-    if (targetDate <= today) {
+    const todayInUk = getUkDateString();
+    // New date cannot be today or in the past in Liverpool UK timezone
+    if (newDate <= todayInUk) {
       return NextResponse.json(
         { error: "New schedule date must be in the future (from tomorrow onwards)" },
         { status: 400 }
       );
     }
 
-    const newScheduledDate = `${newDate} ${newTime}`;
+    const normalizedTime = normalizeTimeSlot(newTime);
+    const newScheduledDate = `${newDate} ${normalizedTime}`;
     updateOrderScheduleTime(orderId, newScheduledDate);
 
     return NextResponse.json({ success: true, scheduled_date: newScheduledDate });

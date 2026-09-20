@@ -1,8 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import AnnouncementBar from "@/components/AnnouncementBar";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import SiteLayoutWrapper from "@/components/SiteLayoutWrapper";
 import { getDbCategoriesWithServices } from "@/lib/servicesDb";
 import { AuthProvider } from "@/context/AuthContext";
 
@@ -52,13 +50,12 @@ export default function RootLayout({ children }) {
   const categories = getDbCategoriesWithServices();
 
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en-GB" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
         <AuthProvider>
-          <AnnouncementBar />
-          <Header categories={categories} />
-          <main>{children}</main>
-          <Footer categories={categories} />
+          <SiteLayoutWrapper categories={categories}>
+            {children}
+          </SiteLayoutWrapper>
         </AuthProvider>
       </body>
     </html>

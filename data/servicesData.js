@@ -50,7 +50,7 @@ export const SERVICE_CATEGORIES = [
     slug: "bbq-cleaning",
     shortDesc: "BBQ cleaning in Liverpool, Southport, Formby and across Merseyside. We remove baked-on carbon and grease from grates, burners and the firebox using food-safe, non-caustic products — ready to grill on the same day.",
     icon: "Beef",
-    badge: "Summer Favorite",
+    badge: "Summer Favourite",
     heroImage: "/services/bbq.jpg",
     items: [
       { id: "small-bbq", name: "Small Round BBQ (e.g. Weber Kettle)", price: 60, width: "Approx. 30-60 sq. ft", duration: "1 – 2 hrs" },

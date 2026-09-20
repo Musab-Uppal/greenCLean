@@ -13,6 +13,8 @@ import {
   Calendar,
   MessageSquare
 } from "lucide-react";
+import JsonLd from "@/components/JsonLd";
+import { getLocalBusinessSchema } from "@/lib/schema";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -30,8 +32,11 @@ export default function ContactPage() {
     setSubmitted(true);
   };
 
+  const businessSchema = getLocalBusinessSchema();
+
   return (
     <div style={{ background: "var(--bg-body)", padding: "60px 0 100px" }}>
+      <JsonLd data={businessSchema} />
       <div className="container">
         {/* Page Header */}
         <div style={{ textAlign: "center", maxWidth: "720px", margin: "0 auto 56px" }}>

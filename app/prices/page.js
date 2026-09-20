@@ -25,7 +25,7 @@ export default function PricesPage() {
           </h1>
 
           <p style={{ fontSize: "1.15rem", color: "var(--slate-600)", lineHeight: "1.65" }}>
-            All prices include labor, professional non-caustic dipping tank treatments, and eco-friendly formulas. Minimum appointment order value is £50.
+            All prices include labour, professional non-caustic dipping tank treatments, and eco-friendly formulas. Minimum appointment order value is £50.
           </p>
 
           <div style={{ marginTop: "24px" }}>

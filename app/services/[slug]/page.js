@@ -21,6 +21,8 @@ import {
   Lock
 } from "lucide-react";
 import { getDbCategoriesWithServices, getDbCategoryBySlug } from "@/lib/servicesDb";
+import JsonLd from "@/components/JsonLd";
+import { getServiceSchema } from "@/lib/schema";
 
 const CATEGORY_ICONS = {
   oven: Flame,
@@ -44,28 +46,28 @@ const SERVICE_GALLERIES = {
     { src: "/services/oven.jpg", title: "Appliance Detailing", desc: "Spotless exteriors and sanitised handles" },
   ],
   "appliances-cleaning": [
-    { src: "/services/appliances.jpg", title: "American Style Fridge / Freezer", desc: "Internal deep sanitisation and odor elimination" },
+    { src: "/services/appliances.jpg", title: "American Style Fridge / Freezer", desc: "Internal deep sanitisation and odour elimination" },
     { src: "/services/kitchen_island.jpg", title: "Dishwasher & Washing Machine", desc: "Limescale de-scaling and filter clearout" },
     { src: "/services/gas_hob.jpg", title: "Hobs & Extractor Degreasing", desc: "Grease-free filters and crystal-clear lights" },
   ],
   "bbq-cleaning": [
     { src: "/services/bbq.jpg", title: "Deep Carbon Removal", desc: "Heavy-duty eco dipping tank grill restoration" },
-    { src: "/services/bbq_grill.jpg", title: "Full Grill & Burner Detail", desc: "Food-safe sanitization, zero harsh residues" },
+    { src: "/services/bbq_grill.jpg", title: "Full Grill & Burner Detail", desc: "Food-safe sanitisation, zero harsh residues" },
     { src: "/services/gas_hob.jpg", title: "Igniters & Burner Rails", desc: "Optimised gas flow and spotless metal" },
   ],
   "bathroom-cleaning": [
     { src: "/services/bathroom.jpg", title: "Luxury Tile & Vanity Sparkle", desc: "100% limescale and soap scum removal" },
-    { src: "/services/bathroom_shower.jpg", title: "Streak-Free Glass Shower Screen", desc: "Anti-fog mold prevention treatment" },
-    { src: "/services/house.jpg", title: "Hygienic Home Standard", desc: "Hospital-grade, eco-friendly sanitization" },
+    { src: "/services/bathroom_shower.jpg", title: "Streak-Free Glass Shower Screen", desc: "Anti-fog mould prevention treatment" },
+    { src: "/services/house.jpg", title: "Hygienic Home Standard", desc: "Hospital-grade, eco-friendly sanitisation" },
   ],
   "house-cleaning": [
     { src: "/services/house.jpg", title: "Pristine Living Space & Floors", desc: "Top-to-bottom dusting, vacuuming and polishing" },
     { src: "/services/house_bedroom.jpg", title: "Fresh & Allergen-Free Bedrooms", desc: "HEPA filtered vacuuming and eco-sprays" },
-    { src: "/services/kitchen.jpg", title: "Sanitized Kitchen & Living", desc: "Plant-based formulas safe for children & pets" },
+    { src: "/services/kitchen.jpg", title: "Sanitised Kitchen & Living", desc: "Plant-based formulas safe for children & pets" },
   ],
   "end-of-tenancy-cleaning": [
     { src: "/services/tenancy.jpg", title: "100% Deposit Return Standard", desc: "Full agency checklist certified deep clean" },
-    { src: "/services/kitchen.jpg", title: "Deep Cleaned Kitchen & Oven", desc: "Landlord inspection approved sanitization" },
+    { src: "/services/kitchen.jpg", title: "Deep Cleaned Kitchen & Oven", desc: "Landlord inspection approved sanitisation" },
     { src: "/services/bathroom.jpg", title: "Descaled Bathroom & Grout", desc: "Spotless chrome, gleaming tiles and sanitary ware" },
   ]
 };
@@ -73,9 +75,9 @@ const SERVICE_GALLERIES = {
 const SERVICE_PROCESSES = {
   "bathroom-cleaning": [
     { step: "01", title: "Inspection & Protection", desc: "We inspect sanitary ware, tiles, and grout, applying protective waterproof floor coverings." },
-    { step: "02", title: "Limescale & Mold Breakdown", desc: "Targeted eco-friendly descaling agents dissolve tough limescale, soap scum, and mineral stains." },
+    { step: "02", title: "Limescale & Mould Breakdown", desc: "Targeted eco-friendly descaling agents dissolve tough limescale, soap scum, and mineral stains." },
     { step: "03", title: "Deep Grout & Tile Scrub", desc: "High-temperature detailing and non-caustic treatments lift grime from grout lines and corners." },
-    { step: "04", title: "Sanitization & Screen Detailing", desc: "Showers, glass screens, bath basins, and sanitary ware are deeply sanitized and degreased." },
+    { step: "04", title: "Sanitisation & Screen Detailing", desc: "Showers, glass screens, bath basins, and sanitary ware are deeply sanitised and degreased." },
     { step: "05", title: "Streak-Free Mirror Polish", desc: "Chrome taps, shower heads, glass, and mirrors are polished to a crystal-clear showroom shine." },
     { step: "06", title: "Final Quality Sign-Off", desc: "We inspect the finished bathroom with you to ensure 100% hygienic perfection before leaving." }
   ],
@@ -90,14 +92,14 @@ const SERVICE_PROCESSES = {
   "kitchen-cleaning": [
     { step: "01", title: "Assessment & Surface Prep", desc: "We survey surfaces, splashbacks, and appliances, preparing non-toxic degreasing solutions." },
     { step: "02", title: "High-Level Degreasing", desc: "Top of cupboards, extractor fan covers, and light fixtures are thoroughly degreased." },
-    { step: "03", title: "Cabinet & Drawer Detailing", desc: "Cupboard doors, handles, and framework are wiped down and sanitized inside and out." },
+    { step: "03", title: "Cabinet & Drawer Detailing", desc: "Cupboard doors, handles, and framework are wiped down and sanitised inside and out." },
     { step: "04", title: "Tiles, Hobs & Splashbacks", desc: "Cooktop burners, tiles, and splashbacks are scrubbed free of grease and baked-on food." },
-    { step: "05", title: "Countertop & Sink Buffing", desc: "Countertops and stainless steel sink units are deep sanitized, descaled, and polished." },
-    { step: "06", title: "Floor Clean & Final Inspection", desc: "Floors are vacuumed, sanitized, and mopped to leave your kitchen fresh and spotless." }
+    { step: "05", title: "Countertop & Sink Buffing", desc: "Countertops and stainless steel sink units are deep sanitised, descaled, and polished." },
+    { step: "06", title: "Floor Clean & Final Inspection", desc: "Floors are vacuumed, sanitised, and mopped to leave your kitchen fresh and spotless." }
   ],
   "bbq-cleaning": [
     { step: "01", title: "Initial Inspection & Setup", desc: "We inspect the burners, ignition, and grill body, placing protective ground sheets." },
-    { step: "02", title: "Disassembly of Grates & Trays", desc: "Cooking grates, flavorizer bars, heat shields, and drip trays are disassembled." },
+    { step: "02", title: "Disassembly of Grates & Trays", desc: "Cooking grates, flavouriser bars, heat shields, and drip trays are disassembled." },
     { step: "03", title: "Eco Dip Tank Immersion", desc: "Parts soak in our van-mounted eco dip tank to dissolve stubborn baked-on carbon." },
     { step: "04", title: "Firebox & Hood Detailing", desc: "The internal hood and firebox are scraped, degreased, and detailed with food-safe formulas." },
     { step: "05", title: "Reassembly & Gas Flow Test", desc: "Clean grates and shields are reassembled, exterior polished, and burners flame-tested." },
@@ -105,8 +107,8 @@ const SERVICE_PROCESSES = {
   ],
   "appliances-cleaning": [
     { step: "01", title: "Appliance Safety Check", desc: "We inspect the appliance, seals, and power before placing protective work mats." },
-    { step: "02", title: "Component Disassembly", desc: "Shelves, drawers, filters, and trays are removed for individual deep sanitization." },
-    { step: "03", title: "Internal Bio-Sanitization", desc: "Interior walls, air ducts, and seals are treated with odor-eliminating, food-safe solution." },
+    { step: "02", title: "Component Disassembly", desc: "Shelves, drawers, filters, and trays are removed for individual deep sanitisation." },
+    { step: "03", title: "Internal Bio-Sanitisation", desc: "Interior walls, air ducts, and seals are treated with odour-eliminating, food-safe solution." },
     { step: "04", title: "Limescale & Debris Removal", desc: "Water nozzles, spray arms, and drainage filters are cleared of calcification and residue." },
     { step: "05", title: "Reassembly & Exterior Polish", desc: "Shelves reinstalled, and exterior stainless steel or enamel polished to a mirror finish." },
     { step: "06", title: "Operational Test & Handover", desc: "Final cycle/cooling check to ensure optimal function and fresh, hygienic results." }
@@ -115,16 +117,16 @@ const SERVICE_PROCESSES = {
     { step: "01", title: "Walkthrough & Custom Checklist", desc: "We review priority rooms and personal cleaning requests with you before starting." },
     { step: "02", title: "High-to-Low Dusting", desc: "Ceiling corners, light fixtures, picture frames, and baseboards are dusted systematically." },
     { step: "03", title: "Surface & Furniture Polish", desc: "Surfaces, tables, and doors are detailed using eco-friendly, non-toxic polishes." },
-    { step: "04", title: "Kitchen & Bathroom Detailing", desc: "Deep cleaning and sanitization of high-touch kitchen and bathroom fixtures." },
+    { step: "04", title: "Kitchen & Bathroom Detailing", desc: "Deep cleaning and sanitisation of high-touch kitchen and bathroom fixtures." },
     { step: "05", title: "HEPA Vacuuming & Mopping", desc: "All carpets and hard floors vacuumed with allergen-trapping HEPA filters and mopped." },
     { step: "06", title: "Room-by-Room Inspection", desc: "We review every room against our standards to ensure complete satisfaction." }
   ],
   "end-of-tenancy-cleaning": [
     { step: "01", title: "Agency Checklist Review", desc: "We cross-reference our clean against UK estate agent and landlord inventory checklists." },
     { step: "02", title: "Kitchen & Oven Deep Immersion", desc: "Oven, hob, extractor, cupboards, and appliances detailed to move-in standard." },
-    { step: "03", title: "Bathroom Limescale & Grout", desc: "Sanitary ware, shower screens, and tiles descaled and mold-treated." },
+    { step: "03", title: "Bathroom Limescale & Grout", desc: "Sanitary ware, shower screens, and tiles descaled and mould-treated." },
     { step: "04", title: "Internal Windows & Woodwork", desc: "Interior window glass, frames, sills, doors, skirting boards, and switches detailed." },
-    { step: "05", title: "Flooring & Edge Detailing", desc: "Intensive vacuuming along edges, hardwood cleaning, and damp sanitizing mop." },
+    { step: "05", title: "Flooring & Edge Detailing", desc: "Intensive vacuuming along edges, hardwood cleaning, and damp sanitising mop." },
     { step: "06", title: "Deposit Guarantee Sign-Off", desc: "Final sign-off with our 100% Deposit Return Guarantee backing the clean." }
   ]
 };
@@ -160,9 +162,11 @@ export default async function ServiceDetailPage({ params }) {
     { src: category.heroImage, title: `${category.title} Results`, desc: "Spotless showroom finish" }
   ];
   const processSteps = SERVICE_PROCESSES[category.slug] || SERVICE_PROCESSES["oven-cleaning"];
+  const serviceSchema = getServiceSchema(category);
 
   return (
     <div style={{ background: "var(--bg-body)", padding: "40px 0 100px" }}>
+      <JsonLd data={serviceSchema} />
       <div className="container">
         {/* Service Hero Banner with Split Image Layout */}
         <div 
