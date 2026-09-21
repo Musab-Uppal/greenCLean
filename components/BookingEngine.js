@@ -344,9 +344,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } else if (step === 4) {
-      if (paymentMethod === "creditcard" && !validateCard()) {
-        return;
-      }
+      // For Stripe (creditcard), no local card validation needed — Stripe hosts the card form
       if (!agreeTerms) {
         setTermsError(true);
         return;
@@ -389,49 +387,53 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
     setCheckoutError("");
 
-    // Option B: Online Payment with Stripe (Credit Card)
+    // Option B: Online Payment — redirect to Stripe Checkout
     if (paymentMethod === "creditcard") {
-      if (!validateCard()) {
-        setStep(4);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        return;
-      }
-
       setCheckoutLoading(true);
-      const last4 = cardDetails.number.replace(/\s/g, "").slice(-4) || "4242";
-      const randomNum = Math.floor(10000 + Math.random() * 90000);
-      setBookingRef(`GCG-${randomNum}`);
-
       try {
-        const res = await fetch("/api/orders", {
+        const res = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: customer.email || user?.email,
-            phone: customer.phone || user?.phone,
-            address: `${customer.address}, ${customer.postcode}`,
-            phoneno: customer.phone || user?.phone,
-            items: cartItems.map((item) => ({ id: item.id, db_id: item.db_id, name: item.name, price: item.price })),
-            scheduled_date: `${selectedDate} ${selectedTimeSlot}`,
-            status: "confirmed",
-            payment_method: "creditcard",
-            payment_status: "paid",
-            stripe_session_id: `stripe_${Date.now()}_${last4}`,
-            total_amount: total
+            items: cartItems.map((item) => ({
+              id: item.id,
+              db_id: item.db_id,
+              name: item.name,
+              price: item.price,
+              qty: item.qty,
+              duration: item.duration
+            })),
+            customer: {
+              firstName: customer.firstName || user?.firstName || "",
+              lastName: customer.lastName || user?.lastName || "",
+              email: customer.email || user?.email,
+              phone: customer.phone || user?.phone,
+              address: customer.address,
+              postcode: customer.postcode
+            },
+            scheduledDate: selectedDate,
+            selectedTimeSlot,
+            notes,
+            discountPercent: appliedDiscount,
+            totalAmount: total
           })
         });
 
-        if (!res.ok) {
-          throw new Error("Failed to record booking in database.");
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || "Failed to create Stripe checkout session.");
         }
 
-        // Realistic verification transition
-        await new Promise((r) => setTimeout(r, 600));
-        setShowConfirmation(true);
+        if (data.url) {
+          // Redirect user to Stripe-hosted payment page
+          window.location.href = data.url;
+        } else {
+          throw new Error("No checkout URL returned from Stripe.");
+        }
       } catch (err) {
-        console.error("Payment error:", err);
-        setCheckoutError(err.message || "Unable to complete transaction. Please try again.");
-      } finally {
+        console.error("Stripe checkout error:", err);
+        setCheckoutError(err.message || "Unable to connect to payment gateway. Please try again.");
         setCheckoutLoading(false);
       }
       return;
@@ -948,111 +950,38 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px", fontSize: "0.75rem", color: "var(--emerald-700)", fontWeight: "600" }}>
                             <span>🔒 256-bit SSL Encrypted</span>
                             <span>•</span>
-                            <span>Visa, Mastercard &amp; Amex</span>
+                            <span>Visa &amp; Mastercard</span>
                           </div>
                         )}
 
-                        {/* Embedded Card Entry Form when Credit Card is selected */}
+                        {/* Stripe redirect info box */}
                         {pm.id === "creditcard" && paymentMethod === "creditcard" && (
                           <div
                             onClick={(e) => e.stopPropagation()}
                             style={{
                               marginTop: "16px",
-                              padding: "18px 20px",
-                              background: "#ffffff",
+                              padding: "16px 18px",
+                              background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
                               borderRadius: "var(--radius-md)",
                               border: "1.5px solid var(--emerald-300)",
                               boxShadow: "var(--shadow-sm)"
                             }}
                           >
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-                              <span style={{ fontWeight: "700", fontSize: "0.88rem", color: "var(--slate-900)" }}>
-                                Enter Card Details:
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                              <Lock size={16} style={{ color: "var(--emerald-600)", flexShrink: 0 }} />
+                              <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "var(--emerald-800)" }}>
+                                Secure Stripe Checkout
                               </span>
-                              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                                <span style={{ fontSize: "0.7rem", fontWeight: "800", color: "#1a1f71", background: "#f0f4ff", padding: "2px 6px", borderRadius: "4px" }}>VISA</span>
-                                <span style={{ fontSize: "0.7rem", fontWeight: "800", color: "#eb001b", background: "#fff1f0", padding: "2px 6px", borderRadius: "4px" }}>MC</span>
-                                <span style={{ fontSize: "0.7rem", fontWeight: "800", color: "#006fcf", background: "#f0f9ff", padding: "2px 6px", borderRadius: "4px" }}>AMEX</span>
-                              </div>
                             </div>
-
-                            {/* Cardholder Name */}
-                            <div className="form-group" style={{ marginBottom: "12px" }}>
-                              <label className="form-label" style={{ fontSize: "0.8rem" }}>Name on Card *</label>
-                              <input
-                                type="text"
-                                placeholder="e.g. John Smith"
-                                value={cardDetails.name}
-                                onChange={(e) => {
-                                  setCardDetails({ ...cardDetails, name: e.target.value });
-                                  if (cardErrors.name) setCardErrors({ ...cardErrors, name: "" });
-                                }}
-                                className="form-input"
-                                style={{ padding: "9px 12px" }}
-                              />
-                              {cardErrors.name && <span style={{ color: "var(--danger-500)", fontSize: "0.78rem" }}>{cardErrors.name}</span>}
-                            </div>
-
-                            {/* Card Number */}
-                            <div className="form-group" style={{ marginBottom: "12px" }}>
-                              <label className="form-label" style={{ fontSize: "0.8rem" }}>Card Number *</label>
-                              <div style={{ position: "relative" }}>
-                                <input
-                                  type="text"
-                                  maxLength={19}
-                                  placeholder="4242 4242 4242 4242"
-                                  value={cardDetails.number}
-                                  onChange={handleCardNumberChange}
-                                  className="form-input"
-                                  style={{ padding: "9px 12px", paddingRight: "70px", fontFamily: "monospace", letterSpacing: "0.05em" }}
-                                />
-                                <span style={{
-                                  position: "absolute",
-                                  right: "12px",
-                                  top: "50%",
-                                  transform: "translateY(-50%)",
-                                  fontSize: "0.75rem",
-                                  fontWeight: "800",
-                                  color: getCardBrand(cardDetails.number).color
-                                }}>
-                                  {getCardBrand(cardDetails.number).name}
-                                </span>
-                              </div>
-                              {cardErrors.number && <span style={{ color: "var(--danger-500)", fontSize: "0.78rem" }}>{cardErrors.number}</span>}
-                            </div>
-
-                            {/* Expiry & CVC */}
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "8px" }}>
-                              <div className="form-group">
-                                <label className="form-label" style={{ fontSize: "0.8rem" }}>Expiry Date *</label>
-                                <input
-                                  type="text"
-                                  maxLength={7}
-                                  placeholder="MM / YY"
-                                  value={cardDetails.expiry}
-                                  onChange={handleExpiryChange}
-                                  className="form-input"
-                                  style={{ padding: "9px 12px", textAlign: "center" }}
-                                />
-                                {cardErrors.expiry && <span style={{ color: "var(--danger-500)", fontSize: "0.78rem" }}>{cardErrors.expiry}</span>}
-                              </div>
-
-                              <div className="form-group">
-                                <label className="form-label" style={{ fontSize: "0.8rem" }}>Security Code (CVC) *</label>
-                                <div style={{ position: "relative" }}>
-                                  <input
-                                    type="password"
-                                    maxLength={4}
-                                    placeholder="123"
-                                    value={cardDetails.cvc}
-                                    onChange={handleCvcChange}
-                                    className="form-input"
-                                    style={{ padding: "9px 12px", textAlign: "center" }}
-                                  />
-                                  <Lock size={13} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--slate-400)" }} />
-                                </div>
-                                {cardErrors.cvc && <span style={{ color: "var(--danger-500)", fontSize: "0.78rem" }}>{cardErrors.cvc}</span>}
-                              </div>
+                            <p style={{ fontSize: "0.82rem", color: "var(--slate-600)", margin: "0 0 10px 0", lineHeight: 1.5 }}>
+                              After reviewing your booking, you&apos;ll be securely redirected to
+                              Stripe&apos;s hosted payment page to enter your card details.
+                              Your card information is never stored on our servers.
+                            </p>
+                            <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                              <span style={{ fontSize: "0.72rem", fontWeight: "800", color: "#1a1f71", background: "#f0f4ff", padding: "3px 8px", borderRadius: "4px", border: "1px solid #c7d2fe" }}>VISA</span>
+                              <span style={{ fontSize: "0.72rem", fontWeight: "800", color: "#eb001b", background: "#fff1f0", padding: "3px 8px", borderRadius: "4px", border: "1px solid #fecaca" }}>MASTERCARD</span>
+                              <span style={{ fontSize: "0.72rem", fontWeight: "700", color: "var(--emerald-700)", background: "var(--emerald-50)", padding: "3px 8px", borderRadius: "4px" }}>🔒 Stripe Secured · GBP £</span>
                             </div>
                           </div>
                         )}
@@ -1170,10 +1099,15 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                   <p style={{ fontSize: "0.9rem", color: "var(--slate-700)" }}>
                     Payment Method: <strong>
                       {paymentMethod === "local" 
-                        ? "I will pay locally (cash or credit card)" 
-                        : `Credit Card (${getCardBrand(cardDetails.number).name} ending in •••• ${cardDetails.number.replace(/\s/g, "").slice(-4) || "4242"})`}
+                        ? "Pay Locally (Cash or Card upon arrival)" 
+                        : "Online via Stripe (Visa / Mastercard · GBP £)"}
                     </strong><br />
-                    {notes && <span>Notes: <em>&ldquo;{notes}&rdquo;</em></span>}
+                    {paymentMethod === "creditcard" && (
+                      <span style={{ fontSize: "0.82rem", color: "var(--emerald-700)" }}>
+                        🔒 You will be redirected to Stripe to complete payment securely.
+                      </span>
+                    )}
+                    {notes && <><br /><span>Notes: <em>&ldquo;{notes}&rdquo;</em></span></>}
                   </p>
                 </div>
               </div>
@@ -1207,12 +1141,12 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                 {checkoutLoading ? (
                   <>
                     <div className="spinner" style={{ width: "18px", height: "18px", border: "2px solid #ffffff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite", display: "inline-block", marginRight: "8px" }} />
-                    <span>Connecting to Stripe UK...</span>
+                    <span>Redirecting to Stripe Secure Checkout...</span>
                   </>
                 ) : paymentMethod === "creditcard" ? (
                   <>
-                    <CreditCard size={20} />
-                    <span>Pay with Card via Stripe (£{total.toFixed(2)})</span>
+                    <Lock size={18} />
+                    <span>Continue to Secure Payment · £{total.toFixed(2)}</span>
                   </>
                 ) : (
                   <>
@@ -1438,8 +1372,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                 <span style={{ color: "var(--slate-500)" }}>Payment:</span>
                 <strong style={{ color: paymentMethod === "creditcard" ? "var(--emerald-700)" : "var(--slate-800)" }}>
                   {paymentMethod === "creditcard"
-                    ? `Credit Card (${getCardBrand(cardDetails.number).name} ending in ${cardDetails.number.replace(/\s/g, "").slice(-4) || "4242"}) - Paid Online`
-                    : "Pay locally (cash or card upon arrival) - Pending Collection"}
+                    ? "Online via Stripe (GBP £)"
+                    : "Pay locally (cash or card upon arrival)"}
                 </strong>
               </div>
             </div>
