@@ -12,62 +12,47 @@ export default function FaqAccordion() {
   };
 
   return (
-    <div style={{ maxWidth: "840px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "14px" }}>
+    <div className="max-w-[840px] mx-auto flex flex-col gap-3.5">
       {FAQS.map((faq, idx) => {
         const isOpen = openIndex === idx;
         return (
-          <div 
+          <div
             key={idx}
-            className="glass-card"
+            className="bg-white/95 backdrop-blur-md rounded-2xl overflow-hidden transition-all duration-150"
             style={{
-              borderRadius: "var(--radius-md)",
-              border: isOpen ? "1.5px solid var(--emerald-400)" : "1px solid var(--border-subtle)",
-              overflow: "hidden",
-              transition: "all var(--transition-fast)"
+              border: isOpen ? "1.5px solid var(--color-emerald-400)" : "1px solid var(--color-border-subtle)",
             }}
           >
             <button
               onClick={() => toggle(idx)}
-              style={{
-                width: "100%",
-                padding: "20px 24px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "16px",
-                textAlign: "left",
-                background: isOpen ? "var(--emerald-50)" : "#ffffff",
-                transition: "background var(--transition-fast)"
-              }}
+              className="w-full px-6 py-5 flex items-center justify-between gap-4 text-left transition-colors duration-150"
+              style={{ background: isOpen ? "var(--color-emerald-50)" : "#ffffff" }}
               aria-expanded={isOpen}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <HelpCircle size={20} color={isOpen ? "#059669" : "#64748b"} style={{ flexShrink: 0 }} />
-                <span style={{ fontWeight: "700", fontSize: "1.05rem", color: isOpen ? "var(--emerald-950)" : "var(--slate-800)" }}>
+              <div className="flex items-center gap-3">
+                <HelpCircle size={20} color={isOpen ? "#059669" : "#64748b"} className="shrink-0" />
+                <span
+                  className="font-bold text-[1.05rem]"
+                  style={{ color: isOpen ? "var(--color-emerald-950)" : "var(--color-slate-800)" }}
+                >
                   {faq.question}
                 </span>
               </div>
-              <ChevronDown 
-                size={18} 
+              <ChevronDown
+                size={18}
+                className="shrink-0"
                 style={{
                   transform: isOpen ? "rotate(180deg)" : "rotate(0)",
                   transition: "transform 0.25s ease",
-                  color: isOpen ? "var(--emerald-600)" : "var(--slate-400)",
-                  flexShrink: 0
-                }} 
+                  color: isOpen ? "var(--color-emerald-600)" : "var(--color-slate-400)",
+                }}
               />
             </button>
 
             {isOpen && (
-              <div 
-                style={{
-                  padding: "0 24px 22px 56px",
-                  background: "var(--emerald-50)",
-                  color: "var(--slate-700)",
-                  fontSize: "0.975rem",
-                  lineHeight: "1.65",
-                  animation: "dropdownFadeIn 0.2s ease"
-                }}
+              <div
+                className="px-6 pb-[22px] pl-14 text-slate-700 text-[0.975rem] leading-[1.65]"
+                style={{ background: "var(--color-emerald-50)", animation: "dropdownFadeIn 0.2s ease" }}
               >
                 {faq.answer}
               </div>

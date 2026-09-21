@@ -481,10 +481,10 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
   return (
     <div style={{ position: "relative" }}>
       {/* 5-Step Progress Stepper */}
-      <div className="booking-stepper-wrap">
-        <div className="stepper-progress-bar">
+      <div className="flex items-center justify-between mb-10 relative overflow-x-auto py-2.5">
+        <div className="absolute top-6 left-[5%] right-[5%] h-1 bg-slate-200 z-[1]">
           <div
-            className="stepper-progress-fill"
+            className="h-full bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full transition-all duration-300"
             style={{ width: `${((step - 1) / 4) * 100}%` }}
           />
         </div>
@@ -499,23 +499,16 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
           <button
             type="button"
             key={node.num}
-            className={`step-node ${step === node.num ? "active" : ""} ${step > node.num ? "completed" : ""}`}
-            onClick={() => {
-              if (step > node.num) setStep(node.num);
-            }}
+            className={`step-node relative z-[2] flex flex-col items-center gap-2 min-w-[90px] ${step === node.num ? "active" : ""} ${step > node.num ? "completed" : ""}`}
+            onClick={() => { if (step > node.num) setStep(node.num); }}
             disabled={step <= node.num}
-            style={{
-              cursor: step > node.num ? "pointer" : "default",
-              border: "none",
-              background: "transparent",
-              padding: 0
-            }}
+            style={{ cursor: step > node.num ? "pointer" : "default", border: "none", background: "transparent", padding: 0 }}
             aria-label={`Step ${node.num}: ${node.label}`}
           >
-            <div className="step-node-bubble">
+            <div className="step-node-bubble w-9 h-9 rounded-full bg-white border-2 border-slate-300 text-slate-500 flex items-center justify-center font-bold text-[0.9rem] transition-all duration-300">
               {step > node.num ? <Check size={18} /> : node.num}
             </div>
-            <span className="step-node-label">{node.label}</span>
+            <span className="step-node-label text-[0.8rem] font-semibold text-slate-500 text-center whitespace-nowrap">{node.label}</span>
           </button>
         ))}
       </div>
@@ -571,8 +564,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
       )}
 
       {/* Main Grid: Wizard Form on Left, Sticky Cart on Right */}
-      <div className="booking-main-grid">
-        <div className="booking-form-col">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_360px] gap-6 lg:gap-7 w-full box-border items-start">
+        <div className="min-w-0 w-full box-border">
 
           {/* ================================================================
               STEP 1: SELECT SERVICES
@@ -591,13 +584,13 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                     </p>
                   </div>
 
-                  <div className="service-booking-grid">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {cat.items.map((item) => {
                       const qty = cart[item.id]?.qty || 0;
                       return (
                         <div
                           key={item.id}
-                          className={`booking-item-card ${qty > 0 ? "has-quantity" : ""}`}
+                          className={`booking-item-card flex items-center justify-between gap-3 p-3 px-3.5 bg-white border border-slate-200/80 rounded-2xl transition-all duration-150 w-full box-border min-w-0 hover:border-emerald-300 hover:shadow-md ${qty > 0 ? "has-quantity" : ""}`}
                         >
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px", flexWrap: "wrap" }}>
@@ -629,22 +622,22 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                           </div>
 
                           {/* Counter */}
-                          <div className="qty-control">
+                          <div className="inline-flex items-center gap-2 bg-white py-[3px] px-1.5 rounded-full border border-slate-200/80 shrink-0">
                             <button
                               type="button"
                               onClick={() => updateQty(item, -1)}
                               disabled={qty === 0}
-                              className="qty-btn"
+                              className="w-[26px] h-[26px] rounded-full bg-slate-100 flex items-center justify-center text-base font-bold text-slate-700 transition-all duration-150 hover:enabled:bg-emerald-600 hover:enabled:text-white"
                               aria-label={`Decrease ${item.name}`}
                               style={{ opacity: qty === 0 ? 0.35 : 1 }}
                             >
                               <Minus size={13} />
                             </button>
-                            <span className="qty-number">{qty}</span>
+                            <span className="min-w-[18px] text-center font-bold text-[0.95rem] text-slate-900">{qty}</span>
                             <button
                               type="button"
                               onClick={() => updateQty(item, 1)}
-                              className="qty-btn"
+                              className="w-[26px] h-[26px] rounded-full bg-slate-100 flex items-center justify-center text-base font-bold text-slate-700 transition-all duration-150 hover:bg-emerald-600 hover:text-white"
                               aria-label={`Increase ${item.name}`}
                             >
                               <Plus size={13} />
@@ -663,7 +656,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               STEP 2: CHOOSE DATE & TIME
              ================================================================ */}
           {step === 2 && (
-            <div className="glass-card responsive-card-padding">
+            <div className="bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-3xl shadow-md p-6 sm:p-9">
               <div style={{ marginBottom: "28px" }}>
                 <h3 style={{ fontSize: "1.35rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "6px" }}>
                   Select Your Preferred Date
@@ -727,18 +720,15 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                 </p>
               </div>
 
-              <div className="time-slots-grid">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                 {UK_TIME_SLOTS.map((slot) => {
                   const isSelected = selectedTimeSlot === slot;
                   return (
                     <button
                       key={slot}
                       type="button"
-                      onClick={() => {
-                        setSelectedTimeSlot(slot);
-                        setDateTimeError("");
-                      }}
-                      className={`time-slot-btn ${isSelected ? "selected" : ""}`}
+                      onClick={() => { setSelectedTimeSlot(slot); setDateTimeError(""); }}
+                      className={`time-slot-btn py-4 px-3.5 rounded-2xl border border-slate-200 bg-white text-center font-semibold text-[0.925rem] text-slate-700 transition-all duration-150 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 ${isSelected ? "selected" : ""}`}
                     >
                       <Clock size={16} style={{ display: "inline", verticalAlign: "middle", marginRight: "6px" }} />
                       <span>{slot}</span>
@@ -772,7 +762,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               STEP 3: CONTACT & ADDRESS
              ================================================================ */}
           {step === 3 && (
-            <div className="glass-card responsive-card-padding">
+            <div className="bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-3xl shadow-md p-6 sm:p-9">
               <div style={{ marginBottom: "24px" }}>
                 <h3 style={{ fontSize: "1.35rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "6px" }}>
                   Your Contact &amp; Property Details
@@ -784,77 +774,77 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
-                  <div className="form-group">
-                    <label className="form-label">First Name *</label>
+                  <div className="mb-5">
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">First Name *</label>
                     <input
                       type="text"
                       value={customer.firstName}
                       onChange={(e) => setCustomer({ ...customer, firstName: e.target.value })}
                       placeholder="e.g. John"
-                      className="form-input"
+                      className="form-input w-full py-[13px] px-4 border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                     />
                     {formErrors.firstName && <span style={{ color: "var(--danger-500)", fontSize: "0.8rem" }}>{formErrors.firstName}</span>}
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Last Name *</label>
+                  <div className="mb-5">
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Last Name *</label>
                     <input
                       type="text"
                       value={customer.lastName}
                       onChange={(e) => setCustomer({ ...customer, lastName: e.target.value })}
                       placeholder="e.g. Smith"
-                      className="form-input"
+                      className="form-input w-full py-[13px] px-4 border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                     />
                     {formErrors.lastName && <span style={{ color: "var(--danger-500)", fontSize: "0.8rem" }}>{formErrors.lastName}</span>}
                   </div>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
-                  <div className="form-group">
-                    <label className="form-label">Phone Number *</label>
+                  <div className="mb-5">
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Phone Number *</label>
                     <input
                       type="tel"
                       value={customer.phone !== "" ? customer.phone : (user?.phone || "")}
                       onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
                       placeholder="e.g. 07359068284"
-                      className="form-input"
+                      className="form-input w-full py-[13px] px-4 border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                     />
                     {formErrors.phone && <span style={{ color: "var(--danger-500)", fontSize: "0.8rem" }}>{formErrors.phone}</span>}
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Email Address *</label>
+                  <div className="mb-5">
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email Address *</label>
                     <input
                       type="email"
                       value={customer.email !== "" ? customer.email : (user?.email || "")}
                       onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
                       placeholder="e.g. john@example.com"
-                      className="form-input"
+                      className="form-input w-full py-[13px] px-4 border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                     />
                     {formErrors.email && <span style={{ color: "var(--danger-500)", fontSize: "0.8rem" }}>{formErrors.email}</span>}
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Street Address *</label>
+                <div className="mb-5">
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Street Address *</label>
                   <input
                     type="text"
                     value={customer.address}
                     onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
                     placeholder="e.g. 24 Dale Street, Apt 3B"
-                    className="form-input"
+                    className="form-input w-full py-[13px] px-4 border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                   />
                   {formErrors.address && <span style={{ color: "var(--danger-500)", fontSize: "0.8rem" }}>{formErrors.address}</span>}
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Postcode (Liverpool / Merseyside) *</label>
+                <div className="mb-5">
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Postcode (Liverpool / Merseyside) *</label>
                   <input
                     type="text"
                     value={customer.postcode}
                     onChange={(e) => setCustomer({ ...customer, postcode: e.target.value })}
                     placeholder="e.g. L2 5ST"
-                    className="form-input"
+                    className="form-input w-full py-[13px] px-4 border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                     style={{ maxWidth: "200px" }}
                   />
                   {formErrors.postcode && <span style={{ color: "var(--danger-500)", fontSize: "0.8rem" }}>{formErrors.postcode}</span>}
@@ -867,10 +857,10 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               STEP 4: PAYMENT & NOTES
              ================================================================ */}
           {step === 4 && (
-            <div className="glass-card responsive-card-padding">
+            <div className="bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-3xl shadow-md p-6 sm:p-9">
               {/* Coupon input */}
               <div style={{ marginBottom: "32px", padding: "20px", background: "var(--emerald-50)", borderRadius: "var(--radius-md)", border: "1px dashed var(--emerald-300)" }}>
-                <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 mb-1.5">
                   <Tag size={16} color="#059669" />
                   <span>Have a promo code? (Try: ECO10)</span>
                 </label>
@@ -880,10 +870,10 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
                     placeholder="Enter coupon code"
-                    className="form-input"
+                    className="form-input w-full py-[13px] px-4 border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                     style={{ textTransform: "uppercase" }}
                   />
-                  <button type="button" onClick={handleApplyCoupon} className="btn btn-secondary">
+                  <button type="button" onClick={handleApplyCoupon} className="inline-flex items-center justify-center gap-2.5 px-[26px] py-3.5 rounded-full bg-white text-emerald-800 font-semibold text-[0.975rem] border border-emerald-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 hover:-translate-y-0.5 transition-all duration-200">
                     Apply
                   </button>
                 </div>
@@ -977,8 +967,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                             </div>
 
                             {/* Cardholder Name */}
-                            <div className="form-group" style={{ marginBottom: "12px" }}>
-                              <label className="form-label" style={{ fontSize: "0.8rem" }}>Name on Card *</label>
+                            <div className="mb-3">
+                              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Name on Card *</label>
                               <input
                                 type="text"
                                 placeholder="e.g. John Smith"
@@ -987,15 +977,15 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                                   setCardDetails({ ...cardDetails, name: e.target.value });
                                   if (cardErrors.name) setCardErrors({ ...cardErrors, name: "" });
                                 }}
-                                className="form-input"
+                                className="form-input w-full border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                                 style={{ padding: "9px 12px" }}
                               />
                               {cardErrors.name && <span style={{ color: "var(--danger-500)", fontSize: "0.78rem" }}>{cardErrors.name}</span>}
                             </div>
 
                             {/* Card Number */}
-                            <div className="form-group" style={{ marginBottom: "12px" }}>
-                              <label className="form-label" style={{ fontSize: "0.8rem" }}>Card Number *</label>
+                            <div className="mb-3">
+                              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Card Number *</label>
                               <div style={{ position: "relative" }}>
                                 <input
                                   type="text"
@@ -1023,8 +1013,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
                             {/* Expiry & CVC */}
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "8px" }}>
-                              <div className="form-group">
-                                <label className="form-label" style={{ fontSize: "0.8rem" }}>Expiry Date *</label>
+                              <div className="mb-0">
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Expiry Date *</label>
                                 <input
                                   type="text"
                                   maxLength={7}
@@ -1037,8 +1027,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                                 {cardErrors.expiry && <span style={{ color: "var(--danger-500)", fontSize: "0.78rem" }}>{cardErrors.expiry}</span>}
                               </div>
 
-                              <div className="form-group">
-                                <label className="form-label" style={{ fontSize: "0.8rem" }}>Security Code (CVC) *</label>
+                              <div className="mb-0">
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Security Code (CVC) *</label>
                                 <div style={{ position: "relative" }}>
                                   <input
                                     type="password"
@@ -1046,7 +1036,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                                     placeholder="123"
                                     value={cardDetails.cvc}
                                     onChange={handleCvcChange}
-                                    className="form-input"
+                                    className="form-input w-full border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                                     style={{ padding: "9px 12px", textAlign: "center" }}
                                   />
                                   <Lock size={13} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--slate-400)" }} />
@@ -1063,14 +1053,14 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               </div>
 
               {/* Special Notes */}
-              <div className="form-group" style={{ marginBottom: "28px" }}>
-                <label className="form-label">Any specific parking or access notes for the cleaner?</label>
+              <div className="mb-7">
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Any specific parking or access notes for the cleaner?</label>
                 <textarea
                   rows={3}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g. Key safe code, park in driveway, beware of friendly golden retriever..."
-                  className="form-textarea"
+                  className="form-textarea w-full py-[13px] px-4 border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                 />
               </div>
 
@@ -1107,7 +1097,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               STEP 5: SUMMARY & CONFIRMATION
              ================================================================ */}
           {step === 5 && (
-            <div className="glass-card responsive-card-padding">
+            <div className="bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-3xl shadow-md p-6 sm:p-9">
               <h3 style={{ fontSize: "1.45rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "24px" }}>
                 Please Review Your Booking
               </h3>
@@ -1201,8 +1191,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                 type="button"
                 onClick={handleFinalConfirm}
                 disabled={checkoutLoading}
-                className="btn btn-primary btn-lg"
-                style={{ width: "100%", fontSize: "1.15rem", opacity: checkoutLoading ? 0.7 : 1 }}
+                className="inline-flex items-center justify-center gap-2.5 w-full px-8 py-4 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-semibold text-[1.15rem] shadow-[0_10px_25px_-5px_rgba(16,185,129,0.35)] hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-4px_rgba(16,185,129,0.45)] active:translate-y-0 transition-all duration-200"
+                style={{ opacity: checkoutLoading ? 0.7 : 1 }}
               >
                 {checkoutLoading ? (
                   <>
@@ -1230,7 +1220,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               <button
                 type="button"
                 onClick={() => setStep(step - 1)}
-                className="btn btn-secondary"
+                className="inline-flex items-center justify-center gap-2.5 px-[26px] py-3.5 rounded-full bg-white text-emerald-800 font-semibold text-[0.975rem] border border-emerald-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 hover:-translate-y-0.5 transition-all duration-200"
               >
                 <ChevronLeft size={16} />
                 <span>Back to Step {step - 1}</span>
@@ -1242,8 +1232,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
         {/* ================================================================
             STICKY CART / ORDER SUMMARY SIDEBAR
            ================================================================ */}
-        <div className="booking-sidebar-col">
-          <div className="sticky-summary-card">
+        <div className="min-w-0 w-full box-border">
+          <div className="sticky top-[90px] bg-white border border-slate-200/80 rounded-3xl p-5 shadow-lg w-full box-border">
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "18px", paddingBottom: "14px", borderBottom: "1px solid var(--slate-200)" }}>
               <ShoppingBag size={20} color="#059669" />
               <h3 style={{ fontSize: "1.2rem", fontWeight: "800", color: "var(--slate-900)" }}>
@@ -1319,7 +1309,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                   type="button"
                   onClick={handleNext}
                   disabled={step === 1 && !meetsMinimum}
-                  className="btn btn-primary"
+                  className="inline-flex items-center justify-center gap-2 w-full rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-bold shadow-[0_10px_25px_-5px_rgba(16,185,129,0.35)] hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-4px_rgba(16,185,129,0.45)] active:translate-y-0 transition-all duration-200"
                   style={{
                     width: "100%",
                     padding: "14px 20px",
@@ -1363,16 +1353,14 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
           padding: "20px"
         }}>
           <div
-            className="glass-card"
+            className="bg-white border border-slate-200/80 rounded-3xl relative"
             style={{
               maxWidth: "520px",
               width: "100%",
               padding: "40px 32px",
               textAlign: "center",
-              background: "#ffffff",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
-              animation: "dropdownFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-              position: "relative"
+              animation: "dropdownFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
             }}
           >
             <button
@@ -1448,14 +1436,14 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="btn btn-secondary btn-sm"
+                className="inline-flex items-center justify-center gap-2.5 px-[18px] py-[9px] rounded-full bg-white text-emerald-800 font-semibold text-sm border border-emerald-200 shadow-sm hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-200"
               >
                 <Printer size={15} />
                 <span>Print Receipt</span>
               </button>
               <Link
                 href="/"
-                className="btn btn-primary btn-sm"
+                className="inline-flex items-center justify-center gap-2.5 px-[18px] py-[9px] rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-semibold text-sm shadow-[0_4px_14px_0_rgba(16,185,129,0.25)] hover:-translate-y-0.5 transition-all duration-200"
               >
                 Return to Homepage
               </Link>
@@ -1477,15 +1465,12 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
           zIndex: 9999,
           padding: "20px"
         }}>
-          <div className="glass-card" style={{
-            background: "#ffffff",
+          <div className="bg-white rounded-3xl relative" style={{
             maxWidth: "460px",
             width: "100%",
-            borderRadius: "var(--radius-lg)",
             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
             padding: "32px",
-            position: "relative",
-            border: "1.5px solid var(--emerald-200)"
+            border: "1.5px solid var(--color-emerald-200)"
           }}>
             <button
               type="button"
@@ -1595,38 +1580,38 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
             )}
 
             <form onSubmit={handleAuthSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div className="form-group">
-                <label className="form-label" style={{ fontSize: "0.825rem" }}>Email Address *</label>
+              <div className="mb-0">
+                <label className="block text-[0.825rem] font-semibold text-slate-700 mb-1.5">Email Address *</label>
                 <input
                   type="email"
                   required
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
                   placeholder="name@example.co.uk"
-                  className="form-input"
+                  className="form-input w-full border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                   style={{ padding: "10px 12px" }}
                   autoComplete="email"
                 />
               </div>
 
               {authMode === "register" && (
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: "0.825rem" }}>Phone Number *</label>
+                <div className="mb-0">
+                  <label className="block text-[0.825rem] font-semibold text-slate-700 mb-1.5">Phone Number *</label>
                   <input
                     type="tel"
                     required
                     value={authPhone}
                     onChange={(e) => setAuthPhone(e.target.value)}
                     placeholder="e.g. 07359068284"
-                    className="form-input"
+                    className="form-input w-full border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                     style={{ padding: "10px 12px" }}
                     autoComplete="tel"
                   />
                 </div>
               )}
 
-              <div className="form-group">
-                <label className="form-label" style={{ fontSize: "0.825rem" }}>Password *</label>
+              <div className="mb-0">
+                <label className="block text-[0.825rem] font-semibold text-slate-700 mb-1.5">Password *</label>
                 <div style={{ position: "relative" }}>
                   <input
                     type={authShowPassword ? "text" : "password"}
@@ -1634,7 +1619,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                     value={authPassword}
                     onChange={(e) => setAuthPassword(e.target.value)}
                     placeholder={authMode === "login" ? "Enter your password" : "At least 6 characters"}
-                    className="form-input"
+                    className="form-input w-full border-[1.5px] border-slate-200 rounded-[10px] bg-white text-slate-800 text-[0.95rem] transition-colors duration-150"
                     style={{ padding: "10px 12px", paddingRight: "36px" }}
                     autoComplete={authMode === "login" ? "current-password" : "new-password"}
                   />
@@ -1657,8 +1642,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               <button
                 type="submit"
                 disabled={authLoading}
-                className="btn btn-primary"
-                style={{ width: "100%", marginTop: "6px", padding: "11px" }}
+                className="inline-flex items-center justify-center gap-2.5 w-full px-6 py-[11px] rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-semibold text-[0.975rem] shadow-[0_10px_25px_-5px_rgba(16,185,129,0.35)] hover:-translate-y-0.5 transition-all duration-200 mt-1.5"
+                style={{ marginTop: "6px" }}
               >
                 <span>{authLoading ? "Authenticating..." : authMode === "login" ? "Sign In & Continue" : "Create Account & Continue"}</span>
                 <ChevronRight size={16} />
