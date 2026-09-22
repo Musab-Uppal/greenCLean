@@ -47,7 +47,12 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  const categories = await getDbCategoriesWithServices();
+  let categories = [];
+  try {
+    categories = await getDbCategoriesWithServices();
+  } catch (err) {
+    console.error("[Layout] Failed to load categories:", err?.message ?? err);
+  }
 
   return (
     <html lang="en-GB" className={`${geistSans.variable} ${geistMono.variable}`}>
