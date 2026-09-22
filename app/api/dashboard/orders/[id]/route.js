@@ -30,26 +30,40 @@ export async function PATCH(request, { params }) {
 
     const resolvedParams = await params;
     const orderId = parseInt(resolvedParams.id, 10);
-    const order = getOrderById(orderId);
+
+    if (isNaN(orderId)) {
+      return NextResponse.json({ error: "Invalid order ID." }, { status: 400 });
+    }
+
+    const order = await getOrderById(orderId);
 
     if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Order not found. It may have been removed or the ID is incorrect." },
+        { status: 404 }
+      );
     }
 
     // Ensure the order belongs to the logged-in user
-    if (order.customer_id !== payload.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (Number(order.customer_id) !== Number(payload.id)) {
+      return NextResponse.json(
+        { error: "You don't have permission to reschedule this order. Please contact support if you believe this is an error." },
+        { status: 403 }
+      );
     }
 
     // Block editing completed orders
     if (order.status === "completed") {
-      return NextResponse.json({ error: "Cannot edit a completed order" }, { status: 400 });
+      return NextResponse.json(
+        { error: "This order has already been completed and cannot be rescheduled." },
+        { status: 400 }
+      );
     }
 
-    // Block editing if the service is currently scheduled for today (or in the past)
+    // Block editing if the service is scheduled for today or in the past
     if (isTodayOrPast(order.scheduled_date)) {
       return NextResponse.json(
-        { error: "Cannot reschedule an order on or after the service date" },
+        { error: "This appointment is today or has already passed and can no longer be rescheduled. Please call us on 07359 068284 to make changes." },
         { status: 400 }
       );
     }
@@ -80,23 +94,23 @@ export async function PATCH(request, { params }) {
     }
 
     const todayInUk = getUkDateString();
-    // New date cannot be today or in the past in Liverpool UK timezone
     if (newDate <= todayInUk) {
       return NextResponse.json(
-        { error: "New schedule date must be in the future (from tomorrow onwards)" },
+        { error: "Please select a future date — tomorrow or later — to reschedule your appointment." },
         { status: 400 }
       );
     }
 
     const normalizedTime = normalizeTimeSlot(newTime);
     const newScheduledDate = `${newDate} ${normalizedTime}`;
-    updateOrderScheduleTime(orderId, newScheduledDate);
+    await updateOrderScheduleTime(orderId, newScheduledDate);
 
     return NextResponse.json({ success: true, scheduled_date: newScheduledDate });
   } catch (error) {
-    console.error("Order update error:", error);
-    return NextResponse.json({ error: "Failed to update order schedule" }, { status: 500 });
+    console.error("[reschedule order]", error);
+    return NextResponse.json(
+      { error: "Something went wrong while rescheduling. Please try again or call us on 07359 068284." },
+      { status: 500 }
+    );
   }
 }
-
-

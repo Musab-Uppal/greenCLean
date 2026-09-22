@@ -31,10 +31,8 @@ import {
 } from "@/lib/dateUtils";
 
 const STATUS_CONFIG = {
-  confirmed: { label: "Confirmed", icon: CheckCircle2, color: "#059669", bg: "#ecfdf5", border: "#6ee7b7" },
   pending: { label: "Pending", icon: Clock, color: "#d97706", bg: "#fffbeb", border: "#fcd34d" },
-  completed: { label: "Completed", icon: CheckCircle2, color: "#2563eb", bg: "#eff6ff", border: "#93c5fd" },
-  cancelled: { label: "Cancelled", icon: XCircle, color: "#dc2626", bg: "#fef2f2", border: "#fca5a5" },
+  completed: { label: "Completed", icon: CheckCircle2, color: "#059669", bg: "#ecfdf5", border: "#6ee7b7" },
 };
 
 const TIME_SLOTS = UK_TIME_SLOTS;
@@ -158,8 +156,14 @@ function OrderCard({ order, onSaved }) {
             <Package size={20} color="#fff" />
           </div>
           <div>
-            <div style={{ fontWeight: "700", fontSize: "1rem", color: "#0f172a" }}>{order.service_name}</div>
-            <div style={{ fontSize: "0.78rem", color: "#64748b", marginTop: "2px" }}>Order #{order.order_id} · {order.category_name}</div>
+            <div style={{ fontWeight: "700", fontSize: "1rem", color: "#0f172a" }}>
+              {Array.isArray(order.items) && order.items.length > 1
+                ? `${order.items.length} Services Booked`
+                : (order.service_name || "Eco Cleaning Service")}
+            </div>
+            <div style={{ fontSize: "0.78rem", color: "#64748b", marginTop: "2px" }}>
+              Order #{order.order_id} · {order.category_name}
+            </div>
           </div>
         </div>
 
@@ -212,6 +216,37 @@ function OrderCard({ order, onSaved }) {
           )}
         </div>
       </div>
+
+      {/* Itemized Services Breakdown if multiple */}
+      {Array.isArray(order.items) && order.items.length > 1 && (
+        <div style={{
+          background: "#f8fafc",
+          borderRadius: "10px",
+          padding: "10px 14px",
+          border: "1px solid #f1f5f9",
+          display: "flex",
+          flexDirection: "column",
+          gap: "6px"
+        }}>
+          <div style={{ fontSize: "0.7rem", fontWeight: "700", textTransform: "uppercase", color: "#94a3b8" }}>
+            Included Services ({order.items.length})
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+            {order.items.map((it, idx) => (
+              <span key={idx} style={{
+                fontSize: "0.78rem",
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                padding: "3px 8px",
+                borderRadius: "6px",
+                color: "#334155"
+              }}>
+                {it.service_name} (£{Number(it.price).toFixed(2)})
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Error */}
       {saveErr && (
@@ -318,8 +353,10 @@ function OrderCard({ order, onSaved }) {
         <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
           <span style={{ fontSize: "0.85rem", color: "#94a3b8", fontWeight: "700", marginTop: "2px", flexShrink: 0, lineHeight: 1 }}>£</span>
           <div>
-            <div style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Price</div>
-            <div style={{ fontSize: "0.85rem", color: "#059669", fontWeight: "700", marginTop: "2px" }}>£{order.service_price ?? "—"}</div>
+            <div style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Price</div>
+            <div style={{ fontSize: "0.85rem", color: "#059669", fontWeight: "700", marginTop: "2px" }}>
+              £{Number(order.total_amount ?? order.service_price ?? 0).toFixed(2)}
+            </div>
           </div>
         </div>
 
@@ -329,7 +366,11 @@ function OrderCard({ order, onSaved }) {
           <div>
             <div style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Payment</div>
             <div style={{ fontSize: "0.82rem", color: order.payment_status === "paid" ? "#059669" : "#d97706", fontWeight: "600", marginTop: "2px" }}>
-              {order.payment_method === "creditcard" ? (order.payment_status === "paid" ? "Paid via Card" : "Card (Pending)") : "Pay on Arrival"}
+              {order.payment_method === "creditcard"
+                ? (order.payment_status === "paid" ? "Paid via Card ✓" : "Card (Pending)")
+                : order.payment_method === "paypal"
+                ? (order.payment_status === "paid" ? "Paid via PayPal ✓" : "PayPal (Pending)")
+                : "Pay on Arrival"}
             </div>
           </div>
         </div>

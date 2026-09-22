@@ -96,7 +96,7 @@ const orderResult = createOrder({
   customer_id: user.id,
   address: orderAddress,
   phoneno: altPhoneForOrder,
-  status: "confirmed"
+  status: "pending"
 });
 console.log(`- Created order ID: ${orderResult.lastInsertRowid}`);
 

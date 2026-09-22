@@ -1,85 +1,78 @@
-import { db, initSchema } from "../lib/db.js";
+import { PrismaClient } from "@prisma/client";
 import { SERVICE_CATEGORIES } from "../data/servicesData.js";
 
-console.log("🌱 Starting SQLite database initialization and seeding...");
+const prisma = new PrismaClient();
 
-// Ensure schema is created
-initSchema();
+async function main() {
+  console.log("🌱 Starting PostgreSQL database seeding with Prisma...");
 
-// Begin transaction for fast and atomic seeding
-const insertCategoryStmt = db.prepare(`
-  INSERT INTO category (name, slug)
-  VALUES (@name, @slug)
-  ON CONFLICT(name) DO UPDATE SET slug = excluded.slug
-`);
-
-const getCategoryByNameStmt = db.prepare(`
-  SELECT id FROM category WHERE name = ?
-`);
-
-const insertProductServiceStmt = db.prepare(`
-  INSERT INTO product_service (name, category_id, price, width, time, slug)
-  VALUES (@name, @category_id, @price, @width, @time, @slug)
-  ON CONFLICT(slug) DO UPDATE SET
-    name = excluded.name,
-    category_id = excluded.category_id,
-    price = excluded.price,
-    width = excluded.width,
-    time = excluded.time
-`);
-
-const seedTransaction = db.transaction(() => {
   let categoryCount = 0;
   let serviceCount = 0;
 
   for (const cat of SERVICE_CATEGORIES) {
-    insertCategoryStmt.run({
-      name: cat.title,
-      slug: cat.slug || cat.id
+    const slug = cat.slug || cat.id;
+
+    // Upsert category
+    const category = await prisma.category.upsert({
+      where: { name: cat.title },
+      update: { slug },
+      create: { name: cat.title, slug },
     });
     categoryCount++;
 
-    const categoryRow = getCategoryByNameStmt.get(cat.title);
-    const categoryId = categoryRow.id;
-
+    // Upsert each service in the category
     for (const item of cat.items) {
-      insertProductServiceStmt.run({
-        name: item.name.trim(),
-        category_id: categoryId,
-        price: item.price,
-        width: item.width || null,
-        time: item.duration || "1 hr",
-        slug: item.id
+      await prisma.productService.upsert({
+        where: { slug: item.id },
+        update: {
+          name: item.name.trim(),
+          categoryId: category.id,
+          price: item.price,
+          width: item.width || null,
+          time: item.duration || "1 hr",
+        },
+        create: {
+          name: item.name.trim(),
+          categoryId: category.id,
+          price: item.price,
+          width: item.width || null,
+          time: item.duration || "1 hr",
+          slug: item.id,
+        },
       });
       serviceCount++;
     }
   }
 
-  return { categoryCount, serviceCount };
-});
+  console.log(`✅ Seeding complete!`);
+  console.log(`   - Categories inserted/updated: ${categoryCount}`);
+  console.log(`   - Products/Services inserted/updated: ${serviceCount}`);
 
-const result = seedTransaction();
+  // Verify DB contents
+  const categories = await prisma.category.findMany();
+  console.log("\n📂 Categories in DB:");
+  console.table(categories);
 
-console.log(`✅ Seeding complete!`);
-console.log(`   - Categories inserted/updated: ${result.categoryCount}`);
-console.log(`   - Products/Services inserted/updated: ${result.serviceCount}`);
+  const servicesSample = await prisma.productService.findMany({
+    take: 10,
+    include: { category: true },
+  });
+  console.log("\n🧹 Sample Products/Services in DB:");
+  console.table(
+    servicesSample.map((s) => ({
+      id: s.id,
+      name: s.name,
+      category: s.category.name,
+      price: s.price,
+      width: s.width,
+      time: s.time,
+    }))
+  );
+}
 
-// Verify and display database contents
-const categories = db.prepare("SELECT * FROM category").all();
-console.log("\n📂 Categories in DB:");
-console.table(categories);
-
-const servicesSample = db.prepare(`
-  SELECT 
-    ps.id,
-    ps.name,
-    c.name AS category,
-    ps.price,
-    ps.width,
-    ps.time
-  FROM product_service ps
-  JOIN category c ON ps.category_id = c.id
-  LIMIT 10
-`).all();
-console.log("\n🧹 Sample Products/Services in DB:");
-console.table(servicesSample);
+main()
+  .catch((e) => {
+    console.error("❌ Seeding failed:", e);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

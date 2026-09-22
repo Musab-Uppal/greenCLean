@@ -387,53 +387,68 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
     setCheckoutError("");
 
-    // Option B: Online Payment — redirect to Stripe Checkout
+    // Build shared booking payload for online payment gateways
+    const onlinePayload = {
+      items: cartItems.map((item) => ({
+        id: item.id,
+        db_id: item.db_id,
+        name: item.name,
+        price: item.price,
+        qty: item.qty,
+        duration: item.duration,
+      })),
+      customer: {
+        firstName: customer.firstName || user?.firstName || "",
+        lastName: customer.lastName || user?.lastName || "",
+        email: customer.email || user?.email,
+        phone: customer.phone || user?.phone,
+        address: customer.address,
+        postcode: customer.postcode,
+      },
+      scheduledDate: selectedDate,
+      selectedTimeSlot,
+      notes,
+      discountPercent: appliedDiscount,
+      totalAmount: total,
+    };
+
+    // Option B: Stripe Credit / Debit Card
     if (paymentMethod === "creditcard") {
       setCheckoutLoading(true);
       try {
         const res = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            items: cartItems.map((item) => ({
-              id: item.id,
-              db_id: item.db_id,
-              name: item.name,
-              price: item.price,
-              qty: item.qty,
-              duration: item.duration
-            })),
-            customer: {
-              firstName: customer.firstName || user?.firstName || "",
-              lastName: customer.lastName || user?.lastName || "",
-              email: customer.email || user?.email,
-              phone: customer.phone || user?.phone,
-              address: customer.address,
-              postcode: customer.postcode
-            },
-            scheduledDate: selectedDate,
-            selectedTimeSlot,
-            notes,
-            discountPercent: appliedDiscount,
-            totalAmount: total
-          })
+          body: JSON.stringify(onlinePayload),
         });
-
         const data = await res.json();
-
-        if (!res.ok || data.error) {
-          throw new Error(data.error || "Failed to create Stripe checkout session.");
-        }
-
-        if (data.url) {
-          // Redirect user to Stripe-hosted payment page
-          window.location.href = data.url;
-        } else {
-          throw new Error("No checkout URL returned from Stripe.");
-        }
+        if (!res.ok || data.error) throw new Error(data.error || "Failed to create Stripe checkout session.");
+        if (!data.url) throw new Error("No checkout URL returned from Stripe.");
+        window.location.href = data.url;
       } catch (err) {
         console.error("Stripe checkout error:", err);
-        setCheckoutError(err.message || "Unable to connect to payment gateway. Please try again.");
+        setCheckoutError(err.message || "Unable to connect to Stripe. Please try again.");
+        setCheckoutLoading(false);
+      }
+      return;
+    }
+
+    // Option C: PayPal
+    if (paymentMethod === "paypal") {
+      setCheckoutLoading(true);
+      try {
+        const res = await fetch("/api/paypal/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(onlinePayload),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || "Failed to create PayPal order.");
+        if (!data.url) throw new Error("No approval URL returned from PayPal.");
+        window.location.href = data.url;
+      } catch (err) {
+        console.error("PayPal checkout error:", err);
+        setCheckoutError(err.message || "Unable to connect to PayPal. Please try again.");
         setCheckoutLoading(false);
       }
       return;
@@ -455,7 +470,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
         phoneno: customer.phone || user?.phone,
         items: cartItems.map((item) => ({ id: item.id, db_id: item.db_id, name: item.name, price: item.price })),
         scheduled_date: `${selectedDate} ${selectedTimeSlot}`,
-        status: "confirmed",
+        status: "pending",
         payment_method: "local",
         payment_status: "pending",
         total_amount: total
@@ -901,18 +916,30 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   {[
-                    { 
-                      id: "local", 
-                      title: "I will pay locally (cash or credit card)", 
-                      desc: "Pay directly to the cleaner upon arrival via Cash or Card terminal once work is completed.", 
-                      badge: "Pay on Arrival" 
+                    {
+                      id: "local",
+                      title: "Pay locally (cash or card on arrival)",
+                      desc: "Pay directly to the cleaner upon arrival via Cash or Card terminal once work is completed.",
+                      badge: "Pay on Arrival",
+                      badgeColor: "var(--emerald-200)",
+                      badgeText: "var(--emerald-800)",
                     },
-                    { 
-                      id: "creditcard", 
-                      title: "I will pay now with credit card", 
-                      desc: "Secure online payment with Credit / Debit Card (Visa, Mastercard, etc.) processed via Stripe UK in GBP (£).", 
-                      badge: "Stripe Online" 
-                    }
+                    {
+                      id: "creditcard",
+                      title: "Pay now with Credit / Debit Card",
+                      desc: "Secure online payment with Visa, Mastercard & other cards, processed via Stripe UK in GBP (£).",
+                      badge: "Stripe",
+                      badgeColor: "#635bff",
+                      badgeText: "#ffffff",
+                    },
+                    {
+                      id: "paypal",
+                      title: "Pay now with PayPal",
+                      desc: "Secure online payment via PayPal. Use your PayPal balance, bank account or card — all in GBP (£).",
+                      badge: "PayPal",
+                      badgeColor: "#003087",
+                      badgeText: "#ffffff",
+                    },
                   ].map((pm) => (
                     <label
                       key={pm.id}
@@ -922,10 +949,10 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                         gap: "14px",
                         padding: "16px 18px",
                         borderRadius: "var(--radius-md)",
-                        border: `1.5px solid ${paymentMethod === pm.id ? "var(--emerald-600)" : "var(--slate-200)"}`,
-                        background: paymentMethod === pm.id ? "var(--emerald-50)" : "#ffffff",
+                        border: `1.5px solid ${paymentMethod === pm.id ? (pm.id === "paypal" ? "#009cde" : "var(--emerald-600)") : "var(--slate-200)"}`,
+                        background: paymentMethod === pm.id ? (pm.id === "paypal" ? "#f0f8ff" : "var(--emerald-50)") : "#ffffff",
                         cursor: "pointer",
-                        transition: "all 0.2s"
+                        transition: "all 0.2s",
                       }}
                     >
                       <input
@@ -934,54 +961,73 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                         value={pm.id}
                         checked={paymentMethod === pm.id}
                         onChange={(e) => setPaymentMethod(e.target.value)}
-                        style={{ marginTop: "4px", accentColor: "var(--emerald-600)", width: "18px", height: "18px" }}
+                        style={{ marginTop: "4px", accentColor: pm.id === "paypal" ? "#009cde" : "var(--emerald-600)", width: "18px", height: "18px" }}
                       />
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                           <span style={{ fontWeight: "700", color: "var(--slate-900)" }}>{pm.title}</span>
                           {pm.badge && (
-                            <span style={{ fontSize: "0.7rem", fontWeight: "700", padding: "2px 6px", borderRadius: "4px", background: "var(--emerald-200)", color: "var(--emerald-800)" }}>
+                            <span style={{ fontSize: "0.7rem", fontWeight: "700", padding: "2px 8px", borderRadius: "4px", background: pm.badgeColor, color: pm.badgeText }}>
                               {pm.badge}
                             </span>
                           )}
                         </div>
                         <span style={{ fontSize: "0.85rem", color: "var(--slate-500)", display: "block", marginTop: "2px" }}>{pm.desc}</span>
-                        {pm.id === "creditcard" && (
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px", fontSize: "0.75rem", color: "var(--emerald-700)", fontWeight: "600" }}>
-                            <span>🔒 256-bit SSL Encrypted</span>
-                            <span>•</span>
-                            <span>Visa &amp; Mastercard</span>
-                          </div>
-                        )}
 
                         {/* Stripe redirect info box */}
                         {pm.id === "creditcard" && paymentMethod === "creditcard" && (
                           <div
                             onClick={(e) => e.stopPropagation()}
                             style={{
-                              marginTop: "16px",
-                              padding: "16px 18px",
+                              marginTop: "14px",
+                              padding: "14px 16px",
                               background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
                               borderRadius: "var(--radius-md)",
                               border: "1.5px solid var(--emerald-300)",
-                              boxShadow: "var(--shadow-sm)"
                             }}
                           >
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                              <Lock size={16} style={{ color: "var(--emerald-600)", flexShrink: 0 }} />
-                              <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "var(--emerald-800)" }}>
-                                Secure Stripe Checkout
-                              </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                              <Lock size={14} style={{ color: "var(--emerald-600)", flexShrink: 0 }} />
+                              <span style={{ fontWeight: "700", fontSize: "0.85rem", color: "var(--emerald-800)" }}>Secure Stripe Checkout</span>
                             </div>
-                            <p style={{ fontSize: "0.82rem", color: "var(--slate-600)", margin: "0 0 10px 0", lineHeight: 1.5 }}>
-                              After reviewing your booking, you&apos;ll be securely redirected to
-                              Stripe&apos;s hosted payment page to enter your card details.
-                              Your card information is never stored on our servers.
+                            <p style={{ fontSize: "0.8rem", color: "var(--slate-600)", margin: "0 0 10px 0", lineHeight: 1.5 }}>
+                              You&apos;ll be redirected to Stripe&apos;s hosted page. Your card details are never stored on our servers.
                             </p>
                             <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
                               <span style={{ fontSize: "0.72rem", fontWeight: "800", color: "#1a1f71", background: "#f0f4ff", padding: "3px 8px", borderRadius: "4px", border: "1px solid #c7d2fe" }}>VISA</span>
                               <span style={{ fontSize: "0.72rem", fontWeight: "800", color: "#eb001b", background: "#fff1f0", padding: "3px 8px", borderRadius: "4px", border: "1px solid #fecaca" }}>MASTERCARD</span>
-                              <span style={{ fontSize: "0.72rem", fontWeight: "700", color: "var(--emerald-700)", background: "var(--emerald-50)", padding: "3px 8px", borderRadius: "4px" }}>🔒 Stripe Secured · GBP £</span>
+                              <span style={{ fontSize: "0.72rem", fontWeight: "700", color: "#635bff", background: "#f5f3ff", padding: "3px 8px", borderRadius: "4px" }}>🔒 Stripe · GBP £</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* PayPal redirect info box */}
+                        {pm.id === "paypal" && paymentMethod === "paypal" && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              marginTop: "14px",
+                              padding: "14px 16px",
+                              background: "linear-gradient(135deg, #e8f4fe 0%, #f0f8ff 100%)",
+                              borderRadius: "var(--radius-md)",
+                              border: "1.5px solid #009cde",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                              {/* PayPal P logo */}
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .921-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.775-4.471z" fill="#009cde"/>
+                              </svg>
+                              <span style={{ fontWeight: "700", fontSize: "0.85rem", color: "#003087" }}>Secure PayPal Checkout</span>
+                            </div>
+                            <p style={{ fontSize: "0.8rem", color: "var(--slate-600)", margin: "0 0 10px 0", lineHeight: 1.5 }}>
+                              You&apos;ll be redirected to PayPal&apos;s secure page. Pay with your PayPal balance, linked bank account, or card.
+                            </p>
+                            <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                              <span style={{ fontSize: "0.72rem", fontWeight: "700", color: "#003087", background: "#dbeafe", padding: "3px 8px", borderRadius: "4px" }}>PayPal Balance</span>
+                              <span style={{ fontSize: "0.72rem", fontWeight: "700", color: "#003087", background: "#dbeafe", padding: "3px 8px", borderRadius: "4px" }}>Bank Account</span>
+                              <span style={{ fontSize: "0.72rem", fontWeight: "700", color: "#003087", background: "#dbeafe", padding: "3px 8px", borderRadius: "4px" }}>Debit / Credit Card</span>
+                              <span style={{ fontSize: "0.72rem", fontWeight: "700", color: "#009cde", background: "#f0f8ff", padding: "3px 8px", borderRadius: "4px" }}>🔒 GBP £</span>
                             </div>
                           </div>
                         )}
@@ -1098,13 +1144,20 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                   </div>
                   <p style={{ fontSize: "0.9rem", color: "var(--slate-700)" }}>
                     Payment Method: <strong>
-                      {paymentMethod === "local" 
-                        ? "Pay Locally (Cash or Card upon arrival)" 
-                        : "Online via Stripe (Visa / Mastercard · GBP £)"}
+                      {paymentMethod === "local"
+                        ? "Pay Locally (Cash or Card upon arrival)"
+                        : paymentMethod === "paypal"
+                        ? "PayPal (Secure Online · GBP £)"
+                        : "Credit / Debit Card via Stripe (GBP £)"}
                     </strong><br />
                     {paymentMethod === "creditcard" && (
-                      <span style={{ fontSize: "0.82rem", color: "var(--emerald-700)" }}>
+                      <span style={{ fontSize: "0.82rem", color: "#635bff" }}>
                         🔒 You will be redirected to Stripe to complete payment securely.
+                      </span>
+                    )}
+                    {paymentMethod === "paypal" && (
+                      <span style={{ fontSize: "0.82rem", color: "#003087" }}>
+                        🔒 You will be redirected to PayPal to complete payment securely.
                       </span>
                     )}
                     {notes && <><br /><span>Notes: <em>&ldquo;{notes}&rdquo;</em></span></>}
@@ -1141,12 +1194,21 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                 {checkoutLoading ? (
                   <>
                     <div className="spinner" style={{ width: "18px", height: "18px", border: "2px solid #ffffff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite", display: "inline-block", marginRight: "8px" }} />
-                    <span>Redirecting to Stripe Secure Checkout...</span>
+                    <span>
+                      {paymentMethod === "paypal"
+                        ? "Redirecting to PayPal Secure Checkout..."
+                        : "Redirecting to Stripe Secure Checkout..."}
+                    </span>
                   </>
                 ) : paymentMethod === "creditcard" ? (
                   <>
                     <Lock size={18} />
-                    <span>Continue to Secure Payment · £{total.toFixed(2)}</span>
+                    <span>Pay with Card via Stripe · £{total.toFixed(2)}</span>
+                  </>
+                ) : paymentMethod === "paypal" ? (
+                  <>
+                    <Lock size={18} />
+                    <span>Continue to PayPal · £{total.toFixed(2)}</span>
                   </>
                 ) : (
                   <>
@@ -1282,114 +1344,336 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
       </div>
 
       {/* ================================================================
-          CONFIRMATION MODAL
+          CONFIRMATION MODAL (SCALED DOWN & BULLETPROOF STYLED)
          ================================================================ */}
       {showConfirmation && (
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(15, 23, 42, 0.75)",
-          backdropFilter: "blur(6px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 9999,
-          padding: "20px"
-        }}>
+        <div
+          className="confirmation-modal-overlay fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.75)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: "16px",
+            overflowY: "auto"
+          }}
+        >
           <div
-            className="glass-card"
+            className="confirmation-modal-card relative w-full max-w-[450px] bg-white rounded-2xl shadow-2xl p-5 my-auto max-h-[90vh] overflow-y-auto text-center border border-slate-100"
             style={{
-              maxWidth: "520px",
+              position: "relative",
               width: "100%",
-              padding: "40px 32px",
-              textAlign: "center",
-              background: "#ffffff",
+              maxWidth: "450px",
+              backgroundColor: "#ffffff",
+              borderRadius: "18px",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
-              animation: "dropdownFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-              position: "relative"
+              padding: "22px 20px 18px",
+              margin: "auto",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              textAlign: "center",
+              border: "1px solid #e2e8f0",
+              boxSizing: "border-box"
             }}
           >
+            {/* Close Button */}
             <button
               type="button"
               onClick={() => setShowConfirmation(false)}
               aria-label="Close confirmation"
+              className="confirmation-modal-close absolute top-3 right-3 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center cursor-pointer"
               style={{
                 position: "absolute",
-                top: "16px",
-                right: "16px",
-                width: "34px",
-                height: "34px",
+                top: "12px",
+                right: "12px",
+                width: "28px",
+                height: "28px",
                 borderRadius: "50%",
-                background: "var(--slate-100)",
-                color: "var(--slate-600)",
+                backgroundColor: "#f1f5f9",
+                color: "#64748b",
+                border: "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                transition: "all 0.2s"
+                padding: 0,
+                transition: "all 0.15s ease"
               }}
             >
-              <X size={18} />
+              <X size={15} />
             </button>
-            <div style={{
-              width: "72px",
-              height: "72px",
-              borderRadius: "50%",
-              background: "var(--emerald-100)",
-              color: "var(--emerald-600)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 20px"
-            }}>
-              <CheckCircle2 size={44} />
+
+            {/* Success Icon */}
+            <div
+              className="confirmation-modal-icon w-11 h-11 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2 shadow-xs"
+              style={{
+                width: "44px",
+                height: "44px",
+                borderRadius: "50%",
+                backgroundColor: "#d1fae5",
+                color: "#059669",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 8px"
+              }}
+            >
+              <CheckCircle2 size={24} />
             </div>
 
-            <span style={{ fontSize: "0.8rem", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--emerald-600)" }}>
-              Booking Confirmed
-            </span>
-            <h2 style={{ fontSize: "1.85rem", fontWeight: "800", color: "var(--slate-900)", margin: "8px 0 12px" }}>
-              Thank you, {customer.firstName}!
+            {/* Header Badge & Title */}
+            <div style={{ marginBottom: "4px" }}>
+              <span
+                className="inline-block text-[0.68rem] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60"
+                style={{
+                  display: "inline-block",
+                  fontSize: "0.7rem",
+                  fontWeight: "800",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: "#059669",
+                  backgroundColor: "#ecfdf5",
+                  padding: "3px 10px",
+                  borderRadius: "9999px",
+                  border: "1px solid #a7f3d0"
+                }}
+              >
+                Booking Confirmed
+              </span>
+            </div>
+
+            <h2
+              className="text-lg font-extrabold text-slate-900 mt-1 mb-0.5 tracking-tight"
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: "800",
+                color: "#0f172a",
+                margin: "4px 0 2px",
+                lineHeight: "1.2"
+              }}
+            >
+              Thank you{customer.firstName ? `, ${customer.firstName}` : ""}!
             </h2>
-            <p style={{ color: "var(--slate-600)", fontSize: "0.95rem", lineHeight: "1.6", marginBottom: "20px" }}>
-              Your eco-friendly cleaning appointment has been scheduled. A confirmation summary has been dispatched to <strong>{customer.email}</strong>.
+            <p
+              className="text-xs text-slate-500 mb-2.5 max-w-xs mx-auto leading-relaxed"
+              style={{
+                fontSize: "0.75rem",
+                color: "#64748b",
+                margin: "0 auto 12px",
+                maxWidth: "340px",
+                lineHeight: "1.35"
+              }}
+            >
+              Your eco-friendly cleaning appointment has been scheduled.
+              {customer.email ? ` A summary has been dispatched to ${customer.email}.` : ""}
             </p>
 
-            <div style={{ padding: "16px", borderRadius: "var(--radius-md)", background: "var(--slate-50)", border: "1px solid var(--slate-200)", textAlign: "left", fontSize: "0.875rem", marginBottom: "24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                <span style={{ color: "var(--slate-500)" }}>Booking Reference:</span>
-                <strong style={{ color: "var(--emerald-700)" }}>{bookingRef}</strong>
+            {/* Receipt Summary Card */}
+            <div
+              className="confirmation-receipt-box bg-slate-50/80 rounded-xl p-3 border border-emerald-200/80 text-left text-xs mb-3 shadow-xs space-y-1.5"
+              style={{
+                backgroundColor: "#f8fafc",
+                borderRadius: "12px",
+                padding: "12px 14px",
+                border: "1.5px solid #a7f3d0",
+                textAlign: "left",
+                fontSize: "0.78rem",
+                marginBottom: "12px",
+                boxShadow: "0 2px 6px rgba(16, 185, 129, 0.05)"
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "6px"
+                }}
+              >
+                <span style={{ color: "#64748b", fontWeight: "500" }}>Booking Reference:</span>
+                <strong style={{ color: "#047857", fontFamily: "monospace", fontSize: "0.85rem", fontWeight: "700" }}>{bookingRef}</strong>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                <span style={{ color: "var(--slate-500)" }}>Date &amp; Slot:</span>
-                <strong>{formatUkDate(selectedDate, true)} ({selectedTimeSlot})</strong>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "6px"
+                }}
+              >
+                <span style={{ color: "#64748b", fontWeight: "500" }}>Date &amp; Slot:</span>
+                <strong style={{ color: "#1e293b", fontWeight: "600", textAlign: "right" }}>
+                  {formatUkDate(selectedDate, true)} ({selectedTimeSlot})
+                </strong>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                <span style={{ color: "var(--slate-500)" }}>Total Amount:</span>
-                <strong style={{ fontSize: "1rem", color: "var(--slate-900)" }}>£{total.toFixed(2)}</strong>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  marginBottom: "8px"
+                }}
+              >
+                <span style={{ color: "#64748b", fontWeight: "500", flexShrink: 0, marginRight: "8px" }}>Service Address:</span>
+                <strong style={{ color: "#1e293b", fontWeight: "600", textAlign: "right", maxWidth: "220px", wordBreak: "break-word" }}>
+                  {customer.address}, {customer.postcode}
+                </strong>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "var(--slate-500)" }}>Payment:</span>
-                <strong style={{ color: paymentMethod === "creditcard" ? "var(--emerald-700)" : "var(--slate-800)" }}>
+
+              {/* Itemized Services Breakdown */}
+              <div
+                style={{
+                  backgroundColor: "#ffffff",
+                  borderRadius: "8px",
+                  padding: "8px 10px",
+                  border: "1px solid #e2e8f0",
+                  margin: "8px 0"
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "0.65rem",
+                    fontWeight: "700",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    color: "#94a3b8",
+                    marginBottom: "4px"
+                  }}
+                >
+                  Services Booked ({cartItems.length})
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                    maxHeight: "85px",
+                    overflowY: "auto"
+                  }}
+                >
+                  {cartItems.map((item, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        fontSize: "0.78rem"
+                      }}
+                    >
+                      <span style={{ color: "#334155", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "200px" }}>{item.name}</span>
+                      <strong style={{ color: "#0f172a", marginLeft: "8px" }}>£{Number(item.price).toFixed(2)}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Prominent Total Amount */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "8px 12px",
+                  backgroundColor: "#ecfdf5",
+                  borderRadius: "8px",
+                  border: "1.5px solid #6ee7b7",
+                  margin: "8px 0 6px"
+                }}
+              >
+                <span style={{ color: "#064e3b", fontWeight: "800", fontSize: "0.85rem" }}>
+                  Total Amount:
+                </span>
+                <strong style={{ fontSize: "1.15rem", color: "#047857", fontWeight: "900" }}>
+                  £{total.toFixed(2)}
+                </strong>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingTop: "2px"
+                }}
+              >
+                <span style={{ color: "#64748b", fontSize: "0.75rem", fontWeight: "500" }}>Payment Method:</span>
+                <span
+                  style={{
+                    fontSize: "0.7rem",
+                    fontWeight: "700",
+                    padding: "2px 7px",
+                    borderRadius: "4px",
+                    backgroundColor: paymentMethod === "creditcard" ? "#d1fae5" : "#f1f5f9",
+                    color: paymentMethod === "creditcard" ? "#065f46" : "#475569",
+                    border: paymentMethod === "creditcard" ? "1px solid #a7f3d0" : "1px solid #e2e8f0"
+                  }}
+                >
                   {paymentMethod === "creditcard"
                     ? "Online via Stripe (GBP £)"
                     : "Pay locally (cash or card upon arrival)"}
-                </strong>
+                </span>
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="btn btn-secondary btn-sm"
-              >
-                <Printer size={15} />
-                <span>Print Receipt</span>
-              </button>
+            {/* Action Buttons */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                paddingTop: "2px",
+                flexWrap: "wrap"
+              }}
+            >
+              {paymentMethod !== "local" && (
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "7px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid #cbd5e1",
+                    backgroundColor: "#ffffff",
+                    color: "#334155",
+                    fontSize: "0.78rem",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)"
+                  }}
+                >
+                  <Printer size={13} />
+                  <span>Print Receipt</span>
+                </button>
+              )}
               <Link
                 href="/"
-                className="btn btn-primary btn-sm"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "8px 20px",
+                  borderRadius: "8px",
+                  backgroundColor: "#059669",
+                  color: "#ffffff",
+                  fontSize: "0.82rem",
+                  fontWeight: "700",
+                  textDecoration: "none",
+                  boxShadow: "0 3px 10px rgba(5, 150, 105, 0.25)",
+                  cursor: "pointer"
+                }}
               >
                 Return to Homepage
               </Link>

@@ -8,11 +8,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "db:generate": "npx prisma@5 generate",
+    "db:migrate": "npx prisma@5 migrate dev",
+    "db:push": "npx prisma@5 db push",
     "db:seed": "node scripts/seed-db.js",
     "pdf:guide": "node scripts/generate-uk-client-guide.js"
   },
   "dependencies": {
-    "better-sqlite3": "^13.0.3",
+    "@prisma/client": "^5.22.0",
     "lucide-react": "^1.46.0",
     "next": "16.3.5",
     "pdfkit": "^0.20.2",
@@ -21,7 +24,10 @@
     "stripe": "^22.6.2"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
     "eslint": "^9",
-    "eslint-config-next": "16.3.5"
+    "eslint-config-next": "16.3.5",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^4.3.3"
   }
 }

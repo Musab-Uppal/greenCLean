@@ -46,8 +46,8 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
-  const categories = getDbCategoriesWithServices();
+export default async function RootLayout({ children }) {
+  const categories = await getDbCategoriesWithServices();
 
   return (
     <html lang="en-GB" className={`${geistSans.variable} ${geistMono.variable}`}>

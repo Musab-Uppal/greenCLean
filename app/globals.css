@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /* ==========================================================================
    GREEN CLEAN GROUP - ECO-LUXURY DESIGN SYSTEM (VANILLA CSS)
    ========================================================================== */
@@ -1713,3 +1715,48 @@ button {
   background: var(--emerald-500);
   animation: pulseGlow 2s infinite;
 }
+
+/* ==========================================================================
+   CONFIRMATION RECEIPT MODAL (COMPACT & SCALED)
+   ========================================================================== */
+.confirmation-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.confirmation-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 450px;
+  background-color: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  padding: 22px 20px 18px;
+  margin: auto;
+  max-height: 90vh;
+  overflow-y: auto;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.confirmation-receipt-box {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid #a7f3d0;
+  text-align: left;
+  font-size: 0.78rem;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.05);
+}
+

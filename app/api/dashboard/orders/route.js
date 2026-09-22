@@ -19,7 +19,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const orders = getOrders(payload.id);
+    const orders = await getOrders(payload.id);
     return NextResponse.json({ orders });
   } catch (error) {
     console.error("Dashboard orders error:", error);

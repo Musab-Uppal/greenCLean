@@ -9,7 +9,7 @@ export const metadata = {
 export default async function BookPage({ searchParams }) {
   const sp = await searchParams;
   const serviceQuery = sp?.service || "oven";
-  const categories = getDbCategoriesWithServices();
+  const categories = await getDbCategoriesWithServices();
 
   return (
     <div style={{ background: "linear-gradient(180deg, #f0fdf4 0%, #f8fafc 400px)", padding: "28px 0 80px" }}>

@@ -24,7 +24,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const categories = getCategoriesWithCount();
+    const categories = await getCategoriesWithCount();
     return NextResponse.json({ categories });
   } catch (error) {
     console.error("Admin categories GET error:", error);
@@ -50,7 +50,7 @@ export async function POST(request) {
     }
 
     const finalSlug = slugify(name);
-    const result = insertCategory({
+    const result = await insertCategory({
       name: name.trim(),
       slug: finalSlug,
       image: image.trim()
@@ -82,7 +82,7 @@ export async function PATCH(request) {
     }
 
     const finalSlug = (slug && slug.trim()) ? slugify(slug) : slugify(name);
-    updateCategory(id, {
+    await updateCategory(id, {
       name: name.trim(),
       slug: finalSlug,
       image: image !== undefined ? (image ? image.trim() : null) : undefined
@@ -114,7 +114,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "Category ID is required" }, { status: 400 });
     }
 
-    deleteCategory(parseInt(id, 10));
+    await deleteCategory(parseInt(id, 10));
 
     return NextResponse.json({
       success: true,

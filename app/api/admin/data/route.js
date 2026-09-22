@@ -17,27 +17,42 @@ export async function GET() {
       );
     }
 
-    const orders = getOrders();
-    const categories = getCategoriesWithCount();
-    const services = getAllServices();
+    const [orders, categories, services] = await Promise.all([
+      getOrders(),
+      getCategoriesWithCount(),
+      getAllServices(),
+    ]);
 
     // Calculate executive KPIs
+    // 1. Order status is strictly 'pending' or 'completed'.
+    // 2. Revenue rules:
+    //    - Card payments: ONLY when received (payment_status === 'paid')
+    //    - Local payments: ONLY when order is completed (status === 'completed')
     let totalRevenue = 0;
     let pendingCount = 0;
-    let confirmedCount = 0;
     let completedCount = 0;
-    let cancelledCount = 0;
 
     orders.forEach((order) => {
-      const price = Number(order.service_price) || 0;
-      if (order.status !== "cancelled") {
-        totalRevenue += price;
+      const amount = Number(order.total_amount) > 0 ? Number(order.total_amount) : Number(order.service_price) || 0;
+      const paymentMethod = (order.payment_method || "local").toLowerCase().trim();
+      const paymentStatus = (order.payment_status || "pending").toLowerCase().trim();
+      const status = (order.status || "pending").toLowerCase().trim();
+
+      const isCardPaymentReceived =
+        (paymentMethod === "creditcard" || paymentMethod === "card" || paymentMethod === "stripe") &&
+        paymentStatus === "paid";
+      const isLocalPaymentCompleted =
+        paymentMethod === "local" && status === "completed";
+
+      if (isCardPaymentReceived || isLocalPaymentCompleted) {
+        totalRevenue += amount;
       }
-      const st = (order.status || "").toLowerCase();
-      if (st === "pending") pendingCount++;
-      else if (st === "confirmed") confirmedCount++;
-      else if (st === "completed") completedCount++;
-      else if (st === "cancelled") cancelledCount++;
+
+      if (status === "completed") {
+        completedCount++;
+      } else {
+        pendingCount++;
+      }
     });
 
     return NextResponse.json({
@@ -49,9 +64,7 @@ export async function GET() {
         totalOrders: orders.length,
         totalRevenue: Math.round(totalRevenue * 100) / 100,
         pendingCount,
-        confirmedCount,
-        completedCount,
-        cancelledCount
+        completedCount
       }
     });
   } catch (error) {

@@ -36,9 +36,7 @@ export default function AdminPage() {
     totalOrders: 0,
     totalRevenue: 0,
     pendingCount: 0,
-    confirmedCount: 0,
     completedCount: 0,
-    cancelledCount: 0,
   });
 
   // UI feedback alert
@@ -83,6 +81,46 @@ export default function AdminPage() {
       Object.keys(pendingCategories).length
     );
   }, [pendingOrders, pendingServices, pendingCategories]);
+
+  // Executive KPIs calculated dynamically from orders:
+  // - Card payments count towards revenue ONLY when received (payment_status === 'paid')
+  // - Local payments count towards revenue ONLY when completed (status === 'completed')
+  // - Status is strictly 'pending' or 'completed'
+  const computedKpis = useMemo(() => {
+    let totalRevenue = 0;
+    let pendingCount = 0;
+    let completedCount = 0;
+
+    orders.forEach((order) => {
+      const amount = Number(order.total_amount) > 0 ? Number(order.total_amount) : Number(order.service_price) || 0;
+      const paymentMethod = (order.payment_method || "local").toLowerCase().trim();
+      const paymentStatus = (order.payment_status || "pending").toLowerCase().trim();
+      const status = (order.status || "pending").toLowerCase().trim();
+
+      const isCardPaymentReceived =
+        (paymentMethod === "creditcard" || paymentMethod === "card" || paymentMethod === "stripe") &&
+        paymentStatus === "paid";
+      const isLocalPaymentCompleted =
+        paymentMethod === "local" && status === "completed";
+
+      if (isCardPaymentReceived || isLocalPaymentCompleted) {
+        totalRevenue += amount;
+      }
+
+      if (status === "completed") {
+        completedCount++;
+      } else {
+        pendingCount++;
+      }
+    });
+
+    return {
+      totalOrders: orders.length,
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      pendingCount,
+      completedCount,
+    };
+  }, [orders]);
 
   const showNotification = (type, text) => {
     setFeedback({ type, text });
@@ -187,12 +225,13 @@ export default function AdminPage() {
 
   // 4. Order Management Actions (Staged for Header "Save Changes")
   const handleStageOrderStatus = (orderId, newStatus) => {
+    const validStatus = (newStatus || "").toLowerCase() === "completed" ? "completed" : "pending";
     setOrders((prev) =>
-      prev.map((o) => (o.order_id === orderId ? { ...o, status: newStatus } : o))
+      prev.map((o) => (o.order_id === orderId ? { ...o, status: validStatus } : o))
     );
     setPendingOrders((prev) => ({
       ...prev,
-      [orderId]: { ...(prev[orderId] || {}), status: newStatus },
+      [orderId]: { ...(prev[orderId] || {}), status: validStatus },
     }));
   };
 
@@ -358,7 +397,7 @@ export default function AdminPage() {
   const handleStageServiceEdit = (e) => {
     e.preventDefault();
     if (!editingService) return;
-    
+
     setServices((prev) =>
       prev.map((s) => (s.id === editingService.id ? { ...s, ...editingService } : s))
     );
@@ -882,7 +921,7 @@ export default function AdminPage() {
 
           {/* Right: Save Changes, Discard, Refresh & Logout */}
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-            
+
             {/* MASTER SAVE CHANGES BUTTON IN HEADER */}
             <button
               onClick={handleSaveChanges}
@@ -917,8 +956,8 @@ export default function AdminPage() {
                 {savingChanges
                   ? "Saving Changes..."
                   : totalPendingCount > 0
-                  ? `Save Changes (${totalPendingCount})`
-                  : "Save Changes"}
+                    ? `Save Changes (${totalPendingCount})`
+                    : "Save Changes"}
               </span>
             </button>
 
@@ -1027,38 +1066,44 @@ export default function AdminPage() {
             =================================================================== */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
           gap: "16px",
           marginBottom: "28px"
         }}>
+          {/* 1. Total Orders */}
           <div style={{
             background: "rgba(15, 23, 42, 0.7)",
             border: "1px solid #1e293b",
             borderRadius: "12px",
             padding: "18px 20px"
           }}>
-            <span style={{ fontSize: "0.75rem", color: "#94a3b8", textTransform: "uppercase", fontWeight: 600 }}>
+            <span style={{ fontSize: "0.75rem", color: "#818cf8", textTransform: "uppercase", fontWeight: 600 }}>
               Total Orders
             </span>
-            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "#f8fafc", marginTop: "4px" }}>
-              {kpis.totalOrders}
+            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "#a5b4fc", marginTop: "4px" }}>
+              {computedKpis.totalOrders}
             </div>
           </div>
 
+          {/* 2. Total Revenue */}
           <div style={{
             background: "rgba(15, 23, 42, 0.7)",
             border: "1px solid #1e293b",
             borderRadius: "12px",
             padding: "18px 20px"
           }}>
-            <span style={{ fontSize: "0.75rem", color: "#34d399", textTransform: "uppercase", fontWeight: 600 }}>
-              Total Order Revenue
-            </span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "0.75rem", color: "#34d399", textTransform: "uppercase", fontWeight: 600 }}>
+                Total Order Revenue
+              </span>
+
+            </div>
             <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "#10b981", marginTop: "4px" }}>
-              £{kpis.totalRevenue.toLocaleString()}
+              £{computedKpis.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
 
+          {/* 3. Pending Orders */}
           <div style={{
             background: "rgba(15, 23, 42, 0.7)",
             border: "1px solid #1e293b",
@@ -1069,35 +1114,22 @@ export default function AdminPage() {
               Pending Action
             </span>
             <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "#fbbf24", marginTop: "4px" }}>
-              {kpis.pendingCount}
+              {computedKpis.pendingCount}
             </div>
           </div>
 
+          {/* 4. Completed Jobs */}
           <div style={{
             background: "rgba(15, 23, 42, 0.7)",
             border: "1px solid #1e293b",
             borderRadius: "12px",
             padding: "18px 20px"
           }}>
-            <span style={{ fontSize: "0.75rem", color: "#60a5fa", textTransform: "uppercase", fontWeight: 600 }}>
-              Confirmed Bookings
-            </span>
-            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "#60a5fa", marginTop: "4px" }}>
-              {kpis.confirmedCount}
-            </div>
-          </div>
-
-          <div style={{
-            background: "rgba(15, 23, 42, 0.7)",
-            border: "1px solid #1e293b",
-            borderRadius: "12px",
-            padding: "18px 20px"
-          }}>
-            <span style={{ fontSize: "0.75rem", color: "#a78bfa", textTransform: "uppercase", fontWeight: 600 }}>
+            <span style={{ fontSize: "0.75rem", color: "#34d399", textTransform: "uppercase", fontWeight: 600 }}>
               Completed Jobs
             </span>
-            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "#a78bfa", marginTop: "4px" }}>
-              {kpis.completedCount}
+            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "#34d399", marginTop: "4px" }}>
+              {computedKpis.completedCount}
             </div>
           </div>
         </div>
@@ -1146,10 +1178,8 @@ export default function AdminPage() {
                     }}
                   >
                     <option value="all">All Statuses ({orders.length})</option>
-                    <option value="pending">Pending ({kpis.pendingCount})</option>
-                    <option value="confirmed">Confirmed ({kpis.confirmedCount})</option>
-                    <option value="completed">Completed ({kpis.completedCount})</option>
-                    <option value="cancelled">Cancelled ({kpis.cancelledCount})</option>
+                    <option value="pending">Pending ({computedKpis.pendingCount})</option>
+                    <option value="completed">Completed ({computedKpis.completedCount})</option>
                   </select>
 
                   {/* Search box */}
@@ -1198,9 +1228,7 @@ export default function AdminPage() {
                       filteredOrders.map((order) => {
                         const statusColors = {
                           pending: { bg: "rgba(245, 158, 11, 0.15)", text: "#fbbf24", border: "rgba(245, 158, 11, 0.3)" },
-                          confirmed: { bg: "rgba(59, 130, 246, 0.15)", text: "#60a5fa", border: "rgba(59, 130, 246, 0.3)" },
-                          completed: { bg: "rgba(16, 185, 129, 0.15)", text: "#34d399", border: "rgba(16, 185, 129, 0.3)" },
-                          cancelled: { bg: "rgba(239, 68, 68, 0.15)", text: "#f87171", border: "rgba(239, 68, 68, 0.3)" }
+                          completed: { bg: "rgba(16, 185, 129, 0.15)", text: "#34d399", border: "rgba(16, 185, 129, 0.3)" }
                         };
                         const sc = statusColors[(order.status || "").toLowerCase()] || statusColors.pending;
 
@@ -1231,9 +1259,34 @@ export default function AdminPage() {
                                 )}
                               </div>
                             </td>
-                            <td style={{ padding: "12px 10px" }}>
-                              <div style={{ fontWeight: 600, color: "#f8fafc" }}>{order.service_name}</div>
-                              <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>{order.category_name}</span>
+                            <td style={{ padding: "12px 10px", maxWidth: "260px" }}>
+                              {Array.isArray(order.items) && order.items.length > 1 ? (
+                                <div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
+                                    <span style={{ fontWeight: 700, color: "#f8fafc" }}>
+                                      {order.items.length} Services Booked
+                                    </span>
+                                    <span style={{
+                                      fontSize: "0.68rem",
+                                      background: "rgba(16, 185, 129, 0.15)",
+                                      color: "#34d399",
+                                      padding: "1px 6px",
+                                      borderRadius: "99px",
+                                      border: "1px solid rgba(16, 185, 129, 0.3)"
+                                    }}>
+                                      Multi-Service
+                                    </span>
+                                  </div>
+                                  <div style={{ fontSize: "0.76rem", color: "#94a3b8", lineHeight: 1.4 }}>
+                                    {order.items.map((it) => it.service_name).join(" · ")}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div style={{ fontWeight: 600, color: "#f8fafc" }}>{order.service_name}</div>
+                                  <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>{order.category_name}</span>
+                                </div>
+                              )}
                             </td>
                             <td style={{ padding: "12px 10px" }}>
                               <div style={{ color: "#f8fafc" }}>{order.customer_email}</div>
@@ -1241,8 +1294,8 @@ export default function AdminPage() {
                                 📞 {order.order_phone}
                               </div>
                             </td>
-                            <td style={{ padding: "12px 10px", fontWeight: 700, color: "#10b981" }}>
-                              £{order.service_price}
+                            <td style={{ padding: "12px 10px", fontWeight: 700, color: "#10b981", fontSize: "0.95rem" }}>
+                              £{Number(order.total_amount ?? order.service_price ?? 0).toFixed(2)}
                             </td>
                             <td style={{ padding: "12px 10px" }}>
                               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -1305,7 +1358,7 @@ export default function AdminPage() {
                             </td>
                             <td style={{ padding: "12px 10px", textAlign: "right" }}>
                               <select
-                                value={order.status}
+                                value={order.status || "pending"}
                                 onChange={(e) => handleStageOrderStatus(order.order_id, e.target.value)}
                                 style={{
                                   background: isOrderPending && pendingOrders[order.order_id]?.status ? "#1e1b4b" : "#020617",
@@ -1318,9 +1371,7 @@ export default function AdminPage() {
                                 }}
                               >
                                 <option value="pending">Pending</option>
-                                <option value="confirmed">Confirmed</option>
                                 <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
                               </select>
                             </td>
                           </tr>
@@ -2011,48 +2062,48 @@ export default function AdminPage() {
                                 />
                               </div>
                             </td>
-                          <td style={{ padding: "12px 10px", color: "#cbd5e1" }}>
-                            {service.time}
-                          </td>
-                          <td style={{ padding: "12px 10px", color: "#94a3b8", fontSize: "0.82rem" }}>
-                            {service.width || "—"}
-                          </td>
-                          <td style={{ padding: "12px 10px", textAlign: "right" }}>
-                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-                              <button
-                                onClick={() => setEditingService({ ...service })}
-                                style={{
-                                  background: "rgba(59, 130, 246, 0.15)",
-                                  border: "1px solid rgba(59, 130, 246, 0.3)",
-                                  color: "#60a5fa",
-                                  padding: "5px 10px",
-                                  borderRadius: "6px",
-                                  fontSize: "0.78rem",
-                                  cursor: "pointer"
-                                }}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteService(service.id)}
-                                style={{
-                                  background: "rgba(239, 68, 68, 0.15)",
-                                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                                  color: "#f87171",
-                                  padding: "5px 10px",
-                                  borderRadius: "6px",
-                                  fontSize: "0.78rem",
-                                  cursor: "pointer"
-                                }}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
+                            <td style={{ padding: "12px 10px", color: "#cbd5e1" }}>
+                              {service.time}
+                            </td>
+                            <td style={{ padding: "12px 10px", color: "#94a3b8", fontSize: "0.82rem" }}>
+                              {service.width || "—"}
+                            </td>
+                            <td style={{ padding: "12px 10px", textAlign: "right" }}>
+                              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                                <button
+                                  onClick={() => setEditingService({ ...service })}
+                                  style={{
+                                    background: "rgba(59, 130, 246, 0.15)",
+                                    border: "1px solid rgba(59, 130, 246, 0.3)",
+                                    color: "#60a5fa",
+                                    padding: "5px 10px",
+                                    borderRadius: "6px",
+                                    fontSize: "0.78rem",
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteService(service.id)}
+                                  style={{
+                                    background: "rgba(239, 68, 68, 0.15)",
+                                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                                    color: "#f87171",
+                                    padding: "5px 10px",
+                                    borderRadius: "6px",
+                                    fontSize: "0.78rem",
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>

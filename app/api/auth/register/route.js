@@ -25,7 +25,7 @@ export async function POST(request) {
       );
     }
 
-    const existingUser = getUserByEmail(trimmedEmail);
+    const existingUser = await getUserByEmail(trimmedEmail);
     if (existingUser) {
       return NextResponse.json(
         { error: "An account with this email already exists. Please log in." },
@@ -34,13 +34,13 @@ export async function POST(request) {
     }
 
     const hashedPassword = hashPassword(password);
-    const result = createUser({
+    const newUser = await createUser({
       email: trimmedEmail,
       phone: trimmedPhone,
       password: hashedPassword
     });
 
-    const newUserId = result.lastInsertRowid;
+    const newUserId = newUser.id;
 
     const token = createToken({
       id: newUserId,

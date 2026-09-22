@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createUser, getUserByEmail, createOrder, getOrders, db } from "@/lib/db";
+import { prisma } from "@/lib/db";
+import { createUser, getUserByEmail, createOrder, getOrders } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +9,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get("customerId");
 
-    const orders = getOrders(customerId ? parseInt(customerId, 10) : null);
+    const orders = await getOrders(customerId ? parseInt(customerId, 10) : null);
     return NextResponse.json(orders);
   } catch (error) {
     console.error("Error retrieving orders from DB:", error);
@@ -28,7 +29,7 @@ export async function POST(request) {
       address, 
       phoneno,
       scheduled_date = null,
-      status = "confirmed",
+      status = "pending",
       payment_method = "local",
       payment_status = "pending",
       stripe_session_id = null,
@@ -43,71 +44,77 @@ export async function POST(request) {
     }
 
     // 1. Find or create user
-    let user = getUserByEmail(email);
+    let user = await getUserByEmail(email);
     if (!user) {
-      const userRes = createUser({
+      user = await createUser({
         email,
         phone: phone || phoneno,
         password
       });
-      user = { id: userRes.lastInsertRowid, email, phone };
     }
 
-    // 2. Create Order(s)
-    const createdOrders = [];
-    
-    // If cart items are passed, insert an order for each product/service as per the schema
+    // 2. Resolve items for single order
+    const orderItems = [];
     if (Array.isArray(items) && items.length > 0) {
       for (const item of items) {
-        // Resolve product_service_id from item.db_id or item.id (slug)
         let resolvedServiceId = item.db_id;
         if (!resolvedServiceId && item.id) {
-          const serviceRow = db.prepare("SELECT id FROM product_service WHERE slug = ? OR id = ?").get(item.id, item.id);
+          const serviceRow = await prisma.productService.findFirst({
+            where: { OR: [{ slug: String(item.id) }, { id: Number(item.id) || -1 }] },
+            select: { id: true, price: true },
+          });
           if (serviceRow) resolvedServiceId = serviceRow.id;
         }
 
         if (resolvedServiceId) {
-          const itemPrice = item.price ? Number(item.price) : null;
-          const orderRes = createOrder({
+          orderItems.push({
             product_service_id: resolvedServiceId,
-            customer_id: user.id,
-            address,
-            phoneno,
-            status,
-            scheduled_date,
-            payment_method,
-            payment_status,
-            stripe_session_id,
-            total_amount: total_amount !== null ? total_amount : itemPrice
+            price: Number(item.price) || 0
           });
-          createdOrders.push(orderRes.lastInsertRowid);
         }
       }
     } else if (product_service_id) {
-      const orderRes = createOrder({
+      orderItems.push({
         product_service_id,
-        customer_id: user.id,
-        address,
-        phoneno,
-        status,
-        scheduled_date,
-        payment_method,
-        payment_status,
-        stripe_session_id,
-        total_amount
+        price: Number(total_amount) || 0
       });
-      createdOrders.push(orderRes.lastInsertRowid);
-    } else {
+    }
+
+    if (orderItems.length === 0) {
       return NextResponse.json(
         { error: "At least one product/service must be specified" },
         { status: 400 }
       );
     }
 
+    const calculatedTotal = total_amount !== null && total_amount !== undefined
+      ? Number(total_amount)
+      : orderItems.reduce((sum, it) => sum + it.price, 0);
+
+    const validStatus = (status || "").toLowerCase().trim() === "completed" ? "completed" : "pending";
+
+    const orderRes = await createOrder({
+      product_service_id: orderItems[0]?.product_service_id,
+      customer_id: user.id,
+      address,
+      phoneno,
+      status: validStatus,
+      scheduled_date,
+      payment_method,
+      payment_status,
+      stripe_session_id,
+      total_amount: calculatedTotal,
+      items: orderItems
+    });
+
+    const orderId = orderRes.lastInsertRowid;
+
     return NextResponse.json({
       success: true,
       customerId: user.id,
-      orderIds: createdOrders,
+      orderId: orderId,
+      orderIds: [orderId],
+      totalAmount: calculatedTotal,
       message: "Order successfully placed and recorded in database."
     });
   } catch (error) {

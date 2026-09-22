@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { db, updateOrderPayment } from "@/lib/db";
+import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -9,13 +9,13 @@ export async function POST(request) {
 
   try {
     const rawBody = await request.text();
-    let event;
+    const sig = request.headers.get("stripe-signature");
 
+    let event;
     if (webhookSecret && !webhookSecret.includes("placeholder")) {
-      const sig = request.headers.get("stripe-signature");
       event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
     } else {
-      // In dev or without webhook signing secret
+      // Dev mode without a signed webhook secret — parse raw body directly
       try {
         event = JSON.parse(rawBody);
       } catch {
@@ -27,13 +27,10 @@ export async function POST(request) {
       const session = event.data.object;
       const sessionId = session.id;
 
-      // Update matching orders in SQLite database to paid
-      const stmt = db.prepare(`
-        UPDATE orders 
-        SET payment_status = 'paid', status = 'confirmed' 
-        WHERE stripe_session_id = ?
-      `);
-      stmt.run(sessionId);
+      await prisma.order.updateMany({
+        where: { stripeSessionId: sessionId },
+        data: { paymentStatus: "paid" },
+      });
     }
 
     return NextResponse.json({ received: true });

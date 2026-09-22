@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe, isStripeConfigured } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 
@@ -71,19 +71,6 @@ export async function POST(request) {
       total_amount: String(totalAmount || 0),
     };
 
-    // If Stripe keys are not yet configured with a live/test key, provide seamless test mode redirect
-    if (!isStripeConfigured()) {
-      const mockSessionId = `mock_session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-      // Save metadata in a short-lived cache or pass via redirect
-      return NextResponse.json({
-        url: `${origin}/book/success?session_id=${mockSessionId}&mock=true`,
-        sessionId: mockSessionId,
-        isMock: true,
-        message: "Stripe key is in test/mock mode. Set STRIPE_SECRET_KEY in .env for live processing."
-      });
-    }
-
-    // Create real Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items,
@@ -105,25 +92,33 @@ export async function POST(request) {
       sessionId: session.id,
     });
   } catch (error) {
-    console.error("Stripe checkout creation error:", error);
+    console.error("[Stripe checkout]", error);
 
-    // If it was an authentication error with Stripe API (e.g. invalid key during test)
-    if (error.type === "StripeAuthenticationError" || error.code === "api_key_expired") {
-      const origin =
-        request.headers.get("origin") ||
-        process.env.NEXT_PUBLIC_BASE_URL ||
-        "http://localhost:3000";
-      const mockSessionId = `test_session_${Date.now()}`;
-      return NextResponse.json({
-        url: `${origin}/book/success?session_id=${mockSessionId}&mock=true`,
-        sessionId: mockSessionId,
-        isMock: true,
-      });
+    if (error.type === "StripeConnectionError" || error.code === "ECONNREFUSED") {
+      return NextResponse.json(
+        { error: "Could not connect to payment servers. Please check your internet connection and try again." },
+        { status: 503 }
+      );
+    }
+
+    if (error.type === "StripeAuthenticationError") {
+      return NextResponse.json(
+        { error: "Payment gateway configuration error. Please contact support." },
+        { status: 500 }
+      );
+    }
+
+    if (error.type === "StripeInvalidRequestError") {
+      return NextResponse.json(
+        { error: "Invalid payment request. Please review your booking details and try again." },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json(
-      { error: error.message || "Failed to create Stripe checkout session." },
+      { error: "Unable to start secure checkout. Please try again or choose a different payment method." },
       { status: 500 }
     );
   }
 }
+

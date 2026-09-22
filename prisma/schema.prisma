@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  slug            String?          @unique
+  image           String?
+  productServices ProductService[]
+
+  @@map("category")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  phone      String
+  password   String
+  createdAt  DateTime @default(now()) @map("created_at")
+  orders     Order[]
+
+  @@map("user")
+}
+
+model ProductService {
+  id          Int         @id @default(autoincrement())
+  name        String
+  categoryId  Int         @map("category_id")
+  price       Float
+  width       String?
+  time        String
+  slug        String?     @unique
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orders      Order[]
+  orderItems  OrderItem[]
+
+  @@map("product_service")
+}
+
+model Order {
+  id               Int         @id @default(autoincrement())
+  productServiceId Int?        @map("product_service_id")
+  customerId       Int         @map("customer_id")
+  address          String
+  phoneno          String
+  status           String      @default("pending")
+  scheduledDate    String?     @map("scheduled_date")
+  paymentMethod    String?     @default("local") @map("payment_method")
+  paymentStatus    String?     @default("pending") @map("payment_status")
+  stripeSessionId  String?     @map("stripe_session_id")
+  totalAmount      Float       @default(0) @map("total_amount")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  customer         User        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  productService   ProductService? @relation(fields: [productServiceId], references: [id], onDelete: SetNull)
+  orderItems       OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id               Int            @id @default(autoincrement())
+  orderId          Int            @map("order_id")
+  productServiceId Int            @map("product_service_id")
+  price            Float
+  createdAt        DateTime       @default(now()) @map("created_at")
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productService   ProductService @relation(fields: [productServiceId], references: [id], onDelete: Restrict)
+
+  @@map("order_items")
+}

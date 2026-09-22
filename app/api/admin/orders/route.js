@@ -14,7 +14,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const orders = getOrders();
+    const orders = await getOrders();
     return NextResponse.json({ orders });
   } catch (error) {
     console.error("Admin get orders error:", error);
@@ -39,11 +39,18 @@ export async function PATCH(request) {
     }
 
     if (status !== undefined) {
-      updateOrderStatus(id, status);
+      const normalizedStatus = String(status).toLowerCase().trim();
+      if (!["pending", "completed"].includes(normalizedStatus)) {
+        return NextResponse.json(
+          { error: "Invalid status. Order status must be either 'pending' or 'completed'." },
+          { status: 400 }
+        );
+      }
+      await updateOrderStatus(id, normalizedStatus);
     }
 
     if (scheduled_date !== undefined || address !== undefined || phoneno !== undefined) {
-      updateOrder(id, { scheduled_date, address, phoneno });
+      await updateOrder(id, { scheduled_date, address, phoneno });
     }
 
     return NextResponse.json({

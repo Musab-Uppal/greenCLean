@@ -16,7 +16,7 @@ export async function POST(request) {
     }
 
     const trimmedEmail = email.trim().toLowerCase();
-    const user = getUserByEmail(trimmedEmail);
+    const user = await getUserByEmail(trimmedEmail);
 
     if (!user) {
       return NextResponse.json(

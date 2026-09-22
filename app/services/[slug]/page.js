@@ -132,7 +132,7 @@ const SERVICE_PROCESSES = {
 };
 
 export async function generateStaticParams() {
-  const categories = getDbCategoriesWithServices();
+  const categories = await getDbCategoriesWithServices();
   return categories.map((cat) => ({
     slug: cat.slug,
   }));
@@ -140,7 +140,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const category = getDbCategoryBySlug(slug);
+  const category = await getDbCategoryBySlug(slug);
   if (!category) return { title: "Service Not Found" };
 
   return {
@@ -151,7 +151,7 @@ export async function generateMetadata({ params }) {
 
 export default async function ServiceDetailPage({ params }) {
   const { slug } = await params;
-  const category = getDbCategoryBySlug(slug);
+  const category = await getDbCategoryBySlug(slug);
 
   if (!category) {
     notFound();

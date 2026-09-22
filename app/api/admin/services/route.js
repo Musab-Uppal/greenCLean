@@ -24,7 +24,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const services = getAllServices();
+    const services = await getAllServices();
     return NextResponse.json({ services });
   } catch (error) {
     console.error("Admin services GET error:", error);
@@ -52,7 +52,7 @@ export async function POST(request) {
 
     const slug = slugify(name) + "-" + Math.floor(1000 + Math.random() * 9000);
 
-    const result = insertProductService({
+    const result = await insertProductService({
       name: name.trim(),
       category_id: parseInt(category_id, 10),
       price: parseFloat(price),
@@ -87,7 +87,7 @@ export async function PATCH(request) {
       return NextResponse.json({ error: "Service ID is required" }, { status: 400 });
     }
 
-    updateProductService(id, {
+    await updateProductService(id, {
       name,
       category_id: category_id !== undefined ? parseInt(category_id, 10) : undefined,
       price: price !== undefined ? parseFloat(price) : undefined,
@@ -121,7 +121,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "Service ID is required" }, { status: 400 });
     }
 
-    deleteProductService(parseInt(id, 10));
+    await deleteProductService(parseInt(id, 10));
 
     return NextResponse.json({
       success: true,

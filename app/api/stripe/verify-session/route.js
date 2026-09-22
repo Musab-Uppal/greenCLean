@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { stripe, isStripeConfigured } from "@/lib/stripe";
-import { 
-  db, 
-  getUserByEmail, 
-  createUser, 
-  createOrder, 
-  getOrdersByStripeSessionId 
+import { stripe } from "@/lib/stripe";
+import {
+  prisma,
+  getUserByEmail,
+  createUser,
+  createOrder,
+  getOrdersByStripeSessionId,
 } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export async function GET(request) {
     }
 
     // 1. Check if order was already recorded for this session
-    const existingOrders = getOrdersByStripeSessionId(sessionId);
+    const existingOrders = await getOrdersByStripeSessionId(sessionId);
     if (existingOrders && existingOrders.length > 0) {
       const firstOrder = existingOrders[0];
       return NextResponse.json({
@@ -37,27 +37,14 @@ export async function GET(request) {
         paymentStatus: firstOrder.payment_status,
         paymentMethod: firstOrder.payment_method,
         totalAmount: firstOrder.total_amount,
+        items: firstOrder.items || [],
+        orderId: firstOrder.order_id,
+        orderIds: [firstOrder.order_id],
         orders: existingOrders,
       });
     }
 
-    // 2. Handle Mock Session in Dev/Test Mode
-    if (sessionId.startsWith("mock_") || sessionId.startsWith("test_") || !isStripeConfigured()) {
-      return NextResponse.json({
-        success: true,
-        isMock: true,
-        bookingRef: `GCG-${Math.floor(10000 + Math.random() * 90000)}`,
-        scheduledDate: "Tomorrow (Confirmed Slot)",
-        address: "Liverpool, Merseyside",
-        email: "customer@greencleangroup.co.uk",
-        paymentStatus: "paid",
-        paymentMethod: "creditcard",
-        totalAmount: 50.00,
-        message: "Booking verified in mock/test payment mode."
-      });
-    }
-
-    // 3. Retrieve real session from Stripe
+    // 2. Retrieve real session from Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     if (!session) {
@@ -72,23 +59,22 @@ export async function GET(request) {
     const email = meta.customer_email || session.customer_details?.email || session.client_reference_id;
     const phone = meta.customer_phone || session.customer_details?.phone || "07359068284";
     const address = `${meta.customer_address || "Liverpool City Centre"}, ${meta.customer_postcode || "L1"}`;
-    const scheduled_date = meta.scheduled_date && meta.time_slot 
-      ? `${meta.scheduled_date} ${meta.time_slot}` 
+    const scheduled_date = meta.scheduled_date && meta.time_slot
+      ? `${meta.scheduled_date} ${meta.time_slot}`
       : meta.scheduled_date || "Confirmed UK Window";
     const totalAmount = session.amount_total ? session.amount_total / 100 : Number(meta.total_amount || 0);
 
-    // 4. Find or create user
-    let user = getUserByEmail(email);
+    // 3. Find or create user
+    let user = await getUserByEmail(email);
     if (!user) {
-      const userRes = createUser({
+      user = await createUser({
         email,
         phone,
-        password: "guest_stripe_account"
+        password: "guest_stripe_account",
       });
-      user = { id: userRes.lastInsertRowid, email, phone };
     }
 
-    // 5. Parse items and insert orders
+    // 4. Parse items and insert order
     let items = [];
     try {
       if (meta.items_json) {
@@ -96,53 +82,60 @@ export async function GET(request) {
       }
     } catch (_) {}
 
-    const createdOrderIds = [];
+    const orderItems = [];
     if (Array.isArray(items) && items.length > 0) {
       for (const it of items) {
         let resolvedId = it.db_id;
         if (!resolvedId && it.id) {
-          const row = db.prepare("SELECT id FROM product_service WHERE slug = ? OR id = ?").get(it.id, it.id);
-          if (row) resolvedId = row.id;
+          const row = await prisma.productService.findFirst({
+            where: { OR: [{ slug: String(it.id) }, { id: Number(it.id) || -1 }] },
+            select: { id: true, price: true, name: true },
+          });
+          if (row) {
+            resolvedId = row.id;
+            it.name = it.name || row.name;
+          }
         }
 
         if (resolvedId) {
-          const res = createOrder({
+          orderItems.push({
             product_service_id: resolvedId,
-            customer_id: user.id,
-            address,
-            phoneno: phone,
-            status: "confirmed",
-            scheduled_date,
-            payment_method: "creditcard",
-            payment_status: isPaid ? "paid" : "pending",
-            stripe_session_id: session.id,
-            total_amount: it.price || totalAmount
+            price: Number(it.price) || 0,
+            name: it.name,
           });
-          createdOrderIds.push(res.lastInsertRowid);
         }
-      }
-    } else {
-      // Fallback: pick primary service
-      const defaultService = db.prepare("SELECT id FROM product_service LIMIT 1").get();
-      if (defaultService) {
-        const res = createOrder({
-          product_service_id: defaultService.id,
-          customer_id: user.id,
-          address,
-          phoneno: phone,
-          status: "confirmed",
-          scheduled_date,
-          payment_method: "creditcard",
-          payment_status: isPaid ? "paid" : "pending",
-          stripe_session_id: session.id,
-          total_amount: totalAmount
-        });
-        createdOrderIds.push(res.lastInsertRowid);
       }
     }
 
-    const firstOrderId = createdOrderIds[0] || Math.floor(1000 + Math.random() * 9000);
-    const bookingRef = `GCG-${firstOrderId + 10000}`;
+    if (orderItems.length === 0) {
+      const defaultService = await prisma.productService.findFirst({
+        select: { id: true, price: true, name: true },
+      });
+      if (defaultService) {
+        orderItems.push({
+          product_service_id: defaultService.id,
+          price: totalAmount,
+          name: defaultService.name,
+        });
+      }
+    }
+
+    const orderRes = await createOrder({
+      product_service_id: orderItems[0]?.product_service_id,
+      customer_id: user.id,
+      address,
+      phoneno: phone,
+      status: "pending",
+      scheduled_date,
+      payment_method: "creditcard",
+      payment_status: isPaid ? "paid" : "pending",
+      stripe_session_id: session.id,
+      total_amount: totalAmount,
+      items: orderItems,
+    });
+
+    const orderId = orderRes.lastInsertRowid;
+    const bookingRef = `GCG-${orderId + 10000}`;
 
     return NextResponse.json({
       success: true,
@@ -154,12 +147,20 @@ export async function GET(request) {
       paymentStatus: isPaid ? "paid" : "pending",
       paymentMethod: "creditcard",
       totalAmount,
-      orderIds: createdOrderIds
+      orderId,
+      orderIds: [orderId],
+      items: orderItems,
     });
   } catch (error) {
-    console.error("Stripe verify session error:", error);
+    console.error("[Stripe verify-session]", error);
+    if (error.type === "StripeConnectionError") {
+      return NextResponse.json(
+        { error: "Could not reach payment servers to verify your booking. Please refresh the page or contact support." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
-      { error: error.message || "Failed to verify Stripe payment session" },
+      { error: "Could not verify your payment. Please contact support at 07359 068284." },
       { status: 500 }
     );
   }

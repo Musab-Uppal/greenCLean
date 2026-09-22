@@ -7,8 +7,8 @@ export const metadata = {
   description: "View our full transparent price list for oven, kitchen, BBQ, and domestic cleaning in Liverpool. No hidden fees, fixed prices, and satisfaction guaranteed.",
 };
 
-export default function PricesPage() {
-  const categories = getDbCategoriesWithServices();
+export default async function PricesPage() {
+  const categories = await getDbCategoriesWithServices();
 
   return (
     <div style={{ background: "var(--bg-body)", padding: "60px 0 100px" }}>

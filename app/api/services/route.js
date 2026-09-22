@@ -9,11 +9,11 @@ export async function GET(request) {
     const flat = searchParams.get("flat");
 
     if (flat === "true") {
-      const allServices = getAllDbServices();
+      const allServices = await getAllDbServices();
       return NextResponse.json(allServices);
     }
 
-    const categories = getDbCategoriesWithServices();
+    const categories = await getDbCategoriesWithServices();
     return NextResponse.json(categories);
   } catch (error) {
     console.error("Error fetching services from DB:", error);

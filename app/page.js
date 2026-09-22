@@ -53,8 +53,8 @@ const OVERLAY_TITLES = {
   tenancy: "Tenancy"
 };
 
-export default function HomePage() {
-  const categories = getDbCategoriesWithServices();
+export default async function HomePage() {
+  const categories = await getDbCategoriesWithServices();
   const businessSchema = getLocalBusinessSchema();
   const faqSchema = getFaqSchema(FAQS);
 
