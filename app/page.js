@@ -68,7 +68,7 @@ export default async function HomePage() {
         <div className="container">
           <div className="hero-grid">
             {/* Left Col: Value Proposition */}
-            <div>
+            <div className="hero-content-col">
 
 
               <h3 className="hero-headline">
@@ -92,8 +92,8 @@ export default async function HomePage() {
                 </a>
               </div>
 
-              {/* Trust Badges Row */}
-              <div className="hero-trust-row">
+              {/* Trust Badges Row (Desktop) */}
+              <div className="hero-trust-row hero-trust-desktop">
                 <div className="hero-trust-badge">
                   <div className="hero-trust-icon">
                     <Star size={14} fill="#059669" />
@@ -125,7 +125,7 @@ export default async function HomePage() {
             </div>
 
             {/* Right Col: Real High Quality Transformation Image */}
-            <div style={{ position: "relative" }}>
+            <div className="hero-image-col" style={{ position: "relative" }}>
               <div
                 style={{
                   borderRadius: "var(--radius-lg)",
@@ -146,11 +146,38 @@ export default async function HomePage() {
                     display: "block"
                   }}
                 />
-
-
               </div>
 
+              {/* Trust Badges Row (Mobile - below oven picture) */}
+              <div className="hero-trust-row hero-trust-mobile">
+                <div className="hero-trust-badge">
+                  <div className="hero-trust-icon">
+                    <Star size={14} fill="#059669" />
+                  </div>
+                  <span>4.9★ Rated locally</span>
+                </div>
 
+                <div className="hero-trust-badge">
+                  <div className="hero-trust-icon">
+                    <Sparkles size={14} />
+                  </div>
+                  <span>100% Non-Toxic</span>
+                </div>
+
+                <div className="hero-trust-badge">
+                  <div className="hero-trust-icon">
+                    <ShieldCheck size={14} />
+                  </div>
+                  <span>Fully Insured</span>
+                </div>
+
+                <div className="hero-trust-badge">
+                  <div className="hero-trust-icon">
+                    <Clock size={14} />
+                  </div>
+                  <span>Card &amp; Cash</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -159,18 +186,12 @@ export default async function HomePage() {
       {/* ====================================================================
           REVIEWS TRUST STRIP (COMPACT)
          ==================================================================== */}
-      <section style={{ background: "#ffffff", padding: "14px 0 10px", borderBottom: "1px solid var(--border-subtle)" }}>
+      <section className="reviews-trust-strip">
         <div className="container">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "8px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span className="section-pill" style={{ fontSize: "0.72rem", padding: "3px 10px", margin: 0 }}>
-                ⭐ Verified Reviews
-              </span>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: "800", color: "var(--slate-900)", margin: 0 }}>
-                What Our Clients Are <span className="gradient-text">Saying</span>
-              </h3>
-            </div>
-
+          <div className="reviews-trust-header">
+            <h3 className="reviews-trust-title">
+              What Our Clients Are <span className="gradient-text">Saying</span>
+            </h3>
           </div>
 
           <TestimonialsCarousel />
