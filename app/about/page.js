@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import {
   CheckCircle2,
@@ -34,14 +34,7 @@ export default function AboutPage() {
     { src: "/work done/serviveinr-img-1.jpg", alt: "Service interior result" },
   ];
 
-  // Auto-advance every 3.5s; pause while lightbox is open
-  useEffect(() => {
-    if (lightboxOpen) return;
-    const timer = setInterval(() => {
-      setSlideIndex(i => (i + 1) % workImages.length);
-    }, 3500);
-    return () => clearInterval(timer);
-  }, [lightboxOpen, workImages.length]);
+
 
   const stats = [
 
@@ -55,38 +48,38 @@ export default function AboutPage() {
 
   const whyUs = [
     {
-      icon: <Leaf size={32} color="#2fb8a7" />,
+      icon: <Leaf size={22} color="#2fb8a7" />,
       title: "Green and Safe",
       desc: "Our eco-friendly, all natural products ensure safety from dangerous chemicals, and allows families to avoid risky additives.",
     },
     {
-      icon: <Clock size={32} color="#2fb8a7" />,
+      icon: <Clock size={22} color="#2fb8a7" />,
       title: "Service on Schedule",
       desc: "Flexible schedule ensures that you can choose the best date and time that suits your needs.",
     },
     {
-      icon: <ShieldCheck size={32} color="#2fb8a7" />,
+      icon: <ShieldCheck size={22} color="#2fb8a7" />,
       title: "Insured Services",
       desc: "We are fully insured, this provides protection for our staff and customers.",
     },
     {
-      icon: <Smile size={32} color="#2fb8a7" />,
+      icon: <Smile size={22} color="#2fb8a7" />,
       title: "Pleasant & Trustworthy",
       desc: "We constantly strive to provide excellent service, and all our staff are pleasant and trustworthy.",
     },
     {
-      icon: <HeartHandshake size={32} color="#2fb8a7" />,
+      icon: <HeartHandshake size={22} color="#2fb8a7" />,
       title: "Customer Support",
       desc: "Our polite and kind customer support team is always ready to help you. We go beyond meeting your needs.",
     },
     {
-      icon: <Star size={32} color="#2fb8a7" />,
+      icon: <Star size={22} color="#2fb8a7" />,
       title: "Client Satisfaction",
       desc: "Keeping our customers happy is our number one priority. Our customers' reviews speak for themselves.",
     },
   ];
 
-  const openLightbox  = () => setLightboxOpen(true);
+  const openLightbox = () => setLightboxOpen(true);
   const closeLightbox = () => setLightboxOpen(false);
   const prevSlide = () => setSlideIndex(i => (i - 1 + workImages.length) % workImages.length);
   const nextSlide = () => setSlideIndex(i => (i + 1) % workImages.length);
@@ -230,8 +223,8 @@ export default function AboutPage() {
         .why-card {
           background: #f8fafc;
           border: 1px solid #e2e8f0;
-          border-radius: 18px;
-          padding: 32px 28px;
+          border-radius: 16px;
+          padding: 24px 22px;
           transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
           position: relative;
           overflow: hidden;
@@ -250,42 +243,50 @@ export default function AboutPage() {
           transform: translateY(-4px);
         }
         .why-card:hover::after { transform: scaleX(1); }
+        .why-card-top {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin-bottom: 12px;
+        }
         .why-card-icon {
-          width: 56px; height: 56px; border-radius: 14px;
+          width: 42px; height: 42px; border-radius: 11px;
           background: linear-gradient(135deg, #ecfdf5, #d1fae5);
           display: flex; align-items: center; justify-content: center;
-          margin-bottom: 18px;
+          flex-shrink: 0;
         }
         .why-card h3 {
-          font-size: 1.07rem; font-weight: 750; color: #0f172a;
-          margin-bottom: 10px;
+          font-size: 1.05rem; font-weight: 750; color: #0f172a;
+          margin: 0;
+          line-height: 1.3;
         }
-        .why-card p { font-size: 0.92rem; color: #64748b; line-height: 1.65; }
+        .why-card p { font-size: 0.92rem; color: #64748b; line-height: 1.65; margin: 0; }
 
-        /* ── Our Latest Work Slideshow ── */
+        /* ── Our Latest Work Gallery ── */
         .about-gallery {
-          padding: 90px 20px;
+          padding: 55px 20px;
           background: linear-gradient(180deg, #f8fafc 0%, #ecfdf5 100%);
         }
-        .about-gallery-inner { max-width: 640px; margin: 0 auto; }
+        .about-gallery-inner { max-width: 480px; margin: 0 auto; }
 
-        .about-gallery-header { text-align: center; margin-bottom: 44px; }
+        .about-gallery-header { text-align: center; margin-bottom: 24px; }
         .about-gallery-header h2 {
-          font-size: clamp(1.8rem, 3vw, 2.6rem);
-          font-weight: 850; color: #0f172a; margin-bottom: 14px;
+          font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+          font-weight: 850; color: #0f172a; margin-bottom: 10px;
         }
-        .about-gallery-header p { font-size: 1.05rem; color: #64748b; max-width: 560px; margin: 0 auto; }
+        .about-gallery-header p { font-size: 0.98rem; color: #64748b; max-width: 460px; margin: 0 auto; }
 
         /* Main slide */
         .gslide-wrap {
           position: relative;
-          aspect-ratio: 4/3;
-          border-radius: 16px;
+          aspect-ratio: 16 / 10;
+          max-height: 320px;
+          border-radius: 14px;
           overflow: hidden;
           background: #1e293b;
-          box-shadow: 0 12px 36px rgba(6,78,59,0.15);
+          box-shadow: 0 8px 24px rgba(6,78,59,0.12);
           cursor: pointer;
-          margin-bottom: 12px;
+          margin-bottom: 10px;
         }
 
         .gslide-img {
@@ -307,11 +308,11 @@ export default function AboutPage() {
         }
         .gslide-wrap:hover .gslide-hover-overlay { background: rgba(6,78,59,0.35); }
         .gslide-expand-icon {
-          width: 56px; height: 56px;
+          width: 46px; height: 46px;
           background: rgba(255,255,255,0.92);
           border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          font-size: 1.4rem;
+          font-size: 1.2rem;
           opacity: 0; transform: scale(0.6);
           transition: all 0.3s ease;
         }
@@ -319,55 +320,55 @@ export default function AboutPage() {
 
         /* Counter badge */
         .gslide-counter {
-          position: absolute; top: 14px; right: 14px;
+          position: absolute; top: 10px; right: 10px;
           background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
-          color: #fff; font-size: 0.78rem; font-weight: 700;
-          padding: 4px 10px; border-radius: 99px;
+          color: #fff; font-size: 0.72rem; font-weight: 700;
+          padding: 3px 8px; border-radius: 99px;
           pointer-events: none;
         }
 
         /* Arrow buttons */
         .gslide-arrow {
           position: absolute; top: 50%; transform: translateY(-50%);
-          width: 42px; height: 42px; border-radius: 50%;
+          width: 36px; height: 36px; border-radius: 50%;
           background: rgba(255,255,255,0.9); backdrop-filter: blur(6px);
           border: none; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.18);
           transition: all 0.2s ease;
           z-index: 10;
           color: #064e3b;
         }
-        .gslide-arrow:hover { background: #fff; transform: translateY(-50%) scale(1.1); }
-        .gslide-arrow.prev { left: 14px; }
-        .gslide-arrow.next { right: 14px; }
+        .gslide-arrow:hover { background: #fff; transform: translateY(-50%) scale(1.08); }
+        .gslide-arrow.prev { left: 10px; }
+        .gslide-arrow.next { right: 10px; }
 
         /* Dot indicators */
         .gslide-dots {
-          display: flex; gap: 8px; justify-content: center; margin-bottom: 18px;
+          display: flex; gap: 6px; justify-content: center; margin-bottom: 14px;
         }
         .gslide-dot {
-          height: 8px; border-radius: 99px;
+          height: 6px; border-radius: 99px;
           background: #cbd5e1;
           transition: all 0.3s ease;
           border: none; cursor: pointer; padding: 0;
         }
-        .gslide-dot.active { background: #059669; width: 28px !important; }
+        .gslide-dot.active { background: #059669; width: 22px !important; }
 
         /* Thumbnail strip */
         .gthumb-strip {
-          display: flex; gap: 10px;
+          display: flex; gap: 8px;
           overflow-x: auto; padding-bottom: 4px;
           scrollbar-width: none;
         }
         .gthumb-strip::-webkit-scrollbar { display: none; }
         .gthumb {
           flex-shrink: 0;
-          width: 72px; height: 50px;
-          border-radius: 8px; overflow: hidden;
+          width: 58px; height: 40px;
+          border-radius: 6px; overflow: hidden;
 
           cursor: pointer;
-          border: 2.5px solid transparent;
+          border: 2px solid transparent;
           transition: all 0.2s ease;
           background: #e2e8f0;
           opacity: 0.65;
@@ -544,8 +545,10 @@ export default function AboutPage() {
           <div className="about-why-grid">
             {whyUs.map((card, i) => (
               <div key={i} className="why-card">
-                <div className="why-card-icon">{card.icon}</div>
-                <h3>{card.title}</h3>
+                <div className="why-card-top">
+                  <div className="why-card-icon">{card.icon}</div>
+                  <h3>{card.title}</h3>
+                </div>
                 <p>{card.desc}</p>
               </div>
             ))}
@@ -582,10 +585,7 @@ export default function AboutPage() {
               />
             ))}
 
-            {/* Hover overlay */}
-            <div className="gslide-hover-overlay">
-              <div className="gslide-expand-icon">🔍</div>
-            </div>
+
 
             {/* Counter */}
             <div className="gslide-counter">
