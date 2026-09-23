@@ -71,7 +71,6 @@ export default async function HomePage() {
             <div>
               <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--emerald-100)", color: "var(--emerald-900)", padding: "6px 16px", borderRadius: "var(--radius-full)", fontSize: "0.85rem", fontWeight: "700", marginBottom: "20px", border: "1px solid var(--emerald-300)" }}>
                 <span className="pulse-indicator" />
-                <span>Liverpool’s #1 Eco-Friendly Cleaning Specialist</span>
               </div>
 
               <h3 className="hero-headline">
@@ -150,56 +149,10 @@ export default async function HomePage() {
                   }}
                 />
 
-                {/* Floating Verified Transformation Overlay */}
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "16px",
-                    left: "16px",
-                    right: "16px",
-                    background: "rgba(15, 23, 42, 0.88)",
-                    backdropFilter: "blur(10px)",
-                    borderRadius: "var(--radius-md)",
-                    padding: "12px 18px",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "12px",
-                    flexWrap: "wrap"
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{ width: "36px", height: "36px", borderRadius: "var(--radius-full)", background: "var(--emerald-500)", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", flexShrink: 0 }}>
-                      <Sparkles size={18} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: "0.875rem", fontWeight: "700", color: "#ffffff" }}>
-                        Real Liverpool Transformation
-                      </div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--emerald-200)" }}>
-                        100% Non-Toxic Van Dip Tank Clean
-                      </div>
-                    </div>
-                  </div>
 
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(16, 185, 129, 0.2)", border: "1px solid rgba(52, 211, 153, 0.3)", padding: "4px 10px", borderRadius: "var(--radius-full)", color: "#34d399", fontSize: "0.75rem", fontWeight: "700" }}>
-                    <CheckCircle2 size={13} />
-                    <span>Verified Result</span>
-                  </div>
-                </div>
               </div>
 
-              {/* Sub-caption note */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "12px", padding: "0 4px", fontSize: "0.82rem", color: "var(--slate-600)" }}>
-                <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <CheckCircle2 size={15} color="#059669" />
-                  <strong>Real Customer Result</strong> • Zero Toxic Fumes
-                </span>
-                <span style={{ color: "var(--slate-500)" }}>
-                  Ready to cook in immediately
-                </span>
-              </div>
+
             </div>
           </div>
         </div>
@@ -479,9 +432,7 @@ export default async function HomePage() {
             <h2 className="section-title">
               Frequently Asked <span className="gradient-text">Questions</span>
             </h2>
-            <p className="section-desc">
-              Everything you need to know about our eco-friendly techniques, scheduling, and guarantees.
-            </p>
+
           </div>
 
           <FaqAccordion />
