@@ -40,10 +40,7 @@ export default function ContactPage() {
       <div className="container">
         {/* Page Header */}
         <div style={{ textAlign: "center", maxWidth: "720px", margin: "0 auto 56px" }}>
-          <span className="section-pill">
-            <Sparkles size={14} />
-            <span>Get in Touch</span>
-          </span>
+
 
           <h1 style={{ fontSize: "2.8rem", fontWeight: "850", color: "var(--slate-900)", marginBottom: "16px", letterSpacing: "-0.02em" }}>
             Contact <span className="gradient-text">Green Clean Group</span>

@@ -157,9 +157,30 @@ export default async function HomePage() {
       </section>
 
       {/* ====================================================================
+          REVIEWS TRUST STRIP (COMPACT)
+         ==================================================================== */}
+      <section style={{ background: "#ffffff", padding: "14px 0 10px", borderBottom: "1px solid var(--border-subtle)" }}>
+        <div className="container">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span className="section-pill" style={{ fontSize: "0.72rem", padding: "3px 10px", margin: 0 }}>
+                ⭐ Verified Reviews
+              </span>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: "800", color: "var(--slate-900)", margin: 0 }}>
+                What Our Clients Are <span className="gradient-text">Saying</span>
+              </h3>
+            </div>
+
+          </div>
+
+          <TestimonialsCarousel />
+        </div>
+      </section>
+
+      {/* ====================================================================
           SERVICES SHOWCASE SECTION
          ==================================================================== */}
-      <section className="section" style={{ background: "var(--bg-body)" }}>
+      <section className="section" style={{ background: "var(--bg-body)", paddingTop: "24px" }}>
         <div className="container">
 
 
@@ -401,24 +422,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ====================================================================
-          TESTIMONIALS SECTION
-         ==================================================================== */}
-      <section className="section" style={{ background: "#ffffff" }}>
-        <div className="container">
-          <div className="section-title-wrap">
-            <span className="section-pill">Customer Reviews</span>
-            <h2 className="section-title">
-              What Our Clients Are <span className="gradient-text">Saying</span>
-            </h2>
-            <p className="section-desc">
-              Over 3,500 glowing transformations and verified reviews on Trustpilot &amp; Google across Liverpool.
-            </p>
-          </div>
 
-          <TestimonialsCarousel />
-        </div>
-      </section>
 
       {/* ====================================================================
           FAQS SECTION

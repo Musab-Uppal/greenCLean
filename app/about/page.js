@@ -40,7 +40,7 @@ export default function AboutPage() {
 
     { icon: "⭐", label: "Years of Experience", value: "7+" },
     { icon: "📋", label: "Orders per Year", value: "1,000+" },
-    { icon: "🌟", label: "Star Reviews", value: "5 Star" },
+    { icon: "🌟", label: "Star Reviews", value: "4.9 Star" },
     { icon: "🌿", label: "ECO Products", value: "100%" },
     { icon: "😊", label: "Pleasant & Trustworthy", value: "Always" },
     { icon: "🛡️", label: "Insured Workers", value: "Fully" },

@@ -435,7 +435,7 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 auto 40px;
+  margin: 0 auto 24px;
   flex-wrap: nowrap;
   overflow-x: auto;
   padding: 4px 6px 14px;
@@ -1153,14 +1153,14 @@ button {
   background: radial-gradient(circle at 80% 20%, rgba(52, 211, 153, 0.15), transparent 45%),
               radial-gradient(circle at 10% 80%, rgba(45, 212, 191, 0.12), transparent 40%),
               linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
-  padding-top: 50px;
-  padding-bottom: 80px;
+  padding-top: 40px;
+  padding-bottom: 24px;
 }
 
 @media (min-width: 1024px) {
   .hero-section {
-    padding-top: 70px;
-    padding-bottom: 110px;
+    padding-top: 50px;
+    padding-bottom: 24px;
   }
 }
 
