@@ -69,9 +69,7 @@ export default async function HomePage() {
           <div className="hero-grid">
             {/* Left Col: Value Proposition */}
             <div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "var(--emerald-100)", color: "var(--emerald-900)", padding: "6px 16px", borderRadius: "var(--radius-full)", fontSize: "0.85rem", fontWeight: "700", marginBottom: "20px", border: "1px solid var(--emerald-300)" }}>
-                <span className="pulse-indicator" />
-              </div>
+
 
               <h3 className="hero-headline">
                 Professional <span className="gradient-text">Oven &amp; Home</span> Cleaning in Liverpool
