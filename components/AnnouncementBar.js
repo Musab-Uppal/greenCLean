@@ -11,7 +11,7 @@ export default function AnnouncementBar() {
         <div className="top-bar-inner">
           <div className="top-bar-left">
             <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-              <Sparkles size={14} color="#34d399" />
+
             </span>
             <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
               <CreditCard size={14} color="#34d399" />

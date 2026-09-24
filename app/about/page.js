@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import {
   CheckCircle2,
@@ -20,6 +20,21 @@ import {
 export default function AboutPage() {
   const [slideIndex, setSlideIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const workSectionRef = useRef(null);
+
+  useEffect(() => {
+    const el = workSectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const workImages = [
     { src: "/work done/b-a-img.jpg", alt: "Before and after cleaning" },
@@ -33,6 +48,8 @@ export default function AboutPage() {
     { src: "/work done/e68347cc-2f39-4580-88cb-3bcf9b07d742-1.jpg", alt: "Professional cleaning result" },
     { src: "/work done/serviveinr-img-1.jpg", alt: "Service interior result" },
   ];
+
+  const carouselImages = [...workImages, ...workImages];
 
 
 
@@ -265,23 +282,25 @@ export default function AboutPage() {
         }
         .why-card p { font-size: 0.92rem; color: #64748b; line-height: 1.65; margin: 0; }
 
-        /* ── Our Latest Work Grid ── */
+        /* ── Our Latest Work Auto-Slide List ── */
         .latest-work-section {
-          padding: 85px 20px;
+          padding: 85px 0 95px;
           background: linear-gradient(180deg, #f8fafc 0%, #ecfdf5 100%);
           width: 100%;
+          overflow: hidden;
         }
         .latest-work-container {
           max-width: 1260px;
           margin-left: auto !important;
           margin-right: auto !important;
           width: 100%;
+          padding: 0 20px;
           box-sizing: border-box;
         }
         .latest-work-header {
           text-align: center;
           max-width: 680px;
-          margin: 0 auto 48px;
+          margin: 0 auto 36px;
         }
         .latest-work-header h2 {
           font-size: clamp(1.8rem, 3vw, 2.6rem);
@@ -296,38 +315,83 @@ export default function AboutPage() {
           line-height: 1.6;
           margin: 0;
         }
-        .latest-work-grid {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 20px;
+
+        .work-carousel-outer {
+          position: relative;
           width: 100%;
+          overflow: hidden;
+          padding: 8px 0 16px;
+          cursor: grab;
         }
-        @media (max-width: 1024px) {
-          .latest-work-grid {
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
+        /* Fade edges */
+        .work-carousel-outer::before,
+        .work-carousel-outer::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 80px;
+          z-index: 2;
+          pointer-events: none;
+        }
+        .work-carousel-outer::before {
+          left: 0;
+          background: linear-gradient(to right, #f8fafc 20%, rgba(248, 250, 252, 0) 100%);
+        }
+        .work-carousel-outer::after {
+          right: 0;
+          background: linear-gradient(to left, #ecfdf5 20%, rgba(236, 253, 245, 0) 100%);
+        }
+        @media (max-width: 768px) {
+          .work-carousel-outer::before,
+          .work-carousel-outer::after {
+            width: 36px;
           }
         }
-        @media (max-width: 640px) {
-          .latest-work-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+
+        .work-carousel-track {
+          display: flex;
+          gap: 16px;
+          width: max-content;
+          animation: scrollWorkLeft 35s linear infinite;
+          will-change: transform;
+        }
+
+        .work-carousel-outer:hover .work-carousel-track {
+          animation-play-state: paused !important;
+        }
+
+        @keyframes scrollWorkLeft {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
           }
         }
+
         .latest-work-card {
           position: relative;
-          aspect-ratio: 1 / 1;
+          width: 275px;
+          height: 205px;
+          flex-shrink: 0;
           border-radius: 16px;
           overflow: hidden;
           background: #f1f5f9;
           border: 1px solid rgba(226, 232, 240, 0.9);
           box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
           cursor: pointer;
-          transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+          transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+        }
+        @media (max-width: 640px) {
+          .latest-work-card {
+            width: 225px;
+            height: 170px;
+          }
         }
         .latest-work-card:hover {
           transform: translateY(-4px);
-          box-shadow: 0 14px 28px rgba(6, 78, 59, 0.14);
+          box-shadow: 0 14px 28px rgba(6, 78, 59, 0.16);
           border-color: #6ee7b7;
         }
         .latest-work-card img {
@@ -343,16 +407,26 @@ export default function AboutPage() {
         .latest-work-overlay {
           position: absolute;
           inset: 0;
-          background: rgba(15, 23, 42, 0.35);
+          background: linear-gradient(to top, rgba(15, 23, 42, 0.72) 0%, rgba(15, 23, 42, 0) 55%);
           opacity: 0;
           transition: opacity 0.25s ease;
           display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 12px;
+          align-items: flex-end;
+          padding: 14px;
+          pointer-events: none;
         }
         .latest-work-card:hover .latest-work-overlay {
           opacity: 1;
+        }
+        .latest-work-caption {
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #ffffff;
+          margin: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
         }
 
         /* ── Lightbox ── */
@@ -535,23 +609,31 @@ export default function AboutPage() {
       </section>
 
       {/* ── OUR LATEST WORK ── */}
-      <section className="latest-work-section w-full" id="our-latest-work">
+      <section ref={workSectionRef} className="latest-work-section w-full" id="our-latest-work">
         <div className="latest-work-container">
           <div className="latest-work-header">
             <h2>Our Latest Work</h2>
-
           </div>
+        </div>
 
-          {/* ── Image Grid ── */}
-          <div className="latest-work-grid">
-            {workImages.map((img, i) => (
+        {/* ── Image Carousel / Auto-Slide List ── */}
+        <div
+          className="work-carousel-outer"
+          role="region"
+          aria-label="Our latest work pictures"
+        >
+          <div
+            className="work-carousel-track"
+            style={{ animationPlayState: isInView ? "running" : "paused" }}
+          >
+            {carouselImages.map((img, i) => (
               <div
                 key={i}
-                onClick={() => openLightbox(i)}
+                onClick={() => openLightbox(i % workImages.length)}
                 role="button"
                 tabIndex={0}
                 aria-label={`View ${img.alt}`}
-                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openLightbox(i)}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openLightbox(i % workImages.length)}
                 className="latest-work-card"
               >
                 <img
@@ -560,33 +642,9 @@ export default function AboutPage() {
                   loading="lazy"
                 />
 
-                {/* Subtle Hover Overlay */}
+                {/* Subtle Hover Caption Overlay (without search icon) */}
                 <div className="latest-work-overlay">
-                  <div style={{ alignSelf: "flex-end" }}>
-                    <span style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "50%",
-                      background: "rgba(255,255,255,0.92)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "0.85rem",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                    }}>
-                      🔍
-                    </span>
-                  </div>
-                  <p style={{
-                    fontSize: "0.78rem",
-                    fontWeight: "600",
-                    color: "#ffffff",
-                    margin: 0,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    textShadow: "0 1px 3px rgba(0,0,0,0.6)",
-                  }}>
+                  <p className="latest-work-caption">
                     {img.alt}
                   </p>
                 </div>
