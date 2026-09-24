@@ -79,7 +79,10 @@ export default function AboutPage() {
     },
   ];
 
-  const openLightbox = () => setLightboxOpen(true);
+  const openLightbox = (index = 0) => {
+    setSlideIndex(index);
+    setLightboxOpen(true);
+  };
   const closeLightbox = () => setLightboxOpen(false);
   const prevSlide = () => setSlideIndex(i => (i - 1 + workImages.length) % workImages.length);
   const nextSlide = () => setSlideIndex(i => (i + 1) % workImages.length);
@@ -262,120 +265,95 @@ export default function AboutPage() {
         }
         .why-card p { font-size: 0.92rem; color: #64748b; line-height: 1.65; margin: 0; }
 
-        /* ── Our Latest Work Gallery ── */
-        .about-gallery {
-          padding: 55px 20px;
+        /* ── Our Latest Work Grid ── */
+        .latest-work-section {
+          padding: 85px 20px;
           background: linear-gradient(180deg, #f8fafc 0%, #ecfdf5 100%);
+          width: 100%;
         }
-        .about-gallery-inner { max-width: 480px; margin: 0 auto; }
-
-        .about-gallery-header { text-align: center; margin-bottom: 24px; }
-        .about-gallery-header h2 {
-          font-size: clamp(1.6rem, 2.8vw, 2.2rem);
-          font-weight: 850; color: #0f172a; margin-bottom: 10px;
+        .latest-work-container {
+          max-width: 1260px;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          width: 100%;
+          box-sizing: border-box;
         }
-        .about-gallery-header p { font-size: 0.98rem; color: #64748b; max-width: 460px; margin: 0 auto; }
-
-        /* Main slide */
-        .gslide-wrap {
+        .latest-work-header {
+          text-align: center;
+          max-width: 680px;
+          margin: 0 auto 48px;
+        }
+        .latest-work-header h2 {
+          font-size: clamp(1.8rem, 3vw, 2.6rem);
+          font-weight: 850;
+          color: #0f172a;
+          margin-bottom: 12px;
+          letter-spacing: -0.02em;
+        }
+        .latest-work-header p {
+          font-size: 1.05rem;
+          color: #64748b;
+          line-height: 1.6;
+          margin: 0;
+        }
+        .latest-work-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 20px;
+          width: 100%;
+        }
+        @media (max-width: 1024px) {
+          .latest-work-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+          }
+        }
+        @media (max-width: 640px) {
+          .latest-work-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+          }
+        }
+        .latest-work-card {
           position: relative;
-          aspect-ratio: 16 / 10;
-          max-height: 320px;
-          border-radius: 14px;
+          aspect-ratio: 1 / 1;
+          border-radius: 16px;
           overflow: hidden;
-          background: #1e293b;
-          box-shadow: 0 8px 24px rgba(6,78,59,0.12);
+          background: #f1f5f9;
+          border: 1px solid rgba(226, 232, 240, 0.9);
+          box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
           cursor: pointer;
-          margin-bottom: 10px;
+          transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         }
-
-        .gslide-img {
-          position: absolute; inset: 0;
-          width: 100%; height: 100%;
+        .latest-work-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 14px 28px rgba(6, 78, 59, 0.14);
+          border-color: #6ee7b7;
+        }
+        .latest-work-card img {
+          width: 100%;
+          height: 100%;
           object-fit: cover;
-          transition: opacity 0.45s ease, transform 0.45s ease;
+          display: block;
+          transition: transform 0.4s ease;
         }
-        .gslide-img.enter  { opacity: 0; transform: scale(1.04); }
-        .gslide-img.active { opacity: 1; transform: scale(1); }
-        .gslide-img.exit   { opacity: 0; transform: scale(0.97); }
-
-        /* Overlay on hover */
-        .gslide-hover-overlay {
-          position: absolute; inset: 0;
-          background: rgba(6,78,59,0);
-          display: flex; align-items: center; justify-content: center;
-          transition: background 0.3s ease;
+        .latest-work-card:hover img {
+          transform: scale(1.06);
         }
-        .gslide-wrap:hover .gslide-hover-overlay { background: rgba(6,78,59,0.35); }
-        .gslide-expand-icon {
-          width: 46px; height: 46px;
-          background: rgba(255,255,255,0.92);
-          border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 1.2rem;
-          opacity: 0; transform: scale(0.6);
-          transition: all 0.3s ease;
+        .latest-work-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.35);
+          opacity: 0;
+          transition: opacity 0.25s ease;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 12px;
         }
-        .gslide-wrap:hover .gslide-expand-icon { opacity: 1; transform: scale(1); }
-
-        /* Counter badge */
-        .gslide-counter {
-          position: absolute; top: 10px; right: 10px;
-          background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
-          color: #fff; font-size: 0.72rem; font-weight: 700;
-          padding: 3px 8px; border-radius: 99px;
-          pointer-events: none;
+        .latest-work-card:hover .latest-work-overlay {
+          opacity: 1;
         }
-
-        /* Arrow buttons */
-        .gslide-arrow {
-          position: absolute; top: 50%; transform: translateY(-50%);
-          width: 36px; height: 36px; border-radius: 50%;
-          background: rgba(255,255,255,0.9); backdrop-filter: blur(6px);
-          border: none; cursor: pointer;
-          display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.18);
-          transition: all 0.2s ease;
-          z-index: 10;
-          color: #064e3b;
-        }
-        .gslide-arrow:hover { background: #fff; transform: translateY(-50%) scale(1.08); }
-        .gslide-arrow.prev { left: 10px; }
-        .gslide-arrow.next { right: 10px; }
-
-        /* Dot indicators */
-        .gslide-dots {
-          display: flex; gap: 6px; justify-content: center; margin-bottom: 14px;
-        }
-        .gslide-dot {
-          height: 6px; border-radius: 99px;
-          background: #cbd5e1;
-          transition: all 0.3s ease;
-          border: none; cursor: pointer; padding: 0;
-        }
-        .gslide-dot.active { background: #059669; width: 22px !important; }
-
-        /* Thumbnail strip */
-        .gthumb-strip {
-          display: flex; gap: 8px;
-          overflow-x: auto; padding-bottom: 4px;
-          scrollbar-width: none;
-        }
-        .gthumb-strip::-webkit-scrollbar { display: none; }
-        .gthumb {
-          flex-shrink: 0;
-          width: 58px; height: 40px;
-          border-radius: 6px; overflow: hidden;
-
-          cursor: pointer;
-          border: 2px solid transparent;
-          transition: all 0.2s ease;
-          background: #e2e8f0;
-          opacity: 0.65;
-        }
-        .gthumb:hover { opacity: 0.9; }
-        .gthumb.active { border-color: #059669; opacity: 1; box-shadow: 0 0 0 2px #d1fae5; }
-        .gthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         /* ── Lightbox ── */
         .lightbox-overlay {
@@ -557,73 +535,63 @@ export default function AboutPage() {
       </section>
 
       {/* ── OUR LATEST WORK ── */}
-      <section className="about-gallery" id="our-latest-work">
-        <div className="about-gallery-inner">
-          <div className="about-gallery-header">
-            <span className="section-pill">📸 Gallery</span>
+      <section className="latest-work-section w-full" id="our-latest-work">
+        <div className="latest-work-container">
+          <div className="latest-work-header">
             <h2>Our Latest Work</h2>
             <p>
               Real results from homes across Liverpool and Merseyside — click any image to view full size.
             </p>
           </div>
 
-          {/* ── Main featured slide ── */}
-          <div
-            className="gslide-wrap"
-            onClick={openLightbox}
-            role="button"
-            tabIndex={0}
-            aria-label={`View ${workImages[slideIndex]?.alt}`}
-            onKeyDown={(e) => e.key === "Enter" && openLightbox()}
-          >
-            {workImages.map((img, i) => (
-              <img
-                key={i}
-                src={img.src}
-                alt={img.alt}
-                className={`gslide-img${i === slideIndex ? " active" : " exit"}`}
-              />
-            ))}
-
-
-
-            {/* Counter */}
-            <div className="gslide-counter">
-              {slideIndex + 1} / {workImages.length}
-            </div>
-
-            {/* Prev arrow */}
-            <button
-              className="gslide-arrow prev"
-              onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-              aria-label="Previous image"
-            >
-              <ChevronLeft size={20} />
-            </button>
-
-            {/* Next arrow */}
-            <button
-              className="gslide-arrow next"
-              onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-              aria-label="Next image"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-
-          {/* ── Thumbnail strip ── */}
-          <div className="gthumb-strip" role="list">
+          {/* ── Image Grid ── */}
+          <div className="latest-work-grid">
             {workImages.map((img, i) => (
               <div
                 key={i}
-                className={`gthumb${i === slideIndex ? " active" : ""}`}
-                onClick={() => setSlideIndex(i)}
-                role="listitem"
+                onClick={() => openLightbox(i)}
+                role="button"
                 tabIndex={0}
-                aria-label={`Select ${img.alt}`}
-                onKeyDown={(e) => e.key === "Enter" && setSlideIndex(i)}
+                aria-label={`View ${img.alt}`}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openLightbox(i)}
+                className="latest-work-card"
               >
-                <img src={img.src} alt={img.alt} />
+                <img
+                  src={img.src}
+                  alt={img.alt}
+                  loading="lazy"
+                />
+
+                {/* Subtle Hover Overlay */}
+                <div className="latest-work-overlay">
+                  <div style={{ alignSelf: "flex-end" }}>
+                    <span style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                      background: "rgba(255,255,255,0.92)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "0.85rem",
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                    }}>
+                      🔍
+                    </span>
+                  </div>
+                  <p style={{
+                    fontSize: "0.78rem",
+                    fontWeight: "600",
+                    color: "#ffffff",
+                    margin: 0,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+                  }}>
+                    {img.alt}
+                  </p>
+                </div>
               </div>
             ))}
           </div>

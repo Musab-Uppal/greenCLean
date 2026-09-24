@@ -384,7 +384,6 @@ export default async function HomePage() {
 
           {/* Section Header */}
           <div className="section-title-wrap" style={{ marginBottom: "40px" }}>
-            <span className="section-pill">Service Area</span>
             <h2 className="section-title">
               Covering Liverpool &amp; <span className="gradient-text">40 Miles Around</span>
             </h2>
@@ -451,7 +450,6 @@ export default async function HomePage() {
       <section className="section" style={{ background: "var(--bg-body)", paddingTop: "80px", paddingBottom: "80px" }}>
         <div className="container">
           <div className="section-title-wrap" style={{ marginBottom: "40px" }}>
-            <span className="section-pill">Got Questions?</span>
             <h2 className="section-title">
               Frequently Asked <span className="gradient-text">Questions</span>
             </h2>
