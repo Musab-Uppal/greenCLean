@@ -539,9 +539,7 @@ export default function AboutPage() {
         <div className="latest-work-container">
           <div className="latest-work-header">
             <h2>Our Latest Work</h2>
-            <p>
-              Real results from homes across Liverpool and Merseyside — click any image to view full size.
-            </p>
+
           </div>
 
           {/* ── Image Grid ── */}
