@@ -112,7 +112,7 @@ export default function AboutPage() {
         .about-hero {
           position: relative;
           background: linear-gradient(135deg, #064e3b 0%, #065f46 40%, #2fb8a7 100%);
-          padding: 100px 20px 80px;
+          padding: 60px 20px 48px;
           text-align: center;
           overflow: hidden;
         }
@@ -129,34 +129,34 @@ export default function AboutPage() {
           background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
           color: #a7f3d0; border: 1px solid rgba(255,255,255,0.2);
           font-size: 0.82rem; font-weight: 700; text-transform: uppercase;
-          letter-spacing: 0.08em; padding: 7px 18px; border-radius: 999px;
-          margin-bottom: 24px;
+          letter-spacing: 0.08em; padding: 6px 16px; border-radius: 999px;
+          margin-bottom: 16px;
         }
         .about-hero h1 {
           font-size: clamp(2rem, 5vw, 3.4rem);
           font-weight: 900; color: #ffffff;
-          line-height: 1.15; margin-bottom: 20px;
+          line-height: 1.15; margin-bottom: 14px;
           letter-spacing: -0.025em;
         }
         .about-hero h1 span { color: #6ee7b7; }
         .about-hero p {
           font-size: 1.12rem; color: rgba(255,255,255,0.82);
-          line-height: 1.7; max-width: 620px; margin: 0 auto 32px;
+          line-height: 1.7; max-width: 620px; margin: 0 auto 24px;
         }
         .about-hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 
         /* ── Story Section ── */
         .about-story {
-          padding: 90px 20px;
+          padding: 50px 20px;
           background: #fff;
         }
         .about-story-inner {
           max-width: 1260px; margin: 0 auto;
           display: grid; grid-template-columns: 1fr 1fr;
-          gap: 60px; align-items: center;
+          gap: 40px; align-items: center;
         }
         @media (max-width: 900px) {
-          .about-story-inner { grid-template-columns: 1fr; gap: 40px; }
+          .about-story-inner { grid-template-columns: 1fr; gap: 28px; }
         }
         .about-story-img {
           border-radius: 20px; overflow: hidden;
@@ -167,14 +167,14 @@ export default function AboutPage() {
         .about-story-text h2 {
           font-size: clamp(1.7rem, 3vw, 2.4rem);
           font-weight: 850; color: #0f172a;
-          margin-bottom: 18px; line-height: 1.2;
+          margin-bottom: 12px; line-height: 1.2;
         }
         .about-story-text h2 span { color: #2fb8a7; }
         .about-story-text p {
           font-size: 1.02rem; color: #475569;
-          line-height: 1.75; margin-bottom: 16px;
+          line-height: 1.75; margin-bottom: 12px;
         }
-        .about-checklist { display: flex; flex-direction: column; gap: 11px; margin-top: 22px; }
+        .about-checklist { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
         .about-checklist-item {
           display: flex; align-items: flex-start; gap: 11px;
           font-size: 0.95rem; font-weight: 600; color: #1e293b;
@@ -201,7 +201,7 @@ export default function AboutPage() {
           .about-stats-inner { grid-template-columns: repeat(2, 1fr); }
         }
         .about-stat-item {
-          padding: 28px 16px;
+          padding: 20px 14px;
           text-align: center;
           border-right: 1px solid #e2e8f0;
           display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -219,20 +219,20 @@ export default function AboutPage() {
 
         /* ── Why Choose Us ── */
         .about-why {
-          padding: 90px 20px;
+          padding: 44px 20px 48px;
           background: #fff;
         }
         .about-why-inner { max-width: 1260px; margin: 0 auto; }
-        .about-why-header { text-align: center; margin-bottom: 56px; }
+        .about-why-header { text-align: center; margin-bottom: 26px; }
         .about-why-header h2 {
           font-size: clamp(1.8rem, 3vw, 2.6rem);
-          font-weight: 850; color: #0f172a; margin-bottom: 14px;
+          font-weight: 850; color: #0f172a; margin-bottom: 8px;
         }
         .about-why-header p { font-size: 1.05rem; color: #64748b; max-width: 580px; margin: 0 auto; }
         .about-why-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 24px;
+          gap: 20px;
         }
         @media (max-width: 900px) {
           .about-why-grid { grid-template-columns: repeat(2, 1fr); }
@@ -244,7 +244,7 @@ export default function AboutPage() {
           background: #f8fafc;
           border: 1px solid #e2e8f0;
           border-radius: 16px;
-          padding: 24px 22px;
+          padding: 20px 18px;
           transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
           position: relative;
           overflow: hidden;
@@ -284,7 +284,7 @@ export default function AboutPage() {
 
         /* ── Our Latest Work Auto-Slide List ── */
         .latest-work-section {
-          padding: 85px 0 95px;
+          padding: 44px 0 48px;
           background: linear-gradient(180deg, #f8fafc 0%, #ecfdf5 100%);
           width: 100%;
           overflow: hidden;
@@ -300,13 +300,13 @@ export default function AboutPage() {
         .latest-work-header {
           text-align: center;
           max-width: 680px;
-          margin: 0 auto 36px;
+          margin: 0 auto 20px;
         }
         .latest-work-header h2 {
           font-size: clamp(1.8rem, 3vw, 2.6rem);
           font-weight: 850;
           color: #0f172a;
-          margin-bottom: 12px;
+          margin-bottom: 8px;
           letter-spacing: -0.02em;
         }
         .latest-work-header p {
@@ -471,24 +471,30 @@ export default function AboutPage() {
 
         /* ── CTA Section ── */
         .about-cta {
-          padding: 80px 20px;
+          padding: 48px 20px;
           background: linear-gradient(135deg, #064e3b 0%, #2fb8a7 100%);
           text-align: center;
         }
         .about-cta h2 {
           font-size: clamp(1.7rem, 3vw, 2.4rem);
-          font-weight: 850; color: #fff; margin-bottom: 14px;
+          font-weight: 850; color: #fff; margin-bottom: 10px;
         }
-        .about-cta p { font-size: 1.05rem; color: rgba(255,255,255,0.8); max-width: 500px; margin: 0 auto 32px; }
+        .about-cta p { font-size: 1.05rem; color: rgba(255,255,255,0.8); max-width: 500px; margin: 0 auto 20px; }
+
+        @media (max-width: 768px) {
+          .about-hero { padding: 44px 16px 36px; }
+          .about-story { padding: 36px 16px; }
+          .about-why { padding: 32px 16px 36px; }
+          .about-why-header { margin-bottom: 20px; }
+          .latest-work-section { padding: 32px 0 36px; }
+          .about-cta { padding: 36px 16px; }
+        }
       `}</style>
 
       {/* ── HERO BANNER ── */}
       <section className="about-hero">
         <div className="about-hero-inner">
-          <div className="about-hero-badge">
-            <span>🌿</span>
-            <span>About Us — Green Clean Group</span>
-          </div>
+
           <h1>
             Where spotless cleaning<br />
             comes to your <span>door</span>
@@ -525,10 +531,7 @@ export default function AboutPage() {
 
           {/* Text side */}
           <div className="about-story-text">
-            <span className="section-pill">
-              <Leaf size={14} />
-              Our Story
-            </span>
+
             <h2>
               Welcome to <span>Green Clean Group</span>
             </h2>
@@ -584,11 +587,7 @@ export default function AboutPage() {
       <section className="about-why">
         <div className="about-why-inner">
           <div className="about-why-header">
-            <span className="section-pill">
-              <Star size={14} />
-              Why Choose Us?
-            </span>
-            <h2>The Green Clean Difference</h2>
+            <h2>The Green Clean <span style={{ color: "#2fb8a7" }}>Difference</span></h2>
             <p>
               Everything we do is built around your family&apos;s safety, your home&apos;s wellbeing, and
               your complete peace of mind.
@@ -612,7 +611,7 @@ export default function AboutPage() {
       <section ref={workSectionRef} className="latest-work-section w-full" id="our-latest-work">
         <div className="latest-work-container">
           <div className="latest-work-header">
-            <h2>Our Latest Work</h2>
+            <h2>Our Latest <span style={{ color: "#2fb8a7" }}>Work</span></h2>
           </div>
         </div>
 

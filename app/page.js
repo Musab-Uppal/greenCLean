@@ -240,16 +240,12 @@ export default async function HomePage() {
                     <div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
                         <div>
-                          <span style={{ fontSize: "0.75rem", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--emerald-600)" }}>
-                            Service Packages
-                          </span>
+
                           <h3 style={{ fontSize: "1.5rem", fontWeight: "800", color: "var(--slate-900)" }}>
                             {category.title}
                           </h3>
                         </div>
-                        <span style={{ fontSize: "0.75rem", fontWeight: "700", padding: "4px 10px", borderRadius: "var(--radius-full)", background: "var(--emerald-100)", color: "var(--emerald-800)" }}>
-                          {category.badge}
-                        </span>
+
                       </div>
 
                       {/* 2-Column Options Grid */}
@@ -307,7 +303,6 @@ export default async function HomePage() {
                     <div className="showcase-media-overlay">
                       <div className="showcase-media-title">
                         <span>{OVERLAY_TITLES[category.id] || category.title}</span>
-                        <Sparkles size={28} className="sparkle-icon" />
                       </div>
                       <div className="showcase-media-subtitle">cleaning</div>
                     </div>
