@@ -459,7 +459,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
     setBookingRef(`GCG-${randomNum}`);
     setShowConfirmation(true);
 
-    // Persist order and customer to SQLite database
+    // Persist order and customer to database
     fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

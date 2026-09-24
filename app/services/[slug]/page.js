@@ -305,7 +305,6 @@ export default async function ServiceDetailPage({ params }) {
         {/* Real Results & Visual Trust Gallery */}
         <div style={{ marginBottom: "60px" }}>
           <div style={{ textAlign: "center", maxWidth: "680px", margin: "0 auto 32px" }}>
-            <span className="section-pill">Real Results &amp; Proof</span>
             <h2 style={{ fontSize: "2rem", fontWeight: "800", color: "var(--slate-900)" }}>
               Recent Work in Liverpool &amp; Surrounding Areas
             </h2>

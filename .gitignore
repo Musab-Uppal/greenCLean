@@ -66,6 +66,7 @@ yarn-error.log*
 ehthumbs.db
 Thumbs.db
 Desktop.ini
+*.db
 *.db-wal
 *.db-shm
 
