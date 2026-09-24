@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { 
-  Sparkles, 
-  Calendar, 
-  CheckCircle2, 
-  ShieldCheck, 
-  Clock, 
-  ArrowRight, 
+import {
+  Sparkles,
+  Calendar,
+  CheckCircle2,
+  ShieldCheck,
+  Clock,
+  ArrowRight,
   Phone,
   Flame,
   UtensilsCrossed,
@@ -169,10 +169,10 @@ export default async function ServiceDetailPage({ params }) {
       <JsonLd data={serviceSchema} />
       <div className="container">
         {/* Service Hero Banner with Split Image Layout */}
-        <div 
-          className="green-card service-hero-padding" 
-          style={{ 
-            marginBottom: "50px", 
+        <div
+          className="green-card service-hero-padding"
+          style={{
+            marginBottom: "50px",
             background: "linear-gradient(135deg, #022c22 0%, #064e3b 60%, #0f766e 100%)",
             position: "relative",
             overflow: "hidden"
@@ -181,10 +181,7 @@ export default async function ServiceDetailPage({ params }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "36px", alignItems: "center" }} className="responsive-two-col">
             {/* Left: Headline and Value Props */}
             <div style={{ position: "relative", zIndex: 2 }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255, 255, 255, 0.15)", padding: "6px 14px", borderRadius: "var(--radius-full)", fontSize: "0.85rem", fontWeight: "700", marginBottom: "16px", color: "#a7f3d0" }}>
-                <IconComponent size={16} />
-                <span>Liverpool &amp; Surrounding Areas</span>
-              </div>
+
 
               <h1 style={{ fontSize: "clamp(1.85rem, 4.5vw, 2.7rem)", fontWeight: "850", color: "#ffffff", lineHeight: "1.15", marginBottom: "16px", letterSpacing: "-0.02em" }}>
                 {category.title}
@@ -224,37 +221,27 @@ export default async function ServiceDetailPage({ params }) {
             </div>
 
             {/* Right: Real Visual Photo with Trust Overlay */}
-            <div style={{ 
-              position: "relative", 
-              borderRadius: "var(--radius-lg)", 
-              overflow: "hidden", 
-              boxShadow: "0 20px 40px -10px rgba(0,0,0,0.5)", 
-              border: "2px solid rgba(255,255,255,0.2)", 
+            <div style={{
+              position: "relative",
+              borderRadius: "var(--radius-lg)",
+              overflow: "hidden",
+              boxShadow: "0 20px 40px -10px rgba(0,0,0,0.5)",
+              border: "2px solid rgba(255,255,255,0.2)",
               width: "100%",
               aspectRatio: "4 / 3",
               maxHeight: "380px"
             }}>
-              <img 
-                src={category.heroImage} 
-                alt={`${category.title} by Green Clean Group Liverpool`} 
-                style={{ 
-                  width: "100%", 
-                  height: "100%", 
+              <img
+                src={category.heroImage}
+                alt={`${category.title} by Green Clean Group Liverpool`}
+                style={{
+                  width: "100%",
+                  height: "100%",
                   objectFit: "cover",
                   objectPosition: "center"
                 }}
               />
-              <div style={{ position: "absolute", bottom: "16px", left: "16px", right: "16px", background: "rgba(15, 23, 42, 0.85)", backdropFilter: "blur(8px)", padding: "12px 16px", borderRadius: "var(--radius-md)", border: "1px solid rgba(255, 255, 255, 0.2)", display: "flex", alignItems: "center", gap: "10px" }}>
-                <Sparkles size={18} color="#34d399" style={{ flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: "0.85rem", fontWeight: "700", color: "#ffffff" }}>
-                    Verified Eco-Clean Standard
-                  </div>
-                  <div style={{ fontSize: "0.75rem", color: "#cbd5e1" }}>
-                    100% Satisfaction Guarantee • Free Re-Clean if not spotless
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -270,7 +257,7 @@ export default async function ServiceDetailPage({ params }) {
 
           <div className="responsive-card-grid" style={{ gap: "20px" }}>
             {category.items.map((item) => (
-              <div 
+              <div
                 key={item.id}
                 className="glass-card glass-card-hover"
                 style={{
@@ -387,7 +374,6 @@ export default async function ServiceDetailPage({ params }) {
         {/* The 6-Step Process (3 by 3 Balanced Grid) */}
         <div className="glass-card responsive-card-padding" style={{ border: "1.5px solid var(--emerald-200)", marginBottom: "60px" }}>
           <div style={{ textAlign: "center", maxWidth: "640px", margin: "0 auto 36px" }}>
-            <span className="section-pill">Our Method</span>
             <h2 style={{ fontSize: "1.8rem", fontWeight: "800", color: "var(--slate-900)" }}>
               How We Clean
             </h2>
@@ -418,7 +404,6 @@ export default async function ServiceDetailPage({ params }) {
         {/* Benefits Checklist */}
         <div className="responsive-two-col" style={{ alignItems: "center" }}>
           <div>
-            <span className="section-pill">Peace of Mind</span>
             <h2 style={{ fontSize: "1.85rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "14px" }}>
               Included With Every Clean
             </h2>
