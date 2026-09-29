@@ -7,9 +7,9 @@ export const dynamic = "force-dynamic";
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const customerId = searchParams.get("customerId");
+    const email = searchParams.get("customerEmail") || searchParams.get("email");
 
-    const orders = await getOrders(customerId ? parseInt(customerId, 10) : null);
+    const orders = await getOrders(email ? email.trim() : null);
     return NextResponse.json(orders);
   } catch (error) {
     console.error("Error retrieving orders from DB:", error);
@@ -102,7 +102,6 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      customerId: user.id,
       orderId: orderId,
       orderIds: [orderId],
       totalAmount: calculatedTotal,

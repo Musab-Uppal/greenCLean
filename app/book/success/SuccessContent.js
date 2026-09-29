@@ -297,13 +297,6 @@ export default function SuccessContent() {
           <span>Print Receipt</span>
         </button>
 
-        <Link
-          href="/dashboard"
-          className="btn btn-secondary"
-          style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
-        >
-          <span>View in Dashboard</span>
-        </Link>
 
         <Link
           href="/"
