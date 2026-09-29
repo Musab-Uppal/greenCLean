@@ -1,14 +1,34 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
+import "./admin.css";
+
 import {
   UK_TIME_SLOTS,
   normalizeTimeSlot,
-  formatUkDate,
   getUkDateString,
   getUkTomorrowDateString,
 } from "@/lib/dateUtils";
+
+import AdminLoginGate from "./components/AdminLoginGate";
+import AdminHeader from "./components/AdminHeader";
+import AdminKpiBar from "./components/AdminKpiBar";
+import OrdersTab from "./components/OrdersTab";
+import CategoriesTab from "./components/CategoriesTab";
+import ServicesTab from "./components/ServicesTab";
+import RescheduleOrderModal from "./components/RescheduleOrderModal";
+import CategoryModals from "./components/CategoryModals";
+import ServiceModals from "./components/ServiceModals";
+
+export const CATEGORY_IMAGE_PRESETS = [
+  { label: "Oven", path: "/services/oven.jpg" },
+  { label: "Kitchen", path: "/services/kitchen.jpg" },
+  { label: "Appliances", path: "/services/appliances.jpg" },
+  { label: "BBQ", path: "/services/bbq.jpg" },
+  { label: "Bathroom", path: "/services/bathroom.jpg" },
+  { label: "House", path: "/services/house.jpg" },
+  { label: "Tenancy", path: "/services/tenancy.jpg" },
+];
 
 function parseOrderDateTime(scheduledStr) {
   if (!scheduledStr) {
@@ -34,16 +54,6 @@ function parseOrderDateTime(scheduledStr) {
     raw: str,
   };
 }
-
-const CATEGORY_IMAGE_PRESETS = [
-  { label: "Oven", path: "/services/oven.jpg" },
-  { label: "Kitchen", path: "/services/kitchen.jpg" },
-  { label: "Appliances", path: "/services/appliances.jpg" },
-  { label: "BBQ", path: "/services/bbq.jpg" },
-  { label: "Bathroom", path: "/services/bathroom.jpg" },
-  { label: "House", path: "/services/house.jpg" },
-  { label: "Tenancy", path: "/services/tenancy.jpg" },
-];
 
 export default function AdminPage() {
   // Authentication states
@@ -77,7 +87,14 @@ export default function AdminPage() {
   // Orders filters
   const [orderStatusFilter, setOrderStatusFilter] = useState("all");
   const [orderSearch, setOrderSearch] = useState("");
-  const [updatingOrderId, setUpdatingOrderId] = useState(null);
+
+  // Reschedule Order modal state (for pending orders)
+  const [rescheduleOrder, setRescheduleOrder] = useState(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTimeSlot, setRescheduleTimeSlot] = useState(UK_TIME_SLOTS[0]);
+  const [rescheduleCustomTime, setRescheduleCustomTime] = useState("");
+  const [isCustomTime, setIsCustomTime] = useState(false);
+  const [rescheduleSaving, setRescheduleSaving] = useState(false);
 
   // Category modals/form
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -101,14 +118,6 @@ export default function AdminPage() {
   const [serviceCatFilter, setServiceCatFilter] = useState("all");
   const [serviceSearch, setServiceSearch] = useState("");
 
-  // Reschedule Order modal state (for pending orders)
-  const [rescheduleOrder, setRescheduleOrder] = useState(null);
-  const [rescheduleDate, setRescheduleDate] = useState("");
-  const [rescheduleTimeSlot, setRescheduleTimeSlot] = useState(UK_TIME_SLOTS[0]);
-  const [rescheduleCustomTime, setRescheduleCustomTime] = useState("");
-  const [isCustomTime, setIsCustomTime] = useState(false);
-  const [rescheduleSaving, setRescheduleSaving] = useState(false);
-
   // Staged / Pending Changes State for Header "Save Changes" Button
   const [pendingOrders, setPendingOrders] = useState({});
   const [pendingServices, setPendingServices] = useState({});
@@ -123,10 +132,7 @@ export default function AdminPage() {
     );
   }, [pendingOrders, pendingServices, pendingCategories]);
 
-  // Executive KPIs calculated dynamically from orders:
-  // - Card payments count towards revenue ONLY when received (payment_status === 'paid')
-  // - Local payments count towards revenue ONLY when completed (status === 'completed')
-  // - Status is strictly 'pending' or 'completed'
+  // Executive KPIs calculated dynamically from orders
   const computedKpis = useMemo(() => {
     let totalRevenue = 0;
     let pendingCount = 0;
@@ -264,7 +270,7 @@ export default function AdminPage() {
     }
   };
 
-  // 4. Order Management Actions (Staged for Header "Save Changes")
+  // 4. Order Management Actions
   const handleStageOrderStatus = (orderId, newStatus) => {
     const validStatus = (newStatus || "").toLowerCase() === "completed" ? "completed" : "pending";
     setOrders((prev) =>
@@ -276,7 +282,7 @@ export default function AdminPage() {
     }));
   };
 
-  // 4a. Quick inline arrival time slot staging for pending orders
+  // Quick inline arrival time slot staging for pending orders
   const handleStageOrderScheduleTime = (orderId, newTimeSlot) => {
     const order = orders.find((o) => o.order_id === orderId);
     if (!order) return;
@@ -305,7 +311,7 @@ export default function AdminPage() {
     );
   };
 
-  // 4b. Open Reschedule Modal for detailed scheduling adjustments
+  // Open Reschedule Modal for detailed scheduling adjustments
   const handleOpenRescheduleModal = (order) => {
     const currentStatus = (pendingOrders[order.order_id]?.status || order.status || "pending").toLowerCase();
     if (currentStatus === "completed") {
@@ -332,8 +338,8 @@ export default function AdminPage() {
     }
   };
 
-  // 4c. Save or Stage from the Reschedule Modal
-  const handleSaveReschedule = async (saveDirectly = false) => {
+  // Save reschedule directly to DB from the Reschedule Modal
+  const handleSaveReschedule = async () => {
     if (!rescheduleOrder) return;
 
     const chosenTime = isCustomTime
@@ -348,80 +354,58 @@ export default function AdminPage() {
     const chosenDate = (rescheduleDate || "").trim() || getUkTomorrowDateString();
     const newScheduledDate = `${chosenDate} ${chosenTime}`;
 
-    if (saveDirectly) {
-      setRescheduleSaving(true);
-      try {
-        const res = await fetch("/api/admin/orders", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: rescheduleOrder.order_id,
-            scheduled_date: newScheduledDate,
-          }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setOrders((prev) =>
-            prev.map((o) =>
-              o.order_id === rescheduleOrder.order_id
-                ? { ...o, scheduled_date: newScheduledDate }
-                : o
-            )
-          );
-          // If there was a pending change for this order's scheduled_date, clear it
-          setPendingOrders((prev) => {
-            const next = { ...prev };
-            if (next[rescheduleOrder.order_id]) {
-              const { scheduled_date, ...rest } = next[rescheduleOrder.order_id];
-              if (Object.keys(rest).length === 0) {
-                delete next[rescheduleOrder.order_id];
-              } else {
-                next[rescheduleOrder.order_id] = rest;
-              }
-            }
-            return next;
-          });
-          showNotification("success", `✓ Order #${rescheduleOrder.order_id} scheduled time saved to database!`);
-          setRescheduleOrder(null);
-        } else {
-          showNotification("error", data.error || "Failed to update order time.");
-        }
-      } catch (err) {
-        console.error("Direct reschedule error:", err);
-        showNotification("error", "Failed to communicate with server.");
-      } finally {
-        setRescheduleSaving(false);
-      }
-    } else {
-      // Stage change for master Save Changes button in header
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.order_id === rescheduleOrder.order_id
-            ? { ...o, scheduled_date: newScheduledDate }
-            : o
-        )
-      );
-      setPendingOrders((prev) => ({
-        ...prev,
-        [rescheduleOrder.order_id]: {
-          ...(prev[rescheduleOrder.order_id] || {}),
+    setRescheduleSaving(true);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: rescheduleOrder.order_id,
           scheduled_date: newScheduledDate,
-        },
-      }));
-      showNotification(
-        "success",
-        `Order #${rescheduleOrder.order_id} schedule staged (${chosenDate} ${chosenTime}). Click "Save Changes" in header to save.`
-      );
-      setRescheduleOrder(null);
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.order_id === rescheduleOrder.order_id
+              ? { ...o, scheduled_date: newScheduledDate }
+              : o
+          )
+        );
+        setPendingOrders((prev) => {
+          const next = { ...prev };
+          if (next[rescheduleOrder.order_id]) {
+            const { scheduled_date, ...rest } = next[rescheduleOrder.order_id];
+            if (Object.keys(rest).length === 0) {
+              delete next[rescheduleOrder.order_id];
+            } else {
+              next[rescheduleOrder.order_id] = rest;
+            }
+          }
+          return next;
+        });
+        showNotification(
+          "success",
+          `✓ Order #${rescheduleOrder.order_id} arrival time updated successfully in database!`
+        );
+        setRescheduleOrder(null);
+      } else {
+        showNotification("error", data.error || "Failed to update order time.");
+      }
+    } catch (err) {
+      console.error("Direct reschedule error:", err);
+      showNotification("error", "Failed to communicate with server.");
+    } finally {
+      setRescheduleSaving(false);
     }
   };
 
-  // 4b. Category File Upload Handler
+  // Category File Upload Handler
   const handleCategoryFileUpload = async (file, isEdit = false) => {
     if (!file) return;
     setUploadingImage(true);
 
-    // 1. Instant local preview
     const reader = new FileReader();
     reader.onload = (ev) => {
       if (isEdit) {
@@ -432,7 +416,6 @@ export default function AdminPage() {
     };
     reader.readAsDataURL(file);
 
-    // 2. Upload file to server
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -458,7 +441,7 @@ export default function AdminPage() {
     }
   };
 
-  // 5. Category Management Actions
+  // Category Management Actions
   const handleAddCategory = async (e) => {
     e.preventDefault();
     if (!newCatName.trim()) {
@@ -540,7 +523,7 @@ export default function AdminPage() {
     }
   };
 
-  // 6. Service Management Actions
+  // Service Management Actions
   const handleAddService = async (e) => {
     e.preventDefault();
     if (!serviceForm.name || !serviceForm.category_id || !serviceForm.price) return;
@@ -609,7 +592,27 @@ export default function AdminPage() {
     }
   };
 
-  // Master Save Changes Function: Commits all pending modifications to Database
+  const handleDeleteService = async (serviceId) => {
+    if (!confirm("Are you sure you want to delete this service?")) return;
+
+    try {
+      const res = await fetch(`/api/admin/services?id=${serviceId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        showNotification("success", "Service deleted successfully.");
+        fetchAdminData();
+      } else {
+        showNotification("error", data.error || "Cannot delete service with active orders.");
+      }
+    } catch {
+      showNotification("error", "Failed to delete service.");
+    }
+  };
+
+  // Master Save Changes Function
   const handleSaveChanges = async () => {
     if (totalPendingCount === 0) {
       showNotification("success", "No unsaved changes.");
@@ -673,36 +676,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleDiscardChanges = () => {
-    if (confirm("Are you sure you want to discard all pending unsaved changes?")) {
-      setPendingOrders({});
-      setPendingServices({});
-      setPendingCategories({});
-      fetchAdminData();
-      showNotification("success", "All unsaved changes discarded.");
-    }
-  };
-
-  const handleDeleteService = async (serviceId) => {
-    if (!confirm("Are you sure you want to delete this service?")) return;
-
-    try {
-      const res = await fetch(`/api/admin/services?id=${serviceId}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        showNotification("success", "Service deleted successfully.");
-        fetchAdminData();
-      } else {
-        showNotification("error", data.error || "Cannot delete service with active orders.");
-      }
-    } catch {
-      showNotification("error", "Failed to delete service.");
-    }
-  };
-
   // Filtered lists
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
@@ -742,2414 +715,158 @@ export default function AdminPage() {
   // Loading state
   if (authChecking) {
     return (
-      <div style={{
-        minHeight: "100vh",
-        background: "#090d16",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#94a3b8",
-        fontFamily: "system-ui, sans-serif"
-      }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{
-            width: "48px",
-            height: "48px",
-            border: "3px solid rgba(16, 185, 129, 0.2)",
-            borderTopColor: "#10b981",
-            borderRadius: "50%",
-            animation: "spin 1s linear infinite",
-            margin: "0 auto 16px"
-          }} />
+      <div className="admin-loading-screen">
+        <div>
+          <div className="admin-spinner" />
           <p style={{ letterSpacing: "1px", textTransform: "uppercase", fontSize: "0.85rem" }}>
             Verifying Security Credentials...
           </p>
-          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
     );
   }
 
-  // =========================================================================
-  // VIEW 1: SECURE AUTHENTICATION GATE (When not authenticated)
-  // =========================================================================
+  // Not authenticated
   if (!isAuthenticated) {
     return (
-      <div style={{
-        minHeight: "100vh",
-        background: "radial-gradient(ellipse at top, #0f172a 0%, #020617 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
-        fontFamily: "system-ui, sans-serif",
-        color: "#f8fafc"
-      }}>
-        <div style={{
-          width: "100%",
-          maxWidth: "420px",
-          background: "rgba(15, 23, 42, 0.8)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid rgba(51, 65, 85, 0.8)",
-          borderRadius: "16px",
-          padding: "36px 32px",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.7)"
-        }}>
-          {/* Top Shield Header */}
-          <div style={{ textAlign: "center", marginBottom: "28px" }}>
-            <div style={{
-              width: "56px",
-              height: "56px",
-              background: "linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.4))",
-              border: "1px solid rgba(16, 185, 129, 0.4)",
-              borderRadius: "14px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 16px",
-              color: "#34d399"
-            }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="M12 8v4" />
-                <path d="M12 16h.01" />
-              </svg>
-            </div>
-            <h1 style={{ fontSize: "1.35rem", fontWeight: 700, margin: "0 0 6px", color: "#f8fafc" }}>
-              GreenClean Admin Page
-            </h1>
-            <p style={{ fontSize: "0.8rem", color: "#64748b", margin: 0, letterSpacing: "0.5px" }}>
-              AUTHORIZED ADMINISTRATIVE ACCESS ONLY
-            </p>
-          </div>
-
-          {/* Login Error Notification */}
-          {loginError && (
-            <div style={{
-              background: "rgba(239, 68, 68, 0.15)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-              color: "#f87171",
-              padding: "12px 14px",
-              borderRadius: "8px",
-              fontSize: "0.85rem",
-              marginBottom: "20px",
-              display: "flex",
-              alignItems: "center",
-              gap: "10px"
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              <span>{loginError}</span>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#94a3b8", marginBottom: "6px" }}>
-                ADMIN USERNAME
-              </label>
-              <input
-                type="text"
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
-                placeholder="Enter admin username"
-                required
-                autoComplete="off"
-                style={{
-                  width: "100%",
-                  padding: "12px 14px",
-                  background: "rgba(2, 6, 23, 0.7)",
-                  border: "1px solid #334155",
-                  borderRadius: "8px",
-                  color: "#f8fafc",
-                  fontSize: "0.95rem",
-                  outline: "none",
-                  boxSizing: "border-box"
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "#94a3b8", marginBottom: "6px" }}>
-                ADMIN PASSWORD
-              </label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder="••••••••••••"
-                  required
-                  autoComplete="current-password"
-                  style={{
-                    width: "100%",
-                    padding: "12px 42px 12px 14px",
-                    background: "rgba(2, 6, 23, 0.7)",
-                    border: "1px solid #334155",
-                    borderRadius: "8px",
-                    color: "#f8fafc",
-                    fontSize: "0.95rem",
-                    outline: "none",
-                    boxSizing: "border-box"
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: "absolute",
-                    right: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    color: "#64748b",
-                    cursor: "pointer",
-                    padding: "4px"
-                  }}
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loginLoading}
-              style={{
-                marginTop: "8px",
-                padding: "14px",
-                background: "linear-gradient(135deg, #059669, #10b981)",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "0.95rem",
-                fontWeight: 600,
-                cursor: loginLoading ? "not-allowed" : "pointer",
-                boxShadow: "0 10px 20px -5px rgba(16, 185, 129, 0.4)",
-                transition: "all 0.2s ease"
-              }}
-            >
-              {loginLoading ? "Authenticating Session..." : "Sign In to Admin Page"}
-            </button>
-          </form>
-
-          <div style={{ marginTop: "24px", textAlign: "center", borderTop: "1px solid #1e293b", paddingTop: "18px" }}>
-            <span style={{ fontSize: "0.75rem", color: "#475569" }}>
-              Protected 256-bit encrypted administrative gateway
-            </span>
-          </div>
-        </div>
-      </div>
+      <AdminLoginGate
+        usernameInput={usernameInput}
+        setUsernameInput={setUsernameInput}
+        passwordInput={passwordInput}
+        setPasswordInput={setPasswordInput}
+        showPassword={showPassword}
+        setShowPassword={setShowPassword}
+        loginLoading={loginLoading}
+        loginError={loginError}
+        handleLogin={handleLogin}
+      />
     );
   }
 
-  // =========================================================================
-  // VIEW 2: AUTHENTICATED ADMIN DASHBOARD
-  // =========================================================================
+  // Authenticated Admin Dashboard
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#0b1120",
-      color: "#f1f5f9",
-      fontFamily: "system-ui, -apple-system, sans-serif"
-    }}>
-      <style>{`
-        /* Remove up/down stepper arrows so users write manually */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-          -webkit-appearance: none !important;
-          margin: 0 !important;
-        }
-        input[type=number] {
-          -moz-appearance: textfield !important;
-        }
-      `}</style>
-      {/* =====================================================================
-          EXECUTIVE HEADER WITH DASHBOARD SELECTOR
-          ===================================================================== */}
-      <header style={{
-        background: "rgba(15, 23, 42, 0.95)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid #1e293b",
-        position: "sticky",
-        top: 0,
-        zIndex: 50
-      }}>
-        <div style={{
-          maxWidth: "1440px",
-          margin: "0 auto",
-          padding: "14px 24px",
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "16px"
-        }}>
-          {/* Branding & Status */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #10b981, #047857)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontWeight: 800,
-              fontSize: "1rem"
-            }}>
-              GC
-            </div>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontWeight: 700, fontSize: "1.05rem", color: "#f8fafc" }}>GreenClean Admin</span>
-
-              </div>
-              <span style={{ fontSize: "0.75rem", color: "#64748b" }}>Admin: {adminUsername}</span>
-            </div>
-          </div>
-
-          {/* DASHBOARD SELECTOR TABS IN HEADER */}
-          <nav style={{
-            display: "flex",
-            alignItems: "center",
-            background: "#020617",
-            padding: "4px",
-            borderRadius: "10px",
-            border: "1px solid #1e293b"
-          }}>
-            <button
-              onClick={() => setActiveTab("orders")}
-              style={{
-                padding: "8px 18px",
-                borderRadius: "8px",
-                border: "none",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                background: activeTab === "orders" ? "linear-gradient(135deg, #059669, #10b981)" : "transparent",
-                color: activeTab === "orders" ? "#ffffff" : "#94a3b8",
-                transition: "all 0.15s ease"
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="2" y="3" width="20" height="14" rx="2" />
-                <line x1="8" y1="21" x2="16" y2="21" />
-                <line x1="12" y1="17" x2="12" y2="21" />
-              </svg>
-              <span>Orders ({orders.length})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("categories")}
-              style={{
-                padding: "8px 18px",
-                borderRadius: "8px",
-                border: "none",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                background: activeTab === "categories" ? "linear-gradient(135deg, #059669, #10b981)" : "transparent",
-                color: activeTab === "categories" ? "#ffffff" : "#94a3b8",
-                transition: "all 0.15s ease"
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              </svg>
-              <span>Categories ({categories.length})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("services")}
-              style={{
-                padding: "8px 18px",
-                borderRadius: "8px",
-                border: "none",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                background: activeTab === "services" ? "linear-gradient(135deg, #059669, #10b981)" : "transparent",
-                color: activeTab === "services" ? "#ffffff" : "#94a3b8",
-                transition: "all 0.15s ease"
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <polyline points="10 9 9 9 8 9" />
-              </svg>
-              <span>Services & Products ({services.length})</span>
-            </button>
-          </nav>
-
-          {/* Right: Save Changes, Discard, Refresh & Logout */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-
-            {/* MASTER SAVE CHANGES BUTTON IN HEADER */}
-            <button
-              onClick={handleSaveChanges}
-              disabled={savingChanges || totalPendingCount === 0}
-              title={totalPendingCount > 0 ? "Click to save all pending changes to database" : "No unsaved changes"}
-              style={{
-                background: totalPendingCount > 0
-                  ? "linear-gradient(135deg, #059669, #10b981)"
-                  : "rgba(30, 41, 59, 0.6)",
-                border: totalPendingCount > 0
-                  ? "1px solid #34d399"
-                  : "1px solid #334155",
-                color: totalPendingCount > 0 ? "#ffffff" : "#64748b",
-                padding: "8px 18px",
-                borderRadius: "8px",
-                cursor: totalPendingCount > 0 && !savingChanges ? "pointer" : "default",
-                fontSize: "0.85rem",
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                boxShadow: totalPendingCount > 0 ? "0 0 16px rgba(16, 185, 129, 0.45)" : "none",
-                transition: "all 0.2s ease"
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                <polyline points="17 21 17 13 7 13 7 21" />
-                <polyline points="7 3 7 8 15 8" />
-              </svg>
-              <span>
-                {savingChanges
-                  ? "Saving Changes..."
-                  : totalPendingCount > 0
-                    ? `Save Changes (${totalPendingCount})`
-                    : "Save Changes"}
-              </span>
-            </button>
-
-            {/* Discard Button if changes are pending */}
-            {totalPendingCount > 0 && (
-              <button
-                onClick={handleDiscardChanges}
-                disabled={savingChanges}
-                title="Discard all pending changes"
-                style={{
-                  background: "transparent",
-                  border: "1px solid #475569",
-                  color: "#cbd5e1",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  transition: "all 0.15s ease"
-                }}
-              >
-                Discard
-              </button>
-            )}
-
-            <button
-              onClick={fetchAdminData}
-              title="Refresh Data from Server"
-              disabled={dataLoading}
-              style={{
-                background: "rgba(30, 41, 59, 0.8)",
-                border: "1px solid #334155",
-                color: "#94a3b8",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="23 4 23 10 17 10" />
-                <polyline points="1 20 1 14 7 14" />
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-              </svg>
-              <span>{dataLoading ? "Updating..." : "Refresh"}</span>
-            </button>
-
-            <button
-              onClick={handleLogout}
-              style={{
-                background: "rgba(239, 68, 68, 0.15)",
-                border: "1px solid rgba(239, 68, 68, 0.3)",
-                color: "#f87171",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              <span>Exit Admin</span>
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="admin-root">
+      {/* Executive Header */}
+      <AdminHeader
+        adminUsername={adminUsername}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        ordersCount={orders.length}
+        categoriesCount={categories.length}
+        servicesCount={services.length}
+        handleSaveChanges={handleSaveChanges}
+        savingChanges={savingChanges}
+        totalPendingCount={totalPendingCount}
+        fetchAdminData={fetchAdminData}
+        dataLoading={dataLoading}
+        handleLogout={handleLogout}
+      />
 
       {/* Floating Action Feedback Notification */}
       {feedback && (
-        <div style={{
-          position: "fixed",
-          bottom: "24px",
-          right: "24px",
-          zIndex: 100,
-          background: feedback.type === "success" ? "#065f46" : "#7f1d1d",
-          color: "#ffffff",
-          border: `1px solid ${feedback.type === "success" ? "#34d399" : "#f87171"}`,
-          borderRadius: "8px",
-          padding: "12px 20px",
-          fontSize: "0.88rem",
-          fontWeight: 600,
-          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)",
-          display: "flex",
-          alignItems: "center",
-          gap: "10px"
-        }}>
+        <div className={`admin-feedback-toast ${feedback.type === "success" ? "success" : "error"}`}>
           {feedback.type === "success" ? "✓" : "⚠️"} {feedback.text}
         </div>
       )}
 
       {/* Main Container */}
-      <main style={{ maxWidth: "1440px", margin: "0 auto", padding: "28px 24px" }}>
+      <main className="admin-main-container">
+        {/* KPI Summary Stats Bar */}
+        <AdminKpiBar computedKpis={computedKpis} />
 
-        {/* ===================================================================
-            KPI SUMMARY STATS BAR (Always visible above any selected dashboard)
-            =================================================================== */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "16px",
-          marginBottom: "28px"
-        }}>
-          {/* 1. Total Orders */}
-          <div style={{
-            background: "rgba(15, 23, 42, 0.7)",
-            border: "1px solid #1e293b",
-            borderRadius: "12px",
-            padding: "18px 20px"
-          }}>
-            <span style={{ fontSize: "0.75rem", color: "#818cf8", textTransform: "uppercase", fontWeight: 600 }}>
-              Total Orders
-            </span>
-            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "#a5b4fc", marginTop: "4px" }}>
-              {computedKpis.totalOrders}
-            </div>
-          </div>
-
-          {/* 2. Total Revenue */}
-          <div style={{
-            background: "rgba(15, 23, 42, 0.7)",
-            border: "1px solid #1e293b",
-            borderRadius: "12px",
-            padding: "18px 20px"
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.75rem", color: "#34d399", textTransform: "uppercase", fontWeight: 600 }}>
-                Total Order Revenue
-              </span>
-
-            </div>
-            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "#10b981", marginTop: "4px" }}>
-              £{computedKpis.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-          </div>
-
-          {/* 3. Pending Orders */}
-          <div style={{
-            background: "rgba(15, 23, 42, 0.7)",
-            border: "1px solid #1e293b",
-            borderRadius: "12px",
-            padding: "18px 20px"
-          }}>
-            <span style={{ fontSize: "0.75rem", color: "#fbbf24", textTransform: "uppercase", fontWeight: 600 }}>
-              Pending Action
-            </span>
-            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "#fbbf24", marginTop: "4px" }}>
-              {computedKpis.pendingCount}
-            </div>
-          </div>
-
-          {/* 4. Completed Jobs */}
-          <div style={{
-            background: "rgba(15, 23, 42, 0.7)",
-            border: "1px solid #1e293b",
-            borderRadius: "12px",
-            padding: "18px 20px"
-          }}>
-            <span style={{ fontSize: "0.75rem", color: "#34d399", textTransform: "uppercase", fontWeight: 600 }}>
-              Completed Jobs
-            </span>
-            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "#34d399", marginTop: "4px" }}>
-              {computedKpis.completedCount}
-            </div>
-          </div>
-        </div>
-
-        {/* ===================================================================
-            DASHBOARD 1: ORDERS DASHBOARD
-            =================================================================== */}
+        {/* Dashboard 1: Orders */}
         {activeTab === "orders" && (
-          <section>
-            {/* Header & Controls */}
-            <div style={{
-              background: "rgba(15, 23, 42, 0.7)",
-              border: "1px solid #1e293b",
-              borderRadius: "14px",
-              padding: "20px",
-              marginBottom: "20px"
-            }}>
-              <div style={{
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "16px",
-                marginBottom: "16px"
-              }}>
-                <div>
-                  <h2 style={{ fontSize: "1.3rem", fontWeight: 700, margin: "0 0 4px" }}>Orders Dashboard</h2>
-                  <p style={{ margin: 0, fontSize: "0.85rem", color: "#94a3b8" }}>
-                    Manage customer service requests, schedules, and fulfillment statuses.
-                  </p>
-                </div>
-
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
-                  {/* Status filter */}
-                  <select
-                    value={orderStatusFilter}
-                    onChange={(e) => setOrderStatusFilter(e.target.value)}
-                    style={{
-                      background: "#020617",
-                      border: "1px solid #334155",
-                      color: "#f8fafc",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      fontSize: "0.85rem",
-                      cursor: "pointer"
-                    }}
-                  >
-                    <option value="all">All Statuses ({orders.length})</option>
-                    <option value="pending">Pending ({computedKpis.pendingCount})</option>
-                    <option value="completed">Completed ({computedKpis.completedCount})</option>
-                  </select>
-
-                  {/* Search box */}
-                  <input
-                    type="text"
-                    value={orderSearch}
-                    onChange={(e) => setOrderSearch(e.target.value)}
-                    placeholder="Search order ID, email, phone..."
-                    style={{
-                      background: "#020617",
-                      border: "1px solid #334155",
-                      color: "#f8fafc",
-                      padding: "8px 14px",
-                      borderRadius: "8px",
-                      fontSize: "0.85rem",
-                      minWidth: "240px"
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Orders Table */}
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.88rem" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #334155", color: "#94a3b8" }}>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Order #</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Service</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Customer Contact</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Price</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Payment</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Scheduled Date & Time</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Service Address</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Status</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600, textAlign: "right" }}>Update Status & Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredOrders.length === 0 ? (
-                      <tr>
-                        <td colSpan={9} style={{ padding: "36px", textAlign: "center", color: "#64748b" }}>
-                          No orders found matching criteria.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredOrders.map((order) => {
-                        const currentStatus = (pendingOrders[order.order_id]?.status || order.status || "pending").toLowerCase();
-                        const isPending = currentStatus === "pending";
-                        const parsedSchedule = parseOrderDateTime(order.scheduled_date);
-
-                        const statusColors = {
-                          pending: { bg: "rgba(245, 158, 11, 0.15)", text: "#fbbf24", border: "rgba(245, 158, 11, 0.3)" },
-                          completed: { bg: "rgba(16, 185, 129, 0.15)", text: "#34d399", border: "rgba(16, 185, 129, 0.3)" }
-                        };
-                        const sc = statusColors[currentStatus] || statusColors.pending;
-
-                        const isOrderPending = Boolean(pendingOrders[order.order_id]);
-                        const isTimeChanged = Boolean(pendingOrders[order.order_id]?.scheduled_date);
-                        const isStatusChanged = Boolean(pendingOrders[order.order_id]?.status);
-
-                        return (
-                          <tr key={order.order_id} style={{
-                            borderBottom: "1px solid #1e293b",
-                            background: isOrderPending ? "rgba(245, 158, 11, 0.05)" : "transparent",
-                            borderLeft: isOrderPending ? "3px solid #f59e0b" : "3px solid transparent",
-                            transition: "background 0.15s"
-                          }}>
-                            <td style={{ padding: "12px 10px", fontWeight: 700, color: "#e2e8f0" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                <span>#{order.order_id}</span>
-                                {isOrderPending && (
-                                  <span style={{
-                                    fontSize: "0.68rem",
-                                    padding: "2px 6px",
-                                    borderRadius: "4px",
-                                    background: "rgba(245, 158, 11, 0.2)",
-                                    border: "1px solid rgba(245, 158, 11, 0.5)",
-                                    color: "#fbbf24",
-                                    fontWeight: 700
-                                  }}>
-                                    Unsaved
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td style={{ padding: "12px 10px", maxWidth: "260px" }}>
-                              {Array.isArray(order.items) && order.items.length > 1 ? (
-                                <div>
-                                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
-                                    <span style={{ fontWeight: 700, color: "#f8fafc" }}>
-                                      {order.items.length} Services Booked
-                                    </span>
-                                    <span style={{
-                                      fontSize: "0.68rem",
-                                      background: "rgba(16, 185, 129, 0.15)",
-                                      color: "#34d399",
-                                      padding: "1px 6px",
-                                      borderRadius: "99px",
-                                      border: "1px solid rgba(16, 185, 129, 0.3)"
-                                    }}>
-                                      Multi-Service
-                                    </span>
-                                  </div>
-                                  <div style={{ fontSize: "0.76rem", color: "#94a3b8", lineHeight: 1.4 }}>
-                                    {order.items.map((it) => it.service_name).join(" · ")}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div>
-                                  <div style={{ fontWeight: 600, color: "#f8fafc" }}>{order.service_name}</div>
-                                  <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>{order.category_name}</span>
-                                </div>
-                              )}
-                            </td>
-                            <td style={{ padding: "12px 10px" }}>
-                              <div style={{ color: "#f8fafc" }}>{order.customer_email}</div>
-                              <div style={{ fontSize: "0.78rem", color: "#10b981", fontWeight: 600 }}>
-                                📞 {order.order_phone}
-                              </div>
-                            </td>
-                            <td style={{ padding: "12px 10px", fontWeight: 700, color: "#10b981", fontSize: "0.95rem" }}>
-                              £{Number(order.total_amount ?? order.service_price ?? 0).toFixed(2)}
-                            </td>
-                            <td style={{ padding: "12px 10px" }}>
-                              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                                <span style={{
-                                  fontSize: "0.72rem",
-                                  fontWeight: 700,
-                                  padding: "2px 8px",
-                                  borderRadius: "4px",
-                                  background: order.payment_method === "creditcard" ? "rgba(16, 185, 129, 0.15)" : "rgba(148, 163, 184, 0.15)",
-                                  color: order.payment_method === "creditcard" ? "#34d399" : "#cbd5e1",
-                                  border: `1px solid ${order.payment_method === "creditcard" ? "rgba(16, 185, 129, 0.3)" : "rgba(148, 163, 184, 0.3)"}`,
-                                  width: "fit-content",
-                                  whiteSpace: "nowrap"
-                                }}>
-                                  {order.payment_method === "creditcard" ? "💳 Stripe Card" : "💵 Pay Locally"}
-                                </span>
-                                <span style={{
-                                  fontSize: "0.68rem",
-                                  fontWeight: 600,
-                                  color: order.payment_status === "paid" ? "#34d399" : "#fbbf24"
-                                }}>
-                                  {order.payment_status === "paid" ? "● Paid Online" : "○ Pending Collection"}
-                                </span>
-                              </div>
-                            </td>
-                            <td style={{ padding: "12px 10px", minWidth: "210px" }}>
-                              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                                {/* Date Line */}
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                                  <span style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "5px",
-                                    padding: "3px 8px",
-                                    background: "rgba(15, 23, 42, 0.85)",
-                                    border: "1px solid #334155",
-                                    borderRadius: "6px",
-                                    fontSize: "0.78rem",
-                                    color: "#e2e8f0",
-                                    fontWeight: 500,
-                                    whiteSpace: "nowrap"
-                                  }}>
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
-                                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                      <line x1="16" y1="2" x2="16" y2="6" />
-                                      <line x1="8" y1="2" x2="8" y2="6" />
-                                      <line x1="3" y1="10" x2="21" y2="10" />
-                                    </svg>
-                                    <span>{parsedSchedule.date || "—"}</span>
-                                  </span>
-
-                                  {isTimeChanged && (
-                                    <span style={{
-                                      fontSize: "0.65rem",
-                                      padding: "1px 6px",
-                                      borderRadius: "4px",
-                                      background: "rgba(56, 189, 248, 0.2)",
-                                      border: "1px solid rgba(56, 189, 248, 0.5)",
-                                      color: "#38bdf8",
-                                      fontWeight: 700
-                                    }}>
-                                      Time Edited
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Arrival Time Slot Controls */}
-                                {isPending ? (
-                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                    <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-                                      <select
-                                        value={parsedSchedule.time}
-                                        onChange={(e) => handleStageOrderScheduleTime(order.order_id, e.target.value)}
-                                        title="Quickly change arrival time window for this pending order"
-                                        style={{
-                                          background: isTimeChanged ? "#082f49" : "#020617",
-                                          border: isTimeChanged ? "1px solid #38bdf8" : "1px solid #334155",
-                                          color: isTimeChanged ? "#7dd3fc" : "#38bdf8",
-                                          padding: "4px 8px 4px 22px",
-                                          borderRadius: "6px",
-                                          fontSize: "0.78rem",
-                                          fontWeight: 700,
-                                          cursor: "pointer",
-                                          outline: "none"
-                                        }}
-                                      >
-                                        {UK_TIME_SLOTS.map((slot) => (
-                                          <option key={slot} value={slot}>
-                                            {slot}
-                                          </option>
-                                        ))}
-                                        {!UK_TIME_SLOTS.includes(parsedSchedule.time) && parsedSchedule.time && (
-                                          <option value={parsedSchedule.time}>
-                                            {parsedSchedule.time} (Custom)
-                                          </option>
-                                        )}
-                                      </select>
-                                      <svg
-                                        width="12"
-                                        height="12"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke={isTimeChanged ? "#38bdf8" : "#0ea5e9"}
-                                        strokeWidth="2.2"
-                                        style={{ position: "absolute", left: "6px", pointerEvents: "none" }}
-                                      >
-                                        <circle cx="12" cy="12" r="10" />
-                                        <polyline points="12 6 12 12 16 14" />
-                                      </svg>
-                                    </div>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenRescheduleModal(order)}
-                                      title="Open detailed reschedule modal (date & time)"
-                                      style={{
-                                        background: "rgba(56, 189, 248, 0.12)",
-                                        border: "1px solid rgba(56, 189, 248, 0.35)",
-                                        color: "#38bdf8",
-                                        borderRadius: "6px",
-                                        padding: "4px 7px",
-                                        fontSize: "0.72rem",
-                                        cursor: "pointer",
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        gap: "3px",
-                                        fontWeight: 600,
-                                        transition: "all 0.15s ease"
-                                      }}
-                                    >
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M12 20h9" />
-                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                                      </svg>
-                                      <span>Edit</span>
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                    <span
-                                      title="Completed orders cannot be rescheduled. Set status to Pending first to change time."
-                                      style={{
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        gap: "4px",
-                                        padding: "3px 8px",
-                                        borderRadius: "6px",
-                                        background: "rgba(51, 65, 85, 0.3)",
-                                        border: "1px solid rgba(71, 85, 105, 0.4)",
-                                        color: "#64748b",
-                                        fontSize: "0.75rem",
-                                        fontWeight: 600
-                                      }}
-                                    >
-                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                      </svg>
-                                      <span>{parsedSchedule.time || "Completed (Locked)"}</span>
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-                            <td style={{ padding: "12px 10px", color: "#94a3b8", maxWidth: "220px", fontSize: "0.82rem" }}>
-                              {order.address}
-                            </td>
-                            <td style={{ padding: "12px 10px" }}>
-                              <span style={{
-                                background: sc.bg,
-                                color: sc.text,
-                                border: `1px solid ${sc.border}`,
-                                padding: "4px 10px",
-                                borderRadius: "999px",
-                                fontSize: "0.75rem",
-                                fontWeight: 700,
-                                textTransform: "capitalize"
-                              }}>
-                                {currentStatus}
-                              </span>
-                            </td>
-                            <td style={{ padding: "12px 10px", textAlign: "right" }}>
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" }}>
-                                <select
-                                  value={currentStatus}
-                                  onChange={(e) => handleStageOrderStatus(order.order_id, e.target.value)}
-                                  title="Change Order Status"
-                                  style={{
-                                    background: isStatusChanged ? "#1e1b4b" : "#020617",
-                                    border: isStatusChanged ? "1px solid #818cf8" : "1px solid #334155",
-                                    color: "#f8fafc",
-                                    padding: "6px 8px",
-                                    borderRadius: "6px",
-                                    fontSize: "0.8rem",
-                                    fontWeight: 600,
-                                    cursor: "pointer"
-                                  }}
-                                >
-                                  <option value="pending">Pending</option>
-                                  <option value="completed">Completed</option>
-                                </select>
-
-                                {isPending ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenRescheduleModal(order)}
-                                    title="Change arrival time / date for this pending order"
-                                    style={{
-                                      background: "linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(2, 132, 199, 0.25))",
-                                      border: "1px solid rgba(56, 189, 248, 0.4)",
-                                      color: "#38bdf8",
-                                      padding: "6px 10px",
-                                      borderRadius: "6px",
-                                      fontSize: "0.78rem",
-                                      fontWeight: 600,
-                                      cursor: "pointer",
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: "5px",
-                                      whiteSpace: "nowrap",
-                                      transition: "all 0.15s ease"
-                                    }}
-                                  >
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <circle cx="12" cy="12" r="10" />
-                                      <polyline points="12 6 12 12 16 14" />
-                                    </svg>
-                                    <span>Change Time</span>
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    disabled
-                                    title="Time cannot be changed for completed orders. Switch status to Pending first."
-                                    style={{
-                                      background: "rgba(15, 23, 42, 0.5)",
-                                      border: "1px solid #1e293b",
-                                      color: "#475569",
-                                      padding: "6px 10px",
-                                      borderRadius: "6px",
-                                      fontSize: "0.78rem",
-                                      fontWeight: 500,
-                                      cursor: "not-allowed",
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: "5px",
-                                      whiteSpace: "nowrap"
-                                    }}
-                                  >
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                    </svg>
-                                    <span>Time Locked</span>
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
+          <OrdersTab
+            orders={orders}
+            orderStatusFilter={orderStatusFilter}
+            setOrderStatusFilter={setOrderStatusFilter}
+            orderSearch={orderSearch}
+            setOrderSearch={setOrderSearch}
+            filteredOrders={filteredOrders}
+            computedKpis={computedKpis}
+            pendingOrders={pendingOrders}
+            handleStageOrderStatus={handleStageOrderStatus}
+            handleStageOrderScheduleTime={handleStageOrderScheduleTime}
+            handleOpenRescheduleModal={handleOpenRescheduleModal}
+            parseOrderDateTime={parseOrderDateTime}
+          />
         )}
 
-        {/* ===================================================================
-            DASHBOARD 2: CATEGORIES DASHBOARD
-            =================================================================== */}
+        {/* Dashboard 2: Categories */}
         {activeTab === "categories" && (
-          <section>
-            <div style={{
-              background: "rgba(15, 23, 42, 0.7)",
-              border: "1px solid #1e293b",
-              borderRadius: "14px",
-              padding: "20px",
-              marginBottom: "20px"
-            }}>
-              <div style={{
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "16px",
-                marginBottom: "20px"
-              }}>
-                <div>
-                  <h2 style={{ fontSize: "1.3rem", fontWeight: 700, margin: "0 0 4px" }}>Categories Dashboard</h2>
-                  <p style={{ margin: 0, fontSize: "0.85rem", color: "#94a3b8" }}>
-                    Organize service classification hierarchy across the catalog.
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => setShowAddCategoryModal(true)}
-                  style={{
-                    background: "linear-gradient(135deg, #059669, #10b981)",
-                    color: "#ffffff",
-                    border: "none",
-                    padding: "9px 16px",
-                    borderRadius: "8px",
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px"
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  <span>Add New Category</span>
-                </button>
-              </div>
-
-              {/* Categories Table */}
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.88rem" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #334155", color: "#94a3b8" }}>
-                      <th style={{ padding: "12px 14px", fontWeight: 600 }}>Image</th>
-                      <th style={{ padding: "12px 14px", fontWeight: 600 }}>Category ID</th>
-                      <th style={{ padding: "12px 14px", fontWeight: 600 }}>Category Name</th>
-                      <th style={{ padding: "12px 14px", fontWeight: 600 }}>Linked Services</th>
-                      <th style={{ padding: "12px 14px", fontWeight: 600, textAlign: "right" }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map((cat) => {
-                      const isCatPending = Boolean(pendingCategories[cat.id]);
-                      return (
-                        <tr key={cat.id} style={{
-                          borderBottom: "1px solid #1e293b",
-                          background: isCatPending ? "rgba(245, 158, 11, 0.05)" : "transparent",
-                          borderLeft: isCatPending ? "3px solid #f59e0b" : "3px solid transparent",
-                          transition: "background 0.15s"
-                        }}>
-                          <td style={{ padding: "12px 14px" }}>
-                            <img
-                              src={cat.image || "/services/oven.jpg"}
-                              alt={cat.name}
-                              style={{
-                                width: "44px",
-                                height: "44px",
-                                objectFit: "cover",
-                                borderRadius: "8px",
-                                border: isCatPending ? "2px solid #f59e0b" : "1px solid #334155",
-                                display: "block"
-                              }}
-                            />
-                          </td>
-                          <td style={{ padding: "12px 14px", color: "#94a3b8" }}>#{cat.id}</td>
-                          <td style={{ padding: "12px 14px", fontWeight: 600, color: "#f8fafc" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <span>{cat.name}</span>
-                              {isCatPending && (
-                                <span style={{
-                                  fontSize: "0.68rem",
-                                  padding: "2px 6px",
-                                  borderRadius: "4px",
-                                  background: "rgba(245, 158, 11, 0.2)",
-                                  border: "1px solid rgba(245, 158, 11, 0.5)",
-                                  color: "#fbbf24",
-                                  fontWeight: 700
-                                }}>
-                                  Unsaved
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td style={{ padding: "12px 14px" }}>
-                            <span style={{
-                              background: "rgba(51, 65, 85, 0.5)",
-                              color: "#cbd5e1",
-                              padding: "3px 10px",
-                              borderRadius: "999px",
-                              fontSize: "0.78rem"
-                            }}>
-                              {cat.service_count || 0} services
-                            </span>
-                          </td>
-                          <td style={{ padding: "12px 14px", textAlign: "right" }}>
-                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-                              <button
-                                onClick={() => setEditingCategory({ ...cat })}
-                                style={{
-                                  background: "rgba(59, 130, 246, 0.15)",
-                                  border: "1px solid rgba(59, 130, 246, 0.3)",
-                                  color: "#60a5fa",
-                                  padding: "5px 10px",
-                                  borderRadius: "6px",
-                                  fontSize: "0.78rem",
-                                  cursor: "pointer"
-                                }}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteCategory(cat.id, cat.service_count)}
-                                style={{
-                                  background: "rgba(239, 68, 68, 0.15)",
-                                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                                  color: "#f87171",
-                                  padding: "5px 10px",
-                                  borderRadius: "6px",
-                                  fontSize: "0.78rem",
-                                  cursor: "pointer"
-                                }}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Add Category Modal */}
-            {showAddCategoryModal && (
-              <div style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0, 0, 0, 0.75)",
-                backdropFilter: "blur(6px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 100,
-                padding: "16px"
-              }}>
-                <div style={{
-                  background: "#0f172a",
-                  border: "1px solid #334155",
-                  borderRadius: "12px",
-                  padding: "24px",
-                  width: "100%",
-                  maxWidth: "420px"
-                }}>
-                  <h3 style={{ margin: "0 0 16px", color: "#f8fafc" }}>Create New Category</h3>
-                  <form onSubmit={handleAddCategory} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                        Category Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={newCatName}
-                        onChange={(e) => setNewCatName(e.target.value)}
-                        placeholder="e.g. Steam Sanitization"
-                        required
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          background: "#020617",
-                          border: "1px solid #334155",
-                          borderRadius: "6px",
-                          color: "#fff",
-                          boxSizing: "border-box"
-                        }}
-                      />
-                    </div>
-
-                    {/* Category Image Selector via File Upload */}
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "6px" }}>
-                        Category Picture *
-                      </label>
-
-                      {/* Image Preview & Upload Button */}
-                      <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "14px",
-                        background: "rgba(2, 6, 23, 0.6)",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        border: "1px dashed #334155",
-                        marginBottom: "10px"
-                      }}>
-                        <img
-                          src={newCatImage || "/services/oven.jpg"}
-                          alt="Preview"
-                          style={{
-                            width: "64px",
-                            height: "64px",
-                            objectFit: "cover",
-                            borderRadius: "8px",
-                            border: "2px solid #10b981",
-                            flexShrink: 0
-                          }}
-                        />
-                        <div style={{ flex: 1 }}>
-                          <label style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            background: uploadingImage ? "#334155" : "linear-gradient(135deg, #059669, #10b981)",
-                            color: "#ffffff",
-                            padding: "8px 14px",
-                            borderRadius: "6px",
-                            fontSize: "0.82rem",
-                            fontWeight: 600,
-                            cursor: uploadingImage ? "not-allowed" : "pointer"
-                          }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                              <polyline points="17 8 12 3 7 8" />
-                              <line x1="12" y1="3" x2="12" y2="15" />
-                            </svg>
-                            <span>{uploadingImage ? "Uploading..." : "Upload Image File"}</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              disabled={uploadingImage}
-                              onChange={(e) => {
-                                if (e.target.files && e.target.files[0]) {
-                                  handleCategoryFileUpload(e.target.files[0], false);
-                                }
-                              }}
-                              style={{ display: "none" }}
-                            />
-                          </label>
-                          <span style={{ display: "block", fontSize: "0.72rem", color: "#64748b", marginTop: "4px" }}>
-                            PNG, JPG, WEBP from your device
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Presets Quick Pick (Optional) */}
-                      <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block", marginBottom: "6px" }}>
-                        Or choose from existing pictures:
-                      </span>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                        {CATEGORY_IMAGE_PRESETS.map((preset) => (
-                          <button
-                            key={preset.path}
-                            type="button"
-                            onClick={() => setNewCatImage(preset.path)}
-                            style={{
-                              background: newCatImage === preset.path ? "rgba(16, 185, 129, 0.25)" : "#020617",
-                              border: `1px solid ${newCatImage === preset.path ? "#10b981" : "#334155"}`,
-                              color: newCatImage === preset.path ? "#34d399" : "#94a3b8",
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              fontSize: "0.75rem",
-                              cursor: "pointer"
-                            }}
-                          >
-                            {preset.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
-                      <button
-                        type="button"
-                        onClick={() => setShowAddCategoryModal(false)}
-                        style={{
-                          background: "transparent",
-                          border: "1px solid #475569",
-                          color: "#cbd5e1",
-                          padding: "8px 14px",
-                          borderRadius: "6px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={catActionLoading}
-                        style={{
-                          background: "#10b981",
-                          border: "none",
-                          color: "#fff",
-                          padding: "8px 16px",
-                          borderRadius: "6px",
-                          fontWeight: 600,
-                          cursor: "pointer"
-                        }}
-                      >
-                        {catActionLoading ? "Saving..." : "Save Category"}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Edit Category Modal */}
-            {editingCategory && (
-              <div style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0, 0, 0, 0.75)",
-                backdropFilter: "blur(6px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 100,
-                padding: "16px"
-              }}>
-                <div style={{
-                  background: "#0f172a",
-                  border: "1px solid #334155",
-                  borderRadius: "12px",
-                  padding: "24px",
-                  width: "100%",
-                  maxWidth: "420px"
-                }}>
-                  <h3 style={{ margin: "0 0 16px", color: "#f8fafc" }}>Edit Category #{editingCategory.id}</h3>
-                  <form onSubmit={handleStageCategoryEdit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                        Category Name
-                      </label>
-                      <input
-                        type="text"
-                        value={editingCategory.name}
-                        onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                        required
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          background: "#020617",
-                          border: "1px solid #334155",
-                          borderRadius: "6px",
-                          color: "#fff",
-                          boxSizing: "border-box"
-                        }}
-                      />
-                    </div>
-
-                    {/* Edit Category Image via File Upload */}
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "6px" }}>
-                        Category Picture
-                      </label>
-                      <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "14px",
-                        background: "rgba(2, 6, 23, 0.6)",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        border: "1px dashed #334155",
-                        marginBottom: "10px"
-                      }}>
-                        <img
-                          src={editingCategory.image || "/services/oven.jpg"}
-                          alt="Preview"
-                          style={{
-                            width: "64px",
-                            height: "64px",
-                            objectFit: "cover",
-                            borderRadius: "8px",
-                            border: "2px solid #10b981",
-                            flexShrink: 0
-                          }}
-                        />
-                        <div style={{ flex: 1 }}>
-                          <label style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            background: uploadingImage ? "#334155" : "linear-gradient(135deg, #059669, #10b981)",
-                            color: "#ffffff",
-                            padding: "8px 14px",
-                            borderRadius: "6px",
-                            fontSize: "0.82rem",
-                            fontWeight: 600,
-                            cursor: uploadingImage ? "not-allowed" : "pointer"
-                          }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                              <polyline points="17 8 12 3 7 8" />
-                              <line x1="12" y1="3" x2="12" y2="15" />
-                            </svg>
-                            <span>{uploadingImage ? "Uploading..." : "Change Image File"}</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              disabled={uploadingImage}
-                              onChange={(e) => {
-                                if (e.target.files && e.target.files[0]) {
-                                  handleCategoryFileUpload(e.target.files[0], true);
-                                }
-                              }}
-                              style={{ display: "none" }}
-                            />
-                          </label>
-                          <span style={{ display: "block", fontSize: "0.72rem", color: "#64748b", marginTop: "4px" }}>
-                            Upload new photo from device
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Presets Quick Pick */}
-                      <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block", marginBottom: "6px" }}>
-                        Or choose from existing pictures:
-                      </span>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                        {CATEGORY_IMAGE_PRESETS.map((preset) => (
-                          <button
-                            key={preset.path}
-                            type="button"
-                            onClick={() => setEditingCategory({ ...editingCategory, image: preset.path })}
-                            style={{
-                              background: editingCategory.image === preset.path ? "rgba(16, 185, 129, 0.25)" : "#020617",
-                              border: `1px solid ${editingCategory.image === preset.path ? "#10b981" : "#334155"}`,
-                              color: editingCategory.image === preset.path ? "#34d399" : "#94a3b8",
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              fontSize: "0.75rem",
-                              cursor: "pointer"
-                            }}
-                          >
-                            {preset.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "10px", marginTop: "14px" }}>
-                      <span style={{ fontSize: "0.75rem", color: "#94a3b8", marginRight: "auto" }}>
-                        Staged changes must be saved in header.
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setEditingCategory(null)}
-                        style={{
-                          background: "transparent",
-                          border: "1px solid #475569",
-                          color: "#cbd5e1",
-                          padding: "8px 14px",
-                          borderRadius: "6px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        style={{
-                          background: "linear-gradient(135deg, #059669, #10b981)",
-                          border: "none",
-                          color: "#fff",
-                          padding: "8px 16px",
-                          borderRadius: "6px",
-                          fontWeight: 600,
-                          cursor: "pointer"
-                        }}
-                      >
-                        Apply Changes
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-          </section>
+          <CategoriesTab
+            categories={categories}
+            pendingCategories={pendingCategories}
+            setShowAddCategoryModal={setShowAddCategoryModal}
+            setEditingCategory={setEditingCategory}
+            handleDeleteCategory={handleDeleteCategory}
+          />
         )}
 
-        {/* ===================================================================
-            DASHBOARD 3: SERVICES & PRODUCTS DASHBOARD
-            =================================================================== */}
+        {/* Dashboard 3: Services */}
         {activeTab === "services" && (
-          <section>
-            <div style={{
-              background: "rgba(15, 23, 42, 0.7)",
-              border: "1px solid #1e293b",
-              borderRadius: "14px",
-              padding: "20px",
-              marginBottom: "20px"
-            }}>
-              {/* Header & Controls */}
-              <div style={{
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "16px",
-                marginBottom: "16px"
-              }}>
-                <div>
-                  <h2 style={{ fontSize: "1.3rem", fontWeight: 700, margin: "0 0 4px" }}>Services & Products Dashboard</h2>
-                  <p style={{ margin: 0, fontSize: "0.85rem", color: "#94a3b8" }}>
-                    Configure service rates, durations, category mappings, and featured highlights.
-                  </p>
-                </div>
-
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
-                  {/* Category filter */}
-                  <select
-                    value={serviceCatFilter}
-                    onChange={(e) => setServiceCatFilter(e.target.value)}
-                    style={{
-                      background: "#020617",
-                      border: "1px solid #334155",
-                      color: "#f8fafc",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      fontSize: "0.85rem",
-                      cursor: "pointer"
-                    }}
-                  >
-                    <option value="all">All Categories</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-
-                  {/* Search box */}
-                  <input
-                    type="text"
-                    value={serviceSearch}
-                    onChange={(e) => setServiceSearch(e.target.value)}
-                    placeholder="Search services..."
-                    style={{
-                      background: "#020617",
-                      border: "1px solid #334155",
-                      color: "#f8fafc",
-                      padding: "8px 14px",
-                      borderRadius: "8px",
-                      fontSize: "0.85rem"
-                    }}
-                  />
-
-                  {/* Add button */}
-                  <button
-                    onClick={() => setShowAddServiceModal(true)}
-                    style={{
-                      background: "linear-gradient(135deg, #059669, #10b981)",
-                      color: "#ffffff",
-                      border: "none",
-                      padding: "8px 16px",
-                      borderRadius: "8px",
-                      fontSize: "0.85rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px"
-                    }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    <span>Add Service</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Services Table */}
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.88rem" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #334155", color: "#94a3b8" }}>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>ID</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Service Name</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Category</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Price (£)</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Duration</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Scope / Area</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600, textAlign: "right" }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredServices.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} style={{ padding: "36px", textAlign: "center", color: "#64748b" }}>
-                          No services found.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredServices.map((service) => {
-                        const isServicePending = Boolean(pendingServices[service.id]);
-                        return (
-                          <tr key={service.id} style={{
-                            borderBottom: "1px solid #1e293b",
-                            background: isServicePending ? "rgba(245, 158, 11, 0.05)" : "transparent",
-                            borderLeft: isServicePending ? "3px solid #f59e0b" : "3px solid transparent",
-                            transition: "background 0.15s"
-                          }}>
-                            <td style={{ padding: "12px 10px", color: "#94a3b8" }}>#{service.id}</td>
-                            <td style={{ padding: "12px 10px", fontWeight: 600, color: "#f8fafc" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <span>{service.name}</span>
-                                {isServicePending && (
-                                  <span style={{
-                                    fontSize: "0.68rem",
-                                    padding: "2px 6px",
-                                    borderRadius: "4px",
-                                    background: "rgba(245, 158, 11, 0.2)",
-                                    border: "1px solid rgba(245, 158, 11, 0.5)",
-                                    color: "#fbbf24",
-                                    fontWeight: 700
-                                  }}>
-                                    Unsaved
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td style={{ padding: "12px 10px" }}>
-                              <span style={{
-                                background: "rgba(16, 185, 129, 0.12)",
-                                color: "#34d399",
-                                padding: "3px 8px",
-                                borderRadius: "6px",
-                                fontSize: "0.78rem"
-                              }}>
-                                {service.category_name}
-                              </span>
-                            </td>
-                            <td style={{ padding: "12px 10px" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                <span style={{ color: "#10b981", fontWeight: 700 }}>£</span>
-                                <input
-                                  type="text"
-                                  inputMode="decimal"
-                                  value={service.price ?? ""}
-                                  onChange={(e) => handleStageServicePrice(service.id, e.target.value)}
-                                  placeholder="0.00"
-                                  style={{
-                                    background: isServicePending && pendingServices[service.id]?.price !== undefined ? "#1e1b4b" : "#020617",
-                                    border: isServicePending && pendingServices[service.id]?.price !== undefined ? "1px solid #818cf8" : "1px solid #334155",
-                                    color: "#10b981",
-                                    fontWeight: 700,
-                                    padding: "6px 10px",
-                                    borderRadius: "6px",
-                                    width: "80px",
-                                    fontSize: "0.85rem",
-                                    outline: "none"
-                                  }}
-                                />
-                              </div>
-                            </td>
-                            <td style={{ padding: "12px 10px", color: "#cbd5e1" }}>
-                              {service.time}
-                            </td>
-                            <td style={{ padding: "12px 10px", color: "#94a3b8", fontSize: "0.82rem" }}>
-                              {service.width || "—"}
-                            </td>
-                            <td style={{ padding: "12px 10px", textAlign: "right" }}>
-                              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-                                <button
-                                  onClick={() => setEditingService({ ...service })}
-                                  style={{
-                                    background: "rgba(59, 130, 246, 0.15)",
-                                    border: "1px solid rgba(59, 130, 246, 0.3)",
-                                    color: "#60a5fa",
-                                    padding: "5px 10px",
-                                    borderRadius: "6px",
-                                    fontSize: "0.78rem",
-                                    cursor: "pointer"
-                                  }}
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteService(service.id)}
-                                  style={{
-                                    background: "rgba(239, 68, 68, 0.15)",
-                                    border: "1px solid rgba(239, 68, 68, 0.3)",
-                                    color: "#f87171",
-                                    padding: "5px 10px",
-                                    borderRadius: "6px",
-                                    fontSize: "0.78rem",
-                                    cursor: "pointer"
-                                  }}
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Add Service Modal */}
-            {showAddServiceModal && (
-              <div style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0, 0, 0, 0.75)",
-                backdropFilter: "blur(6px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 100,
-                padding: "16px"
-              }}>
-                <div style={{
-                  background: "#0f172a",
-                  border: "1px solid #334155",
-                  borderRadius: "12px",
-                  padding: "24px",
-                  width: "100%",
-                  maxWidth: "480px"
-                }}>
-                  <h3 style={{ margin: "0 0 16px", color: "#f8fafc" }}>Add New Service / Product</h3>
-                  <form onSubmit={handleAddService} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                        Service Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={serviceForm.name}
-                        onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
-                        placeholder="e.g. Deluxe Carpet Deep Wash"
-                        required
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          background: "#020617",
-                          border: "1px solid #334155",
-                          borderRadius: "6px",
-                          color: "#fff",
-                          boxSizing: "border-box"
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                      <div>
-                        <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                          Category *
-                        </label>
-                        <select
-                          value={serviceForm.category_id}
-                          onChange={(e) => setServiceForm({ ...serviceForm, category_id: e.target.value })}
-                          required
-                          style={{
-                            width: "100%",
-                            padding: "10px",
-                            background: "#020617",
-                            border: "1px solid #334155",
-                            borderRadius: "6px",
-                            color: "#fff",
-                            boxSizing: "border-box"
-                          }}
-                        >
-                          <option value="">Select Category</option>
-                          {categories.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                          Price (£) *
-                        </label>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={serviceForm.price}
-                          onChange={(e) => setServiceForm({ ...serviceForm, price: e.target.value })}
-                          placeholder="e.g. 120"
-                          required
-                          style={{
-                            width: "100%",
-                            padding: "10px",
-                            background: "#020617",
-                            border: "1px solid #334155",
-                            borderRadius: "6px",
-                            color: "#fff",
-                            boxSizing: "border-box"
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                      <div>
-                        <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                          Estimated Time *
-                        </label>
-                        <input
-                          type="text"
-                          value={serviceForm.time}
-                          onChange={(e) => setServiceForm({ ...serviceForm, time: e.target.value })}
-                          placeholder="e.g. 1h 30m"
-                          required
-                          style={{
-                            width: "100%",
-                            padding: "10px",
-                            background: "#020617",
-                            border: "1px solid #334155",
-                            borderRadius: "6px",
-                            color: "#fff",
-                            boxSizing: "border-box"
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                          Scope / Dimensions
-                        </label>
-                        <input
-                          type="text"
-                          value={serviceForm.width}
-                          onChange={(e) => setServiceForm({ ...serviceForm, width: e.target.value })}
-                          placeholder="e.g. 15-25 sq.m"
-                          style={{
-                            width: "100%",
-                            padding: "10px",
-                            background: "#020617",
-                            border: "1px solid #334155",
-                            borderRadius: "6px",
-                            color: "#fff",
-                            boxSizing: "border-box"
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "16px" }}>
-                      <button
-                        type="button"
-                        onClick={() => setShowAddServiceModal(false)}
-                        style={{
-                          background: "transparent",
-                          border: "1px solid #475569",
-                          color: "#cbd5e1",
-                          padding: "8px 14px",
-                          borderRadius: "6px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={serviceActionLoading}
-                        style={{
-                          background: "#10b981",
-                          border: "none",
-                          color: "#fff",
-                          padding: "8px 16px",
-                          borderRadius: "6px",
-                          fontWeight: 600,
-                          cursor: "pointer"
-                        }}
-                      >
-                        {serviceActionLoading ? "Adding..." : "Add Service"}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Edit Service Modal */}
-            {editingService && (
-              <div style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0, 0, 0, 0.75)",
-                backdropFilter: "blur(6px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 100,
-                padding: "16px"
-              }}>
-                <div style={{
-                  background: "#0f172a",
-                  border: "1px solid #334155",
-                  borderRadius: "12px",
-                  padding: "24px",
-                  width: "100%",
-                  maxWidth: "480px"
-                }}>
-                  <h3 style={{ margin: "0 0 16px", color: "#f8fafc" }}>Edit Service #{editingService.id}</h3>
-                  <form onSubmit={handleStageServiceEdit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                        Service Name
-                      </label>
-                      <input
-                        type="text"
-                        value={editingService.name}
-                        onChange={(e) => setEditingService({ ...editingService, name: e.target.value })}
-                        required
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          background: "#020617",
-                          border: "1px solid #334155",
-                          borderRadius: "6px",
-                          color: "#fff",
-                          boxSizing: "border-box"
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                      <div>
-                        <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                          Category
-                        </label>
-                        <select
-                          value={editingService.category_id}
-                          onChange={(e) => setEditingService({ ...editingService, category_id: e.target.value })}
-                          required
-                          style={{
-                            width: "100%",
-                            padding: "10px",
-                            background: "#020617",
-                            border: "1px solid #334155",
-                            borderRadius: "6px",
-                            color: "#fff",
-                            boxSizing: "border-box"
-                          }}
-                        >
-                          {categories.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                          Price (£)
-                        </label>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={editingService.price ?? ""}
-                          onChange={(e) => setEditingService({ ...editingService, price: e.target.value })}
-                          required
-                          style={{
-                            width: "100%",
-                            padding: "10px",
-                            background: "#020617",
-                            border: "1px solid #334155",
-                            borderRadius: "6px",
-                            color: "#fff",
-                            boxSizing: "border-box"
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                      <div>
-                        <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                          Estimated Time
-                        </label>
-                        <input
-                          type="text"
-                          value={editingService.time}
-                          onChange={(e) => setEditingService({ ...editingService, time: e.target.value })}
-                          required
-                          style={{
-                            width: "100%",
-                            padding: "10px",
-                            background: "#020617",
-                            border: "1px solid #334155",
-                            borderRadius: "6px",
-                            color: "#fff",
-                            boxSizing: "border-box"
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ display: "block", fontSize: "0.8rem", color: "#94a3b8", marginBottom: "4px" }}>
-                          Scope / Dimensions
-                        </label>
-                        <input
-                          type="text"
-                          value={editingService.width || ""}
-                          onChange={(e) => setEditingService({ ...editingService, width: e.target.value })}
-                          style={{
-                            width: "100%",
-                            padding: "10px",
-                            background: "#020617",
-                            border: "1px solid #334155",
-                            borderRadius: "6px",
-                            color: "#fff",
-                            boxSizing: "border-box"
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "10px", marginTop: "16px" }}>
-                      <span style={{ fontSize: "0.75rem", color: "#94a3b8", marginRight: "auto" }}>
-                        Staged changes must be saved in header.
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setEditingService(null)}
-                        style={{
-                          background: "transparent",
-                          border: "1px solid #475569",
-                          color: "#cbd5e1",
-                          padding: "8px 14px",
-                          borderRadius: "6px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        style={{
-                          background: "linear-gradient(135deg, #059669, #10b981)",
-                          border: "none",
-                          color: "#fff",
-                          padding: "8px 16px",
-                          borderRadius: "6px",
-                          fontWeight: 600,
-                          cursor: "pointer"
-                        }}
-                      >
-                        Apply Changes
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            )}
-          </section>
+          <ServicesTab
+            categories={categories}
+            serviceCatFilter={serviceCatFilter}
+            setServiceCatFilter={setServiceCatFilter}
+            serviceSearch={serviceSearch}
+            setServiceSearch={setServiceSearch}
+            setShowAddServiceModal={setShowAddServiceModal}
+            filteredServices={filteredServices}
+            pendingServices={pendingServices}
+            handleStageServicePrice={handleStageServicePrice}
+            setEditingService={setEditingService}
+            handleDeleteService={handleDeleteService}
+          />
         )}
 
-        {/* ===================================================================
-            ORDER RESCHEDULE MODAL (For Pending Orders)
-            =================================================================== */}
-        {rescheduleOrder && (
-          <div style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0, 0, 0, 0.8)",
-            backdropFilter: "blur(8px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 110,
-            padding: "16px"
-          }}>
-            <div style={{
-              background: "#0f172a",
-              border: "1px solid #334155",
-              borderRadius: "16px",
-              padding: "26px",
-              width: "100%",
-              maxWidth: "520px",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.85)",
-              color: "#f8fafc"
-            }}>
-              {/* Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "rgba(56, 189, 248, 0.15)",
-                    border: "1px solid rgba(56, 189, 248, 0.35)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#38bdf8"
-                  }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <polyline points="12 6 12 12 16 14" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#f8fafc" }}>
-                      Reschedule Order #{rescheduleOrder.order_id}
-                    </h3>
-                    <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
-                      Change arrival time window for pending order
-                    </span>
-                  </div>
-                </div>
+        {/* Reschedule Order Modal */}
+        <RescheduleOrderModal
+          rescheduleOrder={rescheduleOrder}
+          setRescheduleOrder={setRescheduleOrder}
+          rescheduleDate={rescheduleDate}
+          setRescheduleDate={setRescheduleDate}
+          rescheduleTimeSlot={rescheduleTimeSlot}
+          setRescheduleTimeSlot={setRescheduleTimeSlot}
+          rescheduleCustomTime={rescheduleCustomTime}
+          setRescheduleCustomTime={setRescheduleCustomTime}
+          isCustomTime={isCustomTime}
+          setIsCustomTime={setIsCustomTime}
+          rescheduleSaving={rescheduleSaving}
+          handleSaveReschedule={handleSaveReschedule}
+        />
 
-                <button
-                  type="button"
-                  onClick={() => setRescheduleOrder(null)}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    color: "#64748b",
-                    cursor: "pointer",
-                    padding: "4px",
-                    borderRadius: "6px"
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
+        {/* Category Add & Edit Modals */}
+        <CategoryModals
+          showAddCategoryModal={showAddCategoryModal}
+          setShowAddCategoryModal={setShowAddCategoryModal}
+          newCatName={newCatName}
+          setNewCatName={setNewCatName}
+          newCatImage={newCatImage}
+          setNewCatImage={setNewCatImage}
+          handleAddCategory={handleAddCategory}
+          catActionLoading={catActionLoading}
+          editingCategory={editingCategory}
+          setEditingCategory={setEditingCategory}
+          handleStageCategoryEdit={handleStageCategoryEdit}
+          handleCategoryFileUpload={handleCategoryFileUpload}
+          uploadingImage={uploadingImage}
+          CATEGORY_IMAGE_PRESETS={CATEGORY_IMAGE_PRESETS}
+        />
 
-              {/* Order Info Card */}
-              <div style={{
-                background: "rgba(2, 6, 23, 0.7)",
-                border: "1px solid #1e293b",
-                borderRadius: "10px",
-                padding: "12px 14px",
-                marginBottom: "18px",
-                fontSize: "0.82rem",
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "10px"
-              }}>
-                <div>
-                  <span style={{ color: "#64748b", fontSize: "0.72rem", textTransform: "uppercase", display: "block", fontWeight: 600 }}>Customer</span>
-                  <div style={{ color: "#e2e8f0", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {rescheduleOrder.customer_email || "Customer"}
-                  </div>
-                  <div style={{ color: "#10b981", fontSize: "0.75rem", marginTop: "2px" }}>
-                    📞 {rescheduleOrder.order_phone || "—"}
-                  </div>
-                </div>
-                <div>
-                  <span style={{ color: "#64748b", fontSize: "0.72rem", textTransform: "uppercase", display: "block", fontWeight: 600 }}>Service</span>
-                  <div style={{ color: "#e2e8f0", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {rescheduleOrder.service_name}
-                  </div>
-                  <div style={{ color: "#fbbf24", fontSize: "0.75rem", fontWeight: 700, marginTop: "2px" }}>
-                    ● Status: Pending
-                  </div>
-                </div>
-              </div>
-
-              {/* Date Input */}
-              <div style={{ marginBottom: "18px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                  <label style={{ fontSize: "0.82rem", fontWeight: 600, color: "#94a3b8" }}>
-                    Appointment Date (Liverpool, UK)
-                  </label>
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    <button
-                      type="button"
-                      onClick={() => setRescheduleDate(getUkDateString())}
-                      style={{
-                        background: "rgba(30, 41, 59, 0.8)",
-                        border: "1px solid #334155",
-                        color: "#cbd5e1",
-                        padding: "2px 8px",
-                        borderRadius: "4px",
-                        fontSize: "0.7rem",
-                        cursor: "pointer"
-                      }}
-                    >
-                      Today
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRescheduleDate(getUkTomorrowDateString())}
-                      style={{
-                        background: "rgba(30, 41, 59, 0.8)",
-                        border: "1px solid #334155",
-                        color: "#cbd5e1",
-                        padding: "2px 8px",
-                        borderRadius: "4px",
-                        fontSize: "0.7rem",
-                        cursor: "pointer"
-                      }}
-                    >
-                      Tomorrow
-                    </button>
-                  </div>
-                </div>
-                <input
-                  type="date"
-                  value={rescheduleDate}
-                  onChange={(e) => setRescheduleDate(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    background: "#020617",
-                    border: "1px solid #334155",
-                    borderRadius: "8px",
-                    color: "#f8fafc",
-                    fontSize: "0.9rem",
-                    outline: "none",
-                    boxSizing: "border-box"
-                  }}
-                />
-              </div>
-
-              {/* Arrival Window (Time Slot) */}
-              <div style={{ marginBottom: "22px" }}>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#94a3b8", marginBottom: "8px" }}>
-                  Select Arrival Time Window
-                </label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
-                  {UK_TIME_SLOTS.map((slot) => {
-                    const isSelected = !isCustomTime && rescheduleTimeSlot === slot;
-                    return (
-                      <button
-                        key={slot}
-                        type="button"
-                        onClick={() => {
-                          setRescheduleTimeSlot(slot);
-                          setIsCustomTime(false);
-                        }}
-                        style={{
-                          padding: "10px 12px",
-                          borderRadius: "8px",
-                          border: isSelected ? "1.5px solid #38bdf8" : "1px solid #334155",
-                          background: isSelected ? "rgba(14, 165, 233, 0.15)" : "#020617",
-                          color: isSelected ? "#38bdf8" : "#cbd5e1",
-                          fontSize: "0.82rem",
-                          fontWeight: isSelected ? 700 : 500,
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "6px",
-                          transition: "all 0.15s ease"
-                        }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        <span>{slot}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Custom Time Option */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setIsCustomTime(!isCustomTime)}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      color: isCustomTime ? "#38bdf8" : "#94a3b8",
-                      fontSize: "0.78rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      padding: "4px 0"
-                    }}
-                  >
-                    <span>{isCustomTime ? "▼ Custom Time Window Active" : "+ Enter Custom Arrival Window"}</span>
-                  </button>
-                  {isCustomTime && (
-                    <input
-                      type="text"
-                      value={rescheduleCustomTime}
-                      onChange={(e) => setRescheduleCustomTime(e.target.value)}
-                      placeholder="e.g. 08:30 – 10:30 or 16:00 – 18:00"
-                      style={{
-                        width: "100%",
-                        marginTop: "6px",
-                        padding: "8px 12px",
-                        background: "#020617",
-                        border: "1px solid #38bdf8",
-                        borderRadius: "8px",
-                        color: "#f8fafc",
-                        fontSize: "0.85rem",
-                        outline: "none",
-                        boxSizing: "border-box"
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "10px",
-                paddingTop: "16px",
-                borderTop: "1px solid #1e293b",
-                flexWrap: "wrap"
-              }}>
-                <button
-                  type="button"
-                  onClick={() => setRescheduleOrder(null)}
-                  disabled={rescheduleSaving}
-                  style={{
-                    background: "transparent",
-                    border: "1px solid #475569",
-                    color: "#cbd5e1",
-                    padding: "9px 16px",
-                    borderRadius: "8px",
-                    fontSize: "0.82rem",
-                    fontWeight: 600,
-                    cursor: "pointer"
-                  }}
-                >
-                  Cancel
-                </button>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <button
-                    type="button"
-                    onClick={() => handleSaveReschedule(false)}
-                    disabled={rescheduleSaving}
-                    title="Stage this change to save with the header Save Changes button"
-                    style={{
-                      background: "rgba(30, 41, 59, 0.8)",
-                      border: "1px solid #475569",
-                      color: "#f8fafc",
-                      padding: "9px 14px",
-                      borderRadius: "8px",
-                      fontSize: "0.82rem",
-                      fontWeight: 600,
-                      cursor: "pointer"
-                    }}
-                  >
-                    Stage Change
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSaveReschedule(true)}
-                    disabled={rescheduleSaving}
-                    title="Directly commit this new time to the database"
-                    style={{
-                      background: "linear-gradient(135deg, #0284c7, #38bdf8)",
-                      border: "none",
-                      color: "#ffffff",
-                      padding: "9px 16px",
-                      borderRadius: "8px",
-                      fontSize: "0.82rem",
-                      fontWeight: 700,
-                      cursor: rescheduleSaving ? "not-allowed" : "pointer",
-                      boxShadow: "0 4px 14px rgba(56, 189, 248, 0.4)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px"
-                    }}
-                  >
-                    {rescheduleSaving ? "Saving..." : "Save Directly to DB"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
+        {/* Service Add & Edit Modals */}
+        <ServiceModals
+          showAddServiceModal={showAddServiceModal}
+          setShowAddServiceModal={setShowAddServiceModal}
+          serviceForm={serviceForm}
+          setServiceForm={setServiceForm}
+          handleAddService={handleAddService}
+          serviceActionLoading={serviceActionLoading}
+          editingService={editingService}
+          setEditingService={setEditingService}
+          handleStageServiceEdit={handleStageServiceEdit}
+          categories={categories}
+        />
       </main>
     </div>
   );
