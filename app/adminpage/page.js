@@ -2,6 +2,38 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import {
+  UK_TIME_SLOTS,
+  normalizeTimeSlot,
+  formatUkDate,
+  getUkDateString,
+  getUkTomorrowDateString,
+} from "@/lib/dateUtils";
+
+function parseOrderDateTime(scheduledStr) {
+  if (!scheduledStr) {
+    return {
+      date: getUkTomorrowDateString(),
+      time: UK_TIME_SLOTS[0],
+      raw: "",
+    };
+  }
+  const str = String(scheduledStr).trim();
+  const firstSpace = str.indexOf(" ");
+  if (firstSpace === -1) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      return { date: str, time: UK_TIME_SLOTS[0], raw: str };
+    }
+    return { date: getUkTomorrowDateString(), time: normalizeTimeSlot(str), raw: str };
+  }
+  const datePart = str.slice(0, firstSpace);
+  const timePart = str.slice(firstSpace + 1).trim();
+  return {
+    date: datePart,
+    time: normalizeTimeSlot(timePart),
+    raw: str,
+  };
+}
 
 const CATEGORY_IMAGE_PRESETS = [
   { label: "Oven", path: "/services/oven.jpg" },
@@ -68,6 +100,15 @@ export default function AdminPage() {
   const [serviceActionLoading, setServiceActionLoading] = useState(false);
   const [serviceCatFilter, setServiceCatFilter] = useState("all");
   const [serviceSearch, setServiceSearch] = useState("");
+
+  // Reschedule Order modal state (for pending orders)
+  const [rescheduleOrder, setRescheduleOrder] = useState(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTimeSlot, setRescheduleTimeSlot] = useState(UK_TIME_SLOTS[0]);
+  const [rescheduleCustomTime, setRescheduleCustomTime] = useState("");
+  const [isCustomTime, setIsCustomTime] = useState(false);
+  const [rescheduleSaving, setRescheduleSaving] = useState(false);
+
   // Staged / Pending Changes State for Header "Save Changes" Button
   const [pendingOrders, setPendingOrders] = useState({});
   const [pendingServices, setPendingServices] = useState({});
@@ -233,6 +274,146 @@ export default function AdminPage() {
       ...prev,
       [orderId]: { ...(prev[orderId] || {}), status: validStatus },
     }));
+  };
+
+  // 4a. Quick inline arrival time slot staging for pending orders
+  const handleStageOrderScheduleTime = (orderId, newTimeSlot) => {
+    const order = orders.find((o) => o.order_id === orderId);
+    if (!order) return;
+
+    const currentStatus = (pendingOrders[orderId]?.status || order.status || "pending").toLowerCase();
+    if (currentStatus === "completed") {
+      showNotification("error", "Cannot change time of a completed order. Set status to Pending first.");
+      return;
+    }
+
+    const { date } = parseOrderDateTime(order.scheduled_date);
+    const newScheduledDate = `${date} ${newTimeSlot}`;
+
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.order_id === orderId ? { ...o, scheduled_date: newScheduledDate } : o
+      )
+    );
+    setPendingOrders((prev) => ({
+      ...prev,
+      [orderId]: { ...(prev[orderId] || {}), scheduled_date: newScheduledDate },
+    }));
+    showNotification(
+      "success",
+      `Order #${orderId} time changed to ${newTimeSlot}. Click "Save Changes" in the header to save.`
+    );
+  };
+
+  // 4b. Open Reschedule Modal for detailed scheduling adjustments
+  const handleOpenRescheduleModal = (order) => {
+    const currentStatus = (pendingOrders[order.order_id]?.status || order.status || "pending").toLowerCase();
+    if (currentStatus === "completed") {
+      showNotification("error", "Cannot reschedule completed orders. Set status to Pending first.");
+      return;
+    }
+
+    const parsed = parseOrderDateTime(order.scheduled_date);
+    setRescheduleOrder(order);
+    setRescheduleDate(parsed.date || getUkTomorrowDateString());
+
+    if (UK_TIME_SLOTS.includes(parsed.time)) {
+      setRescheduleTimeSlot(parsed.time);
+      setIsCustomTime(false);
+      setRescheduleCustomTime("");
+    } else if (parsed.time) {
+      setRescheduleTimeSlot("custom");
+      setIsCustomTime(true);
+      setRescheduleCustomTime(parsed.time);
+    } else {
+      setRescheduleTimeSlot(UK_TIME_SLOTS[0]);
+      setIsCustomTime(false);
+      setRescheduleCustomTime("");
+    }
+  };
+
+  // 4c. Save or Stage from the Reschedule Modal
+  const handleSaveReschedule = async (saveDirectly = false) => {
+    if (!rescheduleOrder) return;
+
+    const chosenTime = isCustomTime
+      ? rescheduleCustomTime.trim()
+      : rescheduleTimeSlot;
+
+    if (!chosenTime) {
+      showNotification("error", "Please select or enter an arrival time window.");
+      return;
+    }
+
+    const chosenDate = (rescheduleDate || "").trim() || getUkTomorrowDateString();
+    const newScheduledDate = `${chosenDate} ${chosenTime}`;
+
+    if (saveDirectly) {
+      setRescheduleSaving(true);
+      try {
+        const res = await fetch("/api/admin/orders", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: rescheduleOrder.order_id,
+            scheduled_date: newScheduledDate,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setOrders((prev) =>
+            prev.map((o) =>
+              o.order_id === rescheduleOrder.order_id
+                ? { ...o, scheduled_date: newScheduledDate }
+                : o
+            )
+          );
+          // If there was a pending change for this order's scheduled_date, clear it
+          setPendingOrders((prev) => {
+            const next = { ...prev };
+            if (next[rescheduleOrder.order_id]) {
+              const { scheduled_date, ...rest } = next[rescheduleOrder.order_id];
+              if (Object.keys(rest).length === 0) {
+                delete next[rescheduleOrder.order_id];
+              } else {
+                next[rescheduleOrder.order_id] = rest;
+              }
+            }
+            return next;
+          });
+          showNotification("success", `✓ Order #${rescheduleOrder.order_id} scheduled time saved to database!`);
+          setRescheduleOrder(null);
+        } else {
+          showNotification("error", data.error || "Failed to update order time.");
+        }
+      } catch (err) {
+        console.error("Direct reschedule error:", err);
+        showNotification("error", "Failed to communicate with server.");
+      } finally {
+        setRescheduleSaving(false);
+      }
+    } else {
+      // Stage change for master Save Changes button in header
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.order_id === rescheduleOrder.order_id
+            ? { ...o, scheduled_date: newScheduledDate }
+            : o
+        )
+      );
+      setPendingOrders((prev) => ({
+        ...prev,
+        [rescheduleOrder.order_id]: {
+          ...(prev[rescheduleOrder.order_id] || {}),
+          scheduled_date: newScheduledDate,
+        },
+      }));
+      showNotification(
+        "success",
+        `Order #${rescheduleOrder.order_id} schedule staged (${chosenDate} ${chosenTime}). Click "Save Changes" in header to save.`
+      );
+      setRescheduleOrder(null);
+    }
   };
 
   // 4b. Category File Upload Handler
@@ -1211,10 +1392,10 @@ export default function AdminPage() {
                       <th style={{ padding: "12px 10px", fontWeight: 600 }}>Customer Contact</th>
                       <th style={{ padding: "12px 10px", fontWeight: 600 }}>Price</th>
                       <th style={{ padding: "12px 10px", fontWeight: 600 }}>Payment</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Scheduled Date</th>
+                      <th style={{ padding: "12px 10px", fontWeight: 600 }}>Scheduled Date & Time</th>
                       <th style={{ padding: "12px 10px", fontWeight: 600 }}>Service Address</th>
                       <th style={{ padding: "12px 10px", fontWeight: 600 }}>Status</th>
-                      <th style={{ padding: "12px 10px", fontWeight: 600, textAlign: "right" }}>Update Status</th>
+                      <th style={{ padding: "12px 10px", fontWeight: 600, textAlign: "right" }}>Update Status & Time</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1226,13 +1407,19 @@ export default function AdminPage() {
                       </tr>
                     ) : (
                       filteredOrders.map((order) => {
+                        const currentStatus = (pendingOrders[order.order_id]?.status || order.status || "pending").toLowerCase();
+                        const isPending = currentStatus === "pending";
+                        const parsedSchedule = parseOrderDateTime(order.scheduled_date);
+
                         const statusColors = {
                           pending: { bg: "rgba(245, 158, 11, 0.15)", text: "#fbbf24", border: "rgba(245, 158, 11, 0.3)" },
                           completed: { bg: "rgba(16, 185, 129, 0.15)", text: "#34d399", border: "rgba(16, 185, 129, 0.3)" }
                         };
-                        const sc = statusColors[(order.status || "").toLowerCase()] || statusColors.pending;
+                        const sc = statusColors[currentStatus] || statusColors.pending;
 
                         const isOrderPending = Boolean(pendingOrders[order.order_id]);
+                        const isTimeChanged = Boolean(pendingOrders[order.order_id]?.scheduled_date);
+                        const isStatusChanged = Boolean(pendingOrders[order.order_id]?.status);
 
                         return (
                           <tr key={order.order_id} style={{
@@ -1321,23 +1508,144 @@ export default function AdminPage() {
                                 </span>
                               </div>
                             </td>
-                            <td style={{ padding: "12px 10px" }}>
-                              {order.scheduled_date ? (
-                                <span style={{
-                                  display: "inline-block",
-                                  padding: "5px 10px",
-                                  background: "rgba(15, 23, 42, 0.8)",
-                                  border: "1px solid #334155",
-                                  borderRadius: "6px",
-                                  fontSize: "0.8rem",
-                                  color: "#e2e8f0",
-                                  whiteSpace: "nowrap"
-                                }}>
-                                  {order.scheduled_date}
-                                </span>
-                              ) : (
-                                <span style={{ color: "#64748b", fontSize: "0.8rem" }}>—</span>
-                              )}
+                            <td style={{ padding: "12px 10px", minWidth: "210px" }}>
+                              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                {/* Date Line */}
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                  <span style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    padding: "3px 8px",
+                                    background: "rgba(15, 23, 42, 0.85)",
+                                    border: "1px solid #334155",
+                                    borderRadius: "6px",
+                                    fontSize: "0.78rem",
+                                    color: "#e2e8f0",
+                                    fontWeight: 500,
+                                    whiteSpace: "nowrap"
+                                  }}>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
+                                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                      <line x1="16" y1="2" x2="16" y2="6" />
+                                      <line x1="8" y1="2" x2="8" y2="6" />
+                                      <line x1="3" y1="10" x2="21" y2="10" />
+                                    </svg>
+                                    <span>{parsedSchedule.date || "—"}</span>
+                                  </span>
+
+                                  {isTimeChanged && (
+                                    <span style={{
+                                      fontSize: "0.65rem",
+                                      padding: "1px 6px",
+                                      borderRadius: "4px",
+                                      background: "rgba(56, 189, 248, 0.2)",
+                                      border: "1px solid rgba(56, 189, 248, 0.5)",
+                                      color: "#38bdf8",
+                                      fontWeight: 700
+                                    }}>
+                                      Time Edited
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Arrival Time Slot Controls */}
+                                {isPending ? (
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                                      <select
+                                        value={parsedSchedule.time}
+                                        onChange={(e) => handleStageOrderScheduleTime(order.order_id, e.target.value)}
+                                        title="Quickly change arrival time window for this pending order"
+                                        style={{
+                                          background: isTimeChanged ? "#082f49" : "#020617",
+                                          border: isTimeChanged ? "1px solid #38bdf8" : "1px solid #334155",
+                                          color: isTimeChanged ? "#7dd3fc" : "#38bdf8",
+                                          padding: "4px 8px 4px 22px",
+                                          borderRadius: "6px",
+                                          fontSize: "0.78rem",
+                                          fontWeight: 700,
+                                          cursor: "pointer",
+                                          outline: "none"
+                                        }}
+                                      >
+                                        {UK_TIME_SLOTS.map((slot) => (
+                                          <option key={slot} value={slot}>
+                                            {slot}
+                                          </option>
+                                        ))}
+                                        {!UK_TIME_SLOTS.includes(parsedSchedule.time) && parsedSchedule.time && (
+                                          <option value={parsedSchedule.time}>
+                                            {parsedSchedule.time} (Custom)
+                                          </option>
+                                        )}
+                                      </select>
+                                      <svg
+                                        width="12"
+                                        height="12"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke={isTimeChanged ? "#38bdf8" : "#0ea5e9"}
+                                        strokeWidth="2.2"
+                                        style={{ position: "absolute", left: "6px", pointerEvents: "none" }}
+                                      >
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 16 14" />
+                                      </svg>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenRescheduleModal(order)}
+                                      title="Open detailed reschedule modal (date & time)"
+                                      style={{
+                                        background: "rgba(56, 189, 248, 0.12)",
+                                        border: "1px solid rgba(56, 189, 248, 0.35)",
+                                        color: "#38bdf8",
+                                        borderRadius: "6px",
+                                        padding: "4px 7px",
+                                        fontSize: "0.72rem",
+                                        cursor: "pointer",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "3px",
+                                        fontWeight: 600,
+                                        transition: "all 0.15s ease"
+                                      }}
+                                    >
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M12 20h9" />
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                      </svg>
+                                      <span>Edit</span>
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                    <span
+                                      title="Completed orders cannot be rescheduled. Set status to Pending first to change time."
+                                      style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "4px",
+                                        padding: "3px 8px",
+                                        borderRadius: "6px",
+                                        background: "rgba(51, 65, 85, 0.3)",
+                                        border: "1px solid rgba(71, 85, 105, 0.4)",
+                                        color: "#64748b",
+                                        fontSize: "0.75rem",
+                                        fontWeight: 600
+                                      }}
+                                    >
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                      </svg>
+                                      <span>{parsedSchedule.time || "Completed (Locked)"}</span>
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                             </td>
                             <td style={{ padding: "12px 10px", color: "#94a3b8", maxWidth: "220px", fontSize: "0.82rem" }}>
                               {order.address}
@@ -1353,26 +1661,85 @@ export default function AdminPage() {
                                 fontWeight: 700,
                                 textTransform: "capitalize"
                               }}>
-                                {order.status}
+                                {currentStatus}
                               </span>
                             </td>
                             <td style={{ padding: "12px 10px", textAlign: "right" }}>
-                              <select
-                                value={order.status || "pending"}
-                                onChange={(e) => handleStageOrderStatus(order.order_id, e.target.value)}
-                                style={{
-                                  background: isOrderPending && pendingOrders[order.order_id]?.status ? "#1e1b4b" : "#020617",
-                                  border: isOrderPending && pendingOrders[order.order_id]?.status ? "1px solid #818cf8" : "1px solid #334155",
-                                  color: "#f8fafc",
-                                  padding: "6px 8px",
-                                  borderRadius: "6px",
-                                  fontSize: "0.8rem",
-                                  cursor: "pointer"
-                                }}
-                              >
-                                <option value="pending">Pending</option>
-                                <option value="completed">Completed</option>
-                              </select>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" }}>
+                                <select
+                                  value={currentStatus}
+                                  onChange={(e) => handleStageOrderStatus(order.order_id, e.target.value)}
+                                  title="Change Order Status"
+                                  style={{
+                                    background: isStatusChanged ? "#1e1b4b" : "#020617",
+                                    border: isStatusChanged ? "1px solid #818cf8" : "1px solid #334155",
+                                    color: "#f8fafc",
+                                    padding: "6px 8px",
+                                    borderRadius: "6px",
+                                    fontSize: "0.8rem",
+                                    fontWeight: 600,
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  <option value="pending">Pending</option>
+                                  <option value="completed">Completed</option>
+                                </select>
+
+                                {isPending ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenRescheduleModal(order)}
+                                    title="Change arrival time / date for this pending order"
+                                    style={{
+                                      background: "linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(2, 132, 199, 0.25))",
+                                      border: "1px solid rgba(56, 189, 248, 0.4)",
+                                      color: "#38bdf8",
+                                      padding: "6px 10px",
+                                      borderRadius: "6px",
+                                      fontSize: "0.78rem",
+                                      fontWeight: 600,
+                                      cursor: "pointer",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "5px",
+                                      whiteSpace: "nowrap",
+                                      transition: "all 0.15s ease"
+                                    }}
+                                  >
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <circle cx="12" cy="12" r="10" />
+                                      <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                    <span>Change Time</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled
+                                    title="Time cannot be changed for completed orders. Switch status to Pending first."
+                                    style={{
+                                      background: "rgba(15, 23, 42, 0.5)",
+                                      border: "1px solid #1e293b",
+                                      color: "#475569",
+                                      padding: "6px 10px",
+                                      borderRadius: "6px",
+                                      fontSize: "0.78rem",
+                                      fontWeight: 500,
+                                      cursor: "not-allowed",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "5px",
+                                      whiteSpace: "nowrap"
+                                    }}
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                    </svg>
+                                    <span>Time Locked</span>
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -2458,6 +2825,329 @@ export default function AdminPage() {
               </div>
             )}
           </section>
+        )}
+
+        {/* ===================================================================
+            ORDER RESCHEDULE MODAL (For Pending Orders)
+            =================================================================== */}
+        {rescheduleOrder && (
+          <div style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.8)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 110,
+            padding: "16px"
+          }}>
+            <div style={{
+              background: "#0f172a",
+              border: "1px solid #334155",
+              borderRadius: "16px",
+              padding: "26px",
+              width: "100%",
+              maxWidth: "520px",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.85)",
+              color: "#f8fafc"
+            }}>
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    background: "rgba(56, 189, 248, 0.15)",
+                    border: "1px solid rgba(56, 189, 248, 0.35)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#38bdf8"
+                  }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#f8fafc" }}>
+                      Reschedule Order #{rescheduleOrder.order_id}
+                    </h3>
+                    <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                      Change arrival time window for pending order
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setRescheduleOrder(null)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#64748b",
+                    cursor: "pointer",
+                    padding: "4px",
+                    borderRadius: "6px"
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Order Info Card */}
+              <div style={{
+                background: "rgba(2, 6, 23, 0.7)",
+                border: "1px solid #1e293b",
+                borderRadius: "10px",
+                padding: "12px 14px",
+                marginBottom: "18px",
+                fontSize: "0.82rem",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "10px"
+              }}>
+                <div>
+                  <span style={{ color: "#64748b", fontSize: "0.72rem", textTransform: "uppercase", display: "block", fontWeight: 600 }}>Customer</span>
+                  <div style={{ color: "#e2e8f0", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {rescheduleOrder.customer_email || "Customer"}
+                  </div>
+                  <div style={{ color: "#10b981", fontSize: "0.75rem", marginTop: "2px" }}>
+                    📞 {rescheduleOrder.order_phone || "—"}
+                  </div>
+                </div>
+                <div>
+                  <span style={{ color: "#64748b", fontSize: "0.72rem", textTransform: "uppercase", display: "block", fontWeight: 600 }}>Service</span>
+                  <div style={{ color: "#e2e8f0", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {rescheduleOrder.service_name}
+                  </div>
+                  <div style={{ color: "#fbbf24", fontSize: "0.75rem", fontWeight: 700, marginTop: "2px" }}>
+                    ● Status: Pending
+                  </div>
+                </div>
+              </div>
+
+              {/* Date Input */}
+              <div style={{ marginBottom: "18px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <label style={{ fontSize: "0.82rem", fontWeight: 600, color: "#94a3b8" }}>
+                    Appointment Date (Liverpool, UK)
+                  </label>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setRescheduleDate(getUkDateString())}
+                      style={{
+                        background: "rgba(30, 41, 59, 0.8)",
+                        border: "1px solid #334155",
+                        color: "#cbd5e1",
+                        padding: "2px 8px",
+                        borderRadius: "4px",
+                        fontSize: "0.7rem",
+                        cursor: "pointer"
+                      }}
+                    >
+                      Today
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRescheduleDate(getUkTomorrowDateString())}
+                      style={{
+                        background: "rgba(30, 41, 59, 0.8)",
+                        border: "1px solid #334155",
+                        color: "#cbd5e1",
+                        padding: "2px 8px",
+                        borderRadius: "4px",
+                        fontSize: "0.7rem",
+                        cursor: "pointer"
+                      }}
+                    >
+                      Tomorrow
+                    </button>
+                  </div>
+                </div>
+                <input
+                  type="date"
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    background: "#020617",
+                    border: "1px solid #334155",
+                    borderRadius: "8px",
+                    color: "#f8fafc",
+                    fontSize: "0.9rem",
+                    outline: "none",
+                    boxSizing: "border-box"
+                  }}
+                />
+              </div>
+
+              {/* Arrival Window (Time Slot) */}
+              <div style={{ marginBottom: "22px" }}>
+                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#94a3b8", marginBottom: "8px" }}>
+                  Select Arrival Time Window
+                </label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
+                  {UK_TIME_SLOTS.map((slot) => {
+                    const isSelected = !isCustomTime && rescheduleTimeSlot === slot;
+                    return (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => {
+                          setRescheduleTimeSlot(slot);
+                          setIsCustomTime(false);
+                        }}
+                        style={{
+                          padding: "10px 12px",
+                          borderRadius: "8px",
+                          border: isSelected ? "1.5px solid #38bdf8" : "1px solid #334155",
+                          background: isSelected ? "rgba(14, 165, 233, 0.15)" : "#020617",
+                          color: isSelected ? "#38bdf8" : "#cbd5e1",
+                          fontSize: "0.82rem",
+                          fontWeight: isSelected ? 700 : 500,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        <span>{slot}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Time Option */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomTime(!isCustomTime)}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: isCustomTime ? "#38bdf8" : "#94a3b8",
+                      fontSize: "0.78rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "4px 0"
+                    }}
+                  >
+                    <span>{isCustomTime ? "▼ Custom Time Window Active" : "+ Enter Custom Arrival Window"}</span>
+                  </button>
+                  {isCustomTime && (
+                    <input
+                      type="text"
+                      value={rescheduleCustomTime}
+                      onChange={(e) => setRescheduleCustomTime(e.target.value)}
+                      placeholder="e.g. 08:30 – 10:30 or 16:00 – 18:00"
+                      style={{
+                        width: "100%",
+                        marginTop: "6px",
+                        padding: "8px 12px",
+                        background: "#020617",
+                        border: "1px solid #38bdf8",
+                        borderRadius: "8px",
+                        color: "#f8fafc",
+                        fontSize: "0.85rem",
+                        outline: "none",
+                        boxSizing: "border-box"
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+                paddingTop: "16px",
+                borderTop: "1px solid #1e293b",
+                flexWrap: "wrap"
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setRescheduleOrder(null)}
+                  disabled={rescheduleSaving}
+                  style={{
+                    background: "transparent",
+                    border: "1px solid #475569",
+                    color: "#cbd5e1",
+                    padding: "9px 16px",
+                    borderRadius: "8px",
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    cursor: "pointer"
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveReschedule(false)}
+                    disabled={rescheduleSaving}
+                    title="Stage this change to save with the header Save Changes button"
+                    style={{
+                      background: "rgba(30, 41, 59, 0.8)",
+                      border: "1px solid #475569",
+                      color: "#f8fafc",
+                      padding: "9px 14px",
+                      borderRadius: "8px",
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      cursor: "pointer"
+                    }}
+                  >
+                    Stage Change
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSaveReschedule(true)}
+                    disabled={rescheduleSaving}
+                    title="Directly commit this new time to the database"
+                    style={{
+                      background: "linear-gradient(135deg, #0284c7, #38bdf8)",
+                      border: "none",
+                      color: "#ffffff",
+                      padding: "9px 16px",
+                      borderRadius: "8px",
+                      fontSize: "0.82rem",
+                      fontWeight: 700,
+                      cursor: rescheduleSaving ? "not-allowed" : "pointer",
+                      boxShadow: "0 4px 14px rgba(56, 189, 248, 0.4)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px"
+                    }}
+                  >
+                    {rescheduleSaving ? "Saving..." : "Save Directly to DB"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
       </main>

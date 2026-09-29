@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyAdminToken, ADMIN_COOKIE_NAME } from "@/lib/adminAuth";
-import { getOrders, updateOrderStatus, updateOrder } from "@/lib/db";
+import { getOrders, updateOrderStatus, updateOrder, getOrderById } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,28 @@ export async function PATCH(request) {
       return NextResponse.json({ error: "Order ID is required." }, { status: 400 });
     }
 
+    const existingOrder = await getOrderById(id);
+    if (!existingOrder) {
+      return NextResponse.json({ error: "Order not found." }, { status: 404 });
+    }
+
+    // Determine final status
+    const finalStatus =
+      status !== undefined
+        ? String(status).toLowerCase().trim()
+        : (existingOrder.status || "pending").toLowerCase().trim();
+
+    // Restrict changing time to pending orders only
+    if (scheduled_date !== undefined && finalStatus === "completed") {
+      return NextResponse.json(
+        {
+          error:
+            "Cannot change scheduled time for completed orders. Only pending orders can be rescheduled.",
+        },
+        { status: 400 }
+      );
+    }
+
     if (status !== undefined) {
       const normalizedStatus = String(status).toLowerCase().trim();
       if (!["pending", "completed"].includes(normalizedStatus)) {
@@ -53,9 +75,12 @@ export async function PATCH(request) {
       await updateOrder(id, { scheduled_date, address, phoneno });
     }
 
+    const updatedOrder = await getOrderById(id);
+
     return NextResponse.json({
       success: true,
-      message: `Order #${id} updated successfully.`
+      message: `Order #${id} updated successfully.`,
+      order: updatedOrder,
     });
   } catch (error) {
     console.error("Admin patch order error:", error);
