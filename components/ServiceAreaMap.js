@@ -6,29 +6,26 @@ const LIVERPOOL_LAT = 53.4084;
 const LIVERPOOL_LNG = -2.9916;
 const RADIUS_METRES = 40 * 1609.34; // 40 miles in metres
 
-export default function ServiceAreaMap() {
+export default function ServiceAreaMap({ height = "380px", style = {} }) {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
 
   useEffect(() => {
     if (mapInstanceRef.current) return;
 
-    // Load Leaflet CSS
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-    link.crossOrigin = "";
-    document.head.appendChild(link);
+    // Load Leaflet CSS if not already present
+    if (!document.querySelector('link[href*="leaflet.css"]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      link.crossOrigin = "";
+      document.head.appendChild(link);
+    }
 
-    // Load Leaflet JS (no SRI hash - unpkg content changes)
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.crossOrigin = "";
-
-    script.onload = () => {
+    const initMap = () => {
       // Short delay to ensure mapRef div is rendered and sized
       setTimeout(() => {
-        if (!mapRef.current || mapInstanceRef.current) return;
+        if (!mapRef.current || mapInstanceRef.current || !window.L) return;
 
         const L = window.L;
 
@@ -116,7 +113,18 @@ export default function ServiceAreaMap() {
       }, 150);
     };
 
-    document.head.appendChild(script);
+    if (window.L) {
+      initMap();
+    } else {
+      let script = document.querySelector('script[src*="leaflet.js"]');
+      if (!script) {
+        script = document.createElement("script");
+        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+        script.crossOrigin = "";
+        document.head.appendChild(script);
+      }
+      script.addEventListener("load", initMap);
+    }
 
     return () => {
       if (mapInstanceRef.current) {
@@ -154,12 +162,13 @@ export default function ServiceAreaMap() {
         ref={mapRef}
         style={{
           width: "100%",
-          height: "380px",
+          height: height,
           borderRadius: "16px",
           overflow: "hidden",
           boxShadow: "0 8px 32px rgba(6,78,59,0.12)",
           border: "1.5px solid #a7f3d0",
           background: "#f0fdf4",
+          ...style,
         }}
         aria-label="Interactive map showing Green Clean Group 40-mile service area around Liverpool"
         role="region"

@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   Phone,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 import JsonLd from "@/components/JsonLd";
 import { getLocalBusinessSchema } from "@/lib/schema";
+import ServiceAreaMap from "@/components/ServiceAreaMap";
 
 export default function ContactPage() {
   const businessSchema = getLocalBusinessSchema();
@@ -31,7 +31,7 @@ export default function ContactPage() {
           </p>
         </div>
 
-        {/* Contact Grid: Details on Left, Picture on Right */}
+        {/* Contact Grid: Details on Left, Map on Right */}
         <div className="responsive-two-col" style={{ marginBottom: "60px", alignItems: "stretch" }}>
           {/* Left Column: Direct Info */}
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -58,7 +58,7 @@ export default function ContactPage() {
                   </a>
 
                   <a
-                    href="mailto:contact@greencleangroup.co.uk"
+                    href="mailto:info@greencleangroup.co.uk"
                     style={{ display: "flex", alignItems: "center", gap: "16px", color: "var(--slate-800)", transition: "color 0.2s" }}
                     onMouseOver={(e) => e.currentTarget.style.color = "var(--emerald-600)"}
                     onMouseOut={(e) => e.currentTarget.style.color = "var(--slate-800)"}
@@ -68,7 +68,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <span style={{ fontSize: "0.8rem", color: "var(--slate-500)", textTransform: "uppercase", fontWeight: "600" }}>Email Us</span>
-                      <div style={{ fontSize: "1.05rem", fontWeight: "700" }}>contact@greencleangroup.co.uk</div>
+                      <div style={{ fontSize: "1.05rem", fontWeight: "700" }}>info@greencleangroup.co.uk</div>
                     </div>
                   </a>
 
@@ -101,61 +101,82 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* Right Column: Contacts Related Picture */}
-          <div style={{
-            position: "relative",
-            borderRadius: "var(--radius-xl)",
-            overflow: "hidden",
-            boxShadow: "var(--shadow-md)",
-            border: "1.5px solid var(--emerald-200)",
-            minHeight: "380px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end"
-          }}>
-            <Image
-              src="/contact.jpg"
-              alt="Green Clean Group Customer Support"
-              fill
-              sizes="(max-width: 900px) 100vw, 50vw"
-              priority
-              style={{ objectFit: "cover" }}
-            />
-            <div style={{
-              position: "relative",
-              margin: "16px",
-              background: "rgba(15, 23, 42, 0.78)",
-              backdropFilter: "blur(10px)",
-              padding: "16px 20px",
-              borderRadius: "var(--radius-lg)",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
-              zIndex: 1
-            }}>
+          {/* Right Column: Service Area Map */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div
+              className="glass-card responsive-card-padding"
+              style={{
+                border: "1.5px solid var(--emerald-200)",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between"
+              }}
+            >
               <div>
-                <div style={{ fontWeight: "800", fontSize: "1rem", color: "#ffffff" }}>Friendly Customer Care</div>
-                <div style={{ fontSize: "0.825rem", color: "var(--emerald-300)" }}>Always here to help across Liverpool & Merseyside</div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "14px",
+                    flexWrap: "wrap",
+                    gap: "8px"
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: "1.35rem",
+                      fontWeight: "800",
+                      color: "var(--slate-900)",
+                      margin: 0
+                    }}
+                  >
+                    Service Area Coverage
+                  </h3>
+                  <span
+                    style={{
+                      fontSize: "0.78rem",
+                      fontWeight: "700",
+                      color: "var(--emerald-800)",
+                      background: "var(--emerald-100)",
+                      padding: "4px 10px",
+                      borderRadius: "var(--radius-full)"
+                    }}
+                  >
+                    40-Mile Radius
+                  </span>
+                </div>
+
+                <p
+                  style={{
+                    fontSize: "0.92rem",
+                    color: "var(--slate-600)",
+                    marginBottom: "16px",
+                    lineHeight: "1.5"
+                  }}
+                >
+                  Covering Liverpool, Merseyside, Wirral, Warrington, St Helens, Southport, Chester &amp; surrounding areas.
+                </p>
+
+                <ServiceAreaMap height="290px" />
               </div>
-              <a
-                href="tel:07359068284"
-                className="btn btn-sm"
+
+              <div
                 style={{
-                  background: "var(--emerald-500)",
-                  color: "#ffffff",
-                  fontSize: "0.825rem",
-                  fontWeight: "700",
-                  padding: "8px 16px",
-                  borderRadius: "var(--radius-full)",
-                  textDecoration: "none",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0
+                  marginTop: "24px",
+                  paddingTop: "18px",
+                  borderTop: "1px solid var(--border-subtle)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  color: "var(--slate-600)",
+                  fontSize: "0.875rem"
                 }}
               >
-                Call Us
-              </a>
+                <MapPin size={18} color="#059669" />
+                <span>Daily mobile cleaning routes across Merseyside</span>
+              </div>
             </div>
           </div>
         </div>

@@ -3,14 +3,14 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { 
-  Sparkles, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Clock, 
-  ShieldCheck, 
-  CreditCard, 
+import {
+  Sparkles,
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  ShieldCheck,
+  CreditCard,
   CheckCircle2,
   ArrowRight
 } from "lucide-react";
@@ -36,7 +36,7 @@ export default function Footer({ categories = [] }) {
             </Link>
 
             <p style={{ fontSize: "0.925rem", lineHeight: "1.7", color: "var(--slate-400)", marginBottom: "20px" }}>
-              Liverpool’s specialist in non-toxic, eco-friendly oven, kitchen, and deep home cleaning. 
+              Liverpool’s specialist in non-toxic, eco-friendly oven, kitchen, and deep home cleaning.
               Family-run, fully insured, and dedicated to sparkling perfection without harsh chemical fumes.
             </p>
 
@@ -96,7 +96,7 @@ export default function Footer({ categories = [] }) {
           <div>
             <h4 className="footer-col-title">Direct Contact</h4>
             <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "24px" }}>
-              <a 
+              <a
                 href="tel:07359068284"
                 style={{ display: "flex", alignItems: "center", gap: "12px", color: "#ffffff", fontWeight: "700" }}
               >
@@ -106,14 +106,14 @@ export default function Footer({ categories = [] }) {
                 <span>07359068284</span>
               </a>
 
-              <a 
-                href="mailto:contact@greencleangroup.co.uk"
+              <a
+                href="mailto:info@greencleangroup.co.uk"
                 style={{ display: "flex", alignItems: "center", gap: "12px", color: "var(--slate-300)" }}
               >
                 <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--emerald-900)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--emerald-400)" }}>
                   <Mail size={16} />
                 </div>
-                <span>contact@greencleangroup.co.uk</span>
+                <span>info@greencleangroup.co.uk</span>
               </a>
 
               <div style={{ display: "flex", alignItems: "center", gap: "12px", color: "var(--slate-300)" }}>
@@ -133,9 +133,9 @@ export default function Footer({ categories = [] }) {
 
             {/* Social connection */}
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <a 
-                href="https://www.facebook.com/people/Green-Clean-Group-Liverpool/100095290844672/" 
-                target="_blank" 
+              <a
+                href="https://www.facebook.com/people/Green-Clean-Group-Liverpool/100095290844672/"
+                target="_blank"
                 rel="noopener noreferrer"
                 style={{
                   display: "inline-flex",
@@ -151,7 +151,7 @@ export default function Footer({ categories = [] }) {
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
                 <span>Follow us on Facebook</span>
               </a>
