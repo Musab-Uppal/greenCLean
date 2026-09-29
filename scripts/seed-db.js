@@ -3,6 +3,17 @@ import { SERVICE_CATEGORIES } from "../data/servicesData.js";
 
 const prisma = new PrismaClient();
 
+// Map slug → hero image path from public/services/
+const CATEGORY_IMAGES = {
+  "oven-cleaning":          "/services/oven.jpg",
+  "kitchen-cleaning":       "/services/kitchen.jpg",
+  "appliances-cleaning":    "/services/appliances.jpg",
+  "bbq-cleaning":           "/services/bbq.jpg",
+  "bathroom-cleaning":      "/services/bathroom.jpg",
+  "house-cleaning":         "/services/house.jpg",
+  "end-of-tenancy-cleaning":"/services/tenancy.jpg",
+};
+
 async function main() {
   console.log("🌱 Starting PostgreSQL database seeding with Prisma...");
 
@@ -11,14 +22,16 @@ async function main() {
 
   for (const cat of SERVICE_CATEGORIES) {
     const slug = cat.slug || cat.id;
+    const image = CATEGORY_IMAGES[slug] || cat.heroImage || null;
 
-    // Upsert category
+    // Upsert category (with image)
     const category = await prisma.category.upsert({
       where: { name: cat.title },
-      update: { slug },
-      create: { name: cat.title, slug },
+      update: { slug, image },
+      create: { name: cat.title, slug, image },
     });
     categoryCount++;
+    console.log(`  📂 Category: ${category.name} (image: ${image})`);
 
     // Upsert each service in the category
     for (const item of cat.items) {
@@ -41,29 +54,30 @@ async function main() {
         },
       });
       serviceCount++;
+      console.log(`    🧹 Service: ${item.name.trim()} — £${item.price}`);
     }
   }
 
-  console.log(`✅ Seeding complete!`);
+  console.log(`\n✅ Seeding complete!`);
   console.log(`   - Categories inserted/updated: ${categoryCount}`);
   console.log(`   - Products/Services inserted/updated: ${serviceCount}`);
 
   // Verify DB contents
-  const categories = await prisma.category.findMany();
+  const categories = await prisma.category.findMany({ orderBy: { id: "asc" } });
   console.log("\n📂 Categories in DB:");
-  console.table(categories);
+  console.table(categories.map(c => ({ id: c.id, name: c.name, slug: c.slug, image: c.image })));
 
-  const servicesSample = await prisma.productService.findMany({
-    take: 10,
+  const services = await prisma.productService.findMany({
     include: { category: true },
+    orderBy: [{ categoryId: "asc" }, { id: "asc" }],
   });
-  console.log("\n🧹 Sample Products/Services in DB:");
+  console.log(`\n🧹 All Services in DB (${services.length} total):`);
   console.table(
-    servicesSample.map((s) => ({
+    services.map((s) => ({
       id: s.id,
       name: s.name,
       category: s.category.name,
-      price: s.price,
+      price: `£${s.price}`,
       width: s.width,
       time: s.time,
     }))

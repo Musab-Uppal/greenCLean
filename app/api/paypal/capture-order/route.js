@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { capturePayPalOrder } from "@/lib/paypal";
-import { getUserByEmail, createUser, createOrder, prisma } from "@/lib/db";
+import { createOrder, prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +35,6 @@ export async function GET(request) {
     const existingOrders = await prisma.order.findMany({
       where: { stripeSessionId: `paypal_${paypalOrderId}` },
       include: {
-        customer: true,
         orderItems: { include: { productService: true } },
       },
     });
@@ -49,7 +48,7 @@ export async function GET(request) {
         scheduledDate: o.scheduledDate,
         address: o.address,
         phone: o.phoneno,
-        email: o.customer?.email,
+        email: o.customerEmail,
         paymentStatus: o.paymentStatus,
         paymentMethod: "paypal",
         totalAmount: o.totalAmount,
@@ -89,15 +88,6 @@ export async function GET(request) {
       }
     } catch (_) {}
 
-    // Find or create user
-    let user = await getUserByEmail(email);
-    if (!user) {
-      user = await createUser({
-        email,
-        phone,
-        password: "guest_paypal_account",
-      });
-    }
 
     // Resolve order items
     const orderItems = [];
@@ -137,7 +127,7 @@ export async function GET(request) {
 
     const orderRes = await createOrder({
       product_service_id: orderItems[0]?.product_service_id,
-      customer_id: user.id,
+      customer_email: email,
       address,
       phoneno: phone,
       status: "pending",

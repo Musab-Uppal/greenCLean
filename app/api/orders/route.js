@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { createUser, getUserByEmail, createOrder, getOrders } from "@/lib/db";
+import { createOrder, getOrders } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,6 @@ export async function POST(request) {
     const { 
       email, 
       phone, 
-      password = "guest_default_password", 
       product_service_id, 
       items = [],
       address, 
@@ -43,15 +42,7 @@ export async function POST(request) {
       );
     }
 
-    // 1. Find or create user
-    let user = await getUserByEmail(email);
-    if (!user) {
-      user = await createUser({
-        email,
-        phone: phone || phoneno,
-        password
-      });
-    }
+    // Persist order — email and phone stored directly on the order row
 
     // 2. Resolve items for single order
     const orderItems = [];
@@ -95,7 +86,7 @@ export async function POST(request) {
 
     const orderRes = await createOrder({
       product_service_id: orderItems[0]?.product_service_id,
-      customer_id: user.id,
+      customer_email: email,
       address,
       phoneno,
       status: validStatus,

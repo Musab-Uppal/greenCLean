@@ -20,17 +20,6 @@ model Category {
   @@map("category")
 }
 
-model User {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  phone      String
-  password   String
-  createdAt  DateTime @default(now()) @map("created_at")
-  orders     Order[]
-
-  @@map("user")
-}
-
 model ProductService {
   id          Int         @id @default(autoincrement())
   name        String
@@ -47,19 +36,18 @@ model ProductService {
 }
 
 model Order {
-  id               Int         @id @default(autoincrement())
-  productServiceId Int?        @map("product_service_id")
-  customerId       Int         @map("customer_id")
-  address          String
+  id               Int             @id @default(autoincrement())
+  productServiceId Int?            @map("product_service_id")
+  customerEmail    String          @map("customer_email")
   phoneno          String
-  status           String      @default("pending")
-  scheduledDate    String?     @map("scheduled_date")
-  paymentMethod    String?     @default("local") @map("payment_method")
-  paymentStatus    String?     @default("pending") @map("payment_status")
-  stripeSessionId  String?     @map("stripe_session_id")
-  totalAmount      Float       @default(0) @map("total_amount")
-  createdAt        DateTime    @default(now()) @map("created_at")
-  customer         User        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  address          String
+  status           String          @default("pending")
+  scheduledDate    String?         @map("scheduled_date")
+  paymentMethod    String?         @default("local") @map("payment_method")
+  paymentStatus    String?         @default("pending") @map("payment_status")
+  stripeSessionId  String?         @map("stripe_session_id")
+  totalAmount      Float           @default(0) @map("total_amount")
+  createdAt        DateTime        @default(now()) @map("created_at")
   productService   ProductService? @relation(fields: [productServiceId], references: [id], onDelete: SetNull)
   orderItems       OrderItem[]
 

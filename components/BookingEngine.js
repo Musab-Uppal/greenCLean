@@ -11,7 +11,6 @@ import {
   Trash2,
   Calendar as CalendarIcon,
   Clock,
-  User,
   CreditCard,
   Sparkles,
   AlertCircle,
@@ -27,11 +26,8 @@ import {
   Printer,
   X,
   Lock,
-  Eye,
-  EyeOff,
   KeyRound
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 import {
   UK_TIMEZONE,
   UK_TIME_SLOTS,
@@ -53,20 +49,9 @@ const CATEGORY_ICONS = {
 };
 
 export default function BookingEngine({ initialCategory = "oven", initialCategories = [] }) {
-  const { user, login, register } = useAuth();
   const [categories, setCategories] = useState(initialCategories);
   const [step, setStep] = useState(1);
   const [activeCategory, setActiveCategory] = useState(initialCategory);
-
-  // Auth Prompt Modal State
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState("login");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPhone, setAuthPhone] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authShowPassword, setAuthShowPassword] = useState(false);
-  const [authError, setAuthError] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
 
   useEffect(() => {
     if (!initialCategories || initialCategories.length === 0) {
@@ -184,36 +169,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
 
-  const handleAuthSubmit = async (e) => {
-    e.preventDefault();
-    setAuthError("");
-    setAuthLoading(true);
 
-    try {
-      let loggedUser;
-      if (authMode === "login") {
-        loggedUser = await login(authEmail, authPassword);
-      } else {
-        if (!authPhone.trim()) {
-          throw new Error("Phone number is required for booking notifications.");
-        }
-        loggedUser = await register(authEmail, authPhone, authPassword);
-      }
-
-      setShowAuthModal(false);
-      setCustomer((prev) => ({
-        ...prev,
-        email: loggedUser.email,
-        phone: loggedUser.phone || prev.phone
-      }));
-      setStep(2);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      setAuthError(err.message || "Authentication failed. Please try again.");
-    } finally {
-      setAuthLoading(false);
-    }
-  };
 
   // Update Cart Quantity
   const updateQty = (item, delta) => {
@@ -265,8 +221,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
     if (!customer.lastName.trim()) {
       errors.lastName = "Last name is required";
     }
-    const phoneVal = (customer.phone || user?.phone || "").trim();
-    const emailVal = (customer.email || user?.email || "").trim();
+    const phoneVal = customer.phone.trim();
+    const emailVal = customer.email.trim();
 
     if (!phoneVal) {
       errors.phone = "Phone number is required";
@@ -316,11 +272,6 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
     if (step === 1) {
       if (!meetsMinimum) return;
-      // Prompt customer to log in before proceeding to select date/time
-      if (!user) {
-        setShowAuthModal(true);
-        return;
-      }
       setStep(2);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else if (step === 2) {
@@ -380,11 +331,6 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
       return;
     }
 
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
-
     setCheckoutError("");
 
     // Build shared booking payload for online payment gateways
@@ -398,10 +344,10 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
         duration: item.duration,
       })),
       customer: {
-        firstName: customer.firstName || user?.firstName || "",
-        lastName: customer.lastName || user?.lastName || "",
-        email: customer.email || user?.email,
-        phone: customer.phone || user?.phone,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        email: customer.email,
+        phone: customer.phone,
         address: customer.address,
         postcode: customer.postcode,
       },
@@ -464,10 +410,10 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: customer.email || user?.email,
-        phone: customer.phone || user?.phone,
+        email: customer.email,
+        phone: customer.phone,
         address: `${customer.address}, ${customer.postcode}`,
-        phoneno: customer.phone || user?.phone,
+        phoneno: customer.phone,
         items: cartItems.map((item) => ({ id: item.id, db_id: item.db_id, name: item.name, price: item.price })),
         scheduled_date: `${selectedDate} ${selectedTimeSlot}`,
         status: "pending",
@@ -831,7 +777,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                     <label className="form-label">Phone Number *</label>
                     <input
                       type="tel"
-                      value={customer.phone !== "" ? customer.phone : (user?.phone || "")}
+                      value={customer.phone}
                       onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
                       placeholder="e.g. 07359068284"
                       className="form-input"
@@ -843,7 +789,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                     <label className="form-label">Email Address *</label>
                     <input
                       type="email"
-                      value={customer.email !== "" ? customer.email : (user?.email || "")}
+                      value={customer.email}
                       onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
                       placeholder="e.g. john@example.com"
                       className="form-input"
@@ -1679,221 +1625,10 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               </Link>
             </div>
           </div>
+
         </div>
       )}
 
-      {/* Login Prompt Modal when wanting to book a service */}
-      {showAuthModal && (
-        <div style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(15, 23, 42, 0.7)",
-          backdropFilter: "blur(6px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 9999,
-          padding: "20px"
-        }}>
-          <div className="glass-card" style={{
-            background: "#ffffff",
-            maxWidth: "460px",
-            width: "100%",
-            borderRadius: "var(--radius-lg)",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-            padding: "32px",
-            position: "relative",
-            border: "1.5px solid var(--emerald-200)"
-          }}>
-            <button
-              type="button"
-              onClick={() => setShowAuthModal(false)}
-              style={{
-                position: "absolute",
-                top: "16px",
-                right: "16px",
-                background: "var(--slate-100)",
-                border: "none",
-                borderRadius: "50%",
-                width: "32px",
-                height: "32px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                color: "var(--slate-600)"
-              }}
-              aria-label="Close"
-            >
-              <X size={18} />
-            </button>
-
-            <div style={{ textAlign: "center", marginBottom: "20px" }}>
-              <div style={{
-                width: "52px",
-                height: "52px",
-                borderRadius: "50%",
-                background: "var(--emerald-100)",
-                color: "var(--emerald-700)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 12px"
-              }}>
-                <Lock size={24} />
-              </div>
-              <h3 style={{ fontSize: "1.45rem", fontWeight: "850", color: "var(--slate-900)", marginBottom: "4px" }}>
-                {authMode === "login" ? "Sign In to Book" : "Create Account"}
-              </h3>
-              <p style={{ fontSize: "0.875rem", color: "var(--slate-500)", lineHeight: "1.5" }}>
-                Sign in to secure your arrival slot. Your selected services ({cartItems.length}) are saved in your cart.
-              </p>
-            </div>
-
-            <div style={{
-              display: "flex",
-              background: "var(--slate-100)",
-              borderRadius: "var(--radius-full)",
-              padding: "4px",
-              marginBottom: "18px"
-            }}>
-              <button
-                type="button"
-                onClick={() => { setAuthMode("login"); setAuthError(""); }}
-                style={{
-                  flex: 1,
-                  padding: "8px 12px",
-                  borderRadius: "var(--radius-full)",
-                  fontSize: "0.85rem",
-                  fontWeight: "700",
-                  background: authMode === "login" ? "#ffffff" : "transparent",
-                  color: authMode === "login" ? "var(--emerald-700)" : "var(--slate-600)",
-                  boxShadow: authMode === "login" ? "var(--shadow-sm)" : "none",
-                  transition: "all 0.2s"
-                }}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => { setAuthMode("register"); setAuthError(""); }}
-                style={{
-                  flex: 1,
-                  padding: "8px 12px",
-                  borderRadius: "var(--radius-full)",
-                  fontSize: "0.85rem",
-                  fontWeight: "700",
-                  background: authMode === "register" ? "#ffffff" : "transparent",
-                  color: authMode === "register" ? "var(--emerald-700)" : "var(--slate-600)",
-                  boxShadow: authMode === "register" ? "var(--shadow-sm)" : "none",
-                  transition: "all 0.2s"
-                }}
-              >
-                New Customer?
-              </button>
-            </div>
-
-            {authError && (
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "10px 14px",
-                borderRadius: "var(--radius-sm)",
-                background: "var(--danger-50)",
-                color: "var(--danger-500)",
-                fontSize: "0.85rem",
-                fontWeight: "600",
-                border: "1px solid rgba(239, 68, 68, 0.2)",
-                marginBottom: "16px"
-              }}>
-                <AlertCircle size={16} style={{ flexShrink: 0 }} />
-                <span>{authError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleAuthSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div className="form-group">
-                <label className="form-label" style={{ fontSize: "0.825rem" }}>Email Address *</label>
-                <input
-                  type="email"
-                  required
-                  value={authEmail}
-                  onChange={(e) => setAuthEmail(e.target.value)}
-                  placeholder="name@example.co.uk"
-                  className="form-input"
-                  style={{ padding: "10px 12px" }}
-                  autoComplete="email"
-                />
-              </div>
-
-              {authMode === "register" && (
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: "0.825rem" }}>Phone Number *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={authPhone}
-                    onChange={(e) => setAuthPhone(e.target.value)}
-                    placeholder="e.g. 07359068284"
-                    className="form-input"
-                    style={{ padding: "10px 12px" }}
-                    autoComplete="tel"
-                  />
-                </div>
-              )}
-
-              <div className="form-group">
-                <label className="form-label" style={{ fontSize: "0.825rem" }}>Password *</label>
-                <div style={{ position: "relative" }}>
-                  <input
-                    type={authShowPassword ? "text" : "password"}
-                    required
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
-                    placeholder={authMode === "login" ? "Enter your password" : "At least 6 characters"}
-                    className="form-input"
-                    style={{ padding: "10px 12px", paddingRight: "36px" }}
-                    autoComplete={authMode === "login" ? "current-password" : "new-password"}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setAuthShowPassword(!authShowPassword)}
-                    style={{
-                      position: "absolute",
-                      right: "10px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "var(--slate-400)"
-                    }}
-                  >
-                    {authShowPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={authLoading}
-                className="btn btn-primary"
-                style={{ width: "100%", marginTop: "6px", padding: "11px" }}
-              >
-                <span>{authLoading ? "Authenticating..." : authMode === "login" ? "Sign In & Continue" : "Create Account & Continue"}</span>
-                <ChevronRight size={16} />
-              </button>
-
-              <div style={{ textAlign: "center", marginTop: "6px" }}>
-                <Link
-                  href={`/login?redirect=${encodeURIComponent("/book")}`}
-                  style={{ fontSize: "0.8rem", color: "var(--slate-500)", textDecoration: "underline" }}
-                >
-                  Open full login page in separate tab
-                </Link>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

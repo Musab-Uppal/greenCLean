@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import {
   prisma,
-  getUserByEmail,
-  createUser,
   createOrder,
   getOrdersByStripeSessionId,
 } from "@/lib/db";
@@ -64,17 +62,7 @@ export async function GET(request) {
       : meta.scheduled_date || "Confirmed UK Window";
     const totalAmount = session.amount_total ? session.amount_total / 100 : Number(meta.total_amount || 0);
 
-    // 3. Find or create user
-    let user = await getUserByEmail(email);
-    if (!user) {
-      user = await createUser({
-        email,
-        phone,
-        password: "guest_stripe_account",
-      });
-    }
-
-    // 4. Parse items and insert order
+    // 3. Parse items and insert order
     let items = [];
     try {
       if (meta.items_json) {
@@ -122,7 +110,7 @@ export async function GET(request) {
 
     const orderRes = await createOrder({
       product_service_id: orderItems[0]?.product_service_id,
-      customer_id: user.id,
+      customer_email: email,
       address,
       phoneno: phone,
       status: "pending",

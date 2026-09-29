@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -18,12 +18,7 @@ import {
   Home,
   KeyRound,
   Calendar,
-  Tag,
-  User,
-  LogOut,
-  Package,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 
 const SERVICE_ICONS = {
   "Flame": Flame,
@@ -36,24 +31,10 @@ const SERVICE_ICONS = {
 };
 
 export default function Header({ categories: initialCategories = [] }) {
-  const { user, logout } = useAuth();
   const [categories, setCategories] = useState(initialCategories);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef(null);
   const pathname = usePathname();
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-        setUserMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     if (!initialCategories || initialCategories.length === 0) {
@@ -144,55 +125,6 @@ export default function Header({ categories: initialCategories = [] }) {
 
             {/* Actions / CTA */}
             <div className="header-actions">
-
-
-              {user ? (
-                <div className="user-menu-wrap" ref={userMenuRef}>
-                  <button
-                    className="user-menu-trigger"
-                    onClick={() => setUserMenuOpen((o) => !o)}
-                    aria-expanded={userMenuOpen}
-                  >
-                    <User size={13} color="#059669" />
-                    <span>{user.email.split("@")[0]}</span>
-                    <ChevronDown
-                      size={12}
-                      color="#059669"
-                      style={{ transform: userMenuOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
-                    />
-                  </button>
-                  <div className={`user-menu-dropdown${userMenuOpen ? " open" : ""}`}>
-                    <Link href="/dashboard" className="user-menu-item" onClick={() => setUserMenuOpen(false)}>
-                      <Package size={14} />
-                      <span>My Dashboard</span>
-                    </Link>
-                    <button onClick={() => { setUserMenuOpen(false); logout(); }} className="user-menu-item user-menu-signout">
-                      <LogOut size={14} />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <Link
-                  href="/login"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "6px 12px",
-                    borderRadius: "var(--radius-sm)",
-                    color: "var(--slate-700)",
-                    fontWeight: "600",
-                    fontSize: "0.875rem"
-                  }}
-                >
-                  <User size={15} color="#059669" />
-                  <span>Log In</span>
-                </Link>
-              )}
-
-
-
               {/* Mobile Hamburger Toggle */}
               <button
                 className="mobile-toggle-btn"
@@ -336,29 +268,6 @@ export default function Header({ categories: initialCategories = [] }) {
           </div>
 
           <div style={{ marginTop: "auto", paddingTop: "20px", borderTop: "1px solid var(--border-subtle)", display: "flex", flexDirection: "column", gap: "10px" }}>
-            {user ? (
-              <div style={{ padding: "10px 14px", borderRadius: "var(--radius-sm)", background: "var(--emerald-50)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--emerald-900)" }}>
-                  👤 {user.email}
-                </span>
-                <button
-                  onClick={() => { logout(); setMobileMenuOpen(false); }}
-                  style={{ color: "var(--danger-500)", fontSize: "0.8rem", fontWeight: "700" }}
-                >
-                  Sign Out
-                </button>
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="btn btn-secondary"
-                onClick={() => setMobileMenuOpen(false)}
-                style={{ width: "100%" }}
-              >
-                <User size={16} />
-                <span>Customer Sign In / Register</span>
-              </Link>
-            )}
 
             <Link
               href="/book"
