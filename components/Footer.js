@@ -47,7 +47,7 @@ export default function Footer({ categories = [] }) {
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
                 <CheckCircle2 size={16} color="#10b981" />
-                <span>Fully insured technicians</span>
+                <span>Fully insured cleaning team</span>
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
                 <CheckCircle2 size={16} color="#10b981" />
@@ -88,7 +88,7 @@ export default function Footer({ categories = [] }) {
 
             <h4 className="footer-col-title" style={{ marginTop: "24px" }}>Coverage Regions</h4>
             <p style={{ fontSize: "0.85rem", color: "var(--slate-400)", lineHeight: "1.6" }}>
-              Merseyside (Liverpool, Sefton, St Helens, Wirral), plus select parts of Cheshire, Manchester & Lancashire.
+              House cleaning across Liverpool and Merseyside. Oven cleaning also available in selected parts of Cheshire, Greater Manchester and Lancashire. Please contact us to check availability in your area.
             </p>
           </div>
 

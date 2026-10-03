@@ -76,7 +76,7 @@ export default async function HomePage() {
               </h3>
 
               <p className="hero-subtitle">
-                Experience spotless perfection without toxic fumes. Our 100% plant-based dipping tank method removes burnt-on carbon and grease while keeping your family, pets, and food completely safe.
+                Reliable oven and home cleaning across Liverpool and Merseyside. We bring our own equipment and use eco-friendly cleaning products. Choose a service and book online, or call us to discuss what you need.
               </p>
 
               {/* CTAs */}
@@ -105,7 +105,7 @@ export default async function HomePage() {
                   <div className="hero-trust-icon">
                     <Sparkles size={14} />
                   </div>
-                  <span>100% Non-Toxic</span>
+                  <span>Eco-Friendly Products</span>
                 </div>
 
                 <div className="hero-trust-badge">
@@ -257,8 +257,8 @@ export default async function HomePage() {
                               <div className="showcase-item-meta">
                                 {item.width && (
                                   <div className="showcase-meta-row">
-                                    <MoveHorizontal size={13} />
-                                    <span>Width: {item.width}</span>
+                                    {!item.width.toLowerCase().startsWith("includes") && <MoveHorizontal size={13} />}
+                                    <span>{item.width.toLowerCase().startsWith("includes") ? item.width : `Width: ${item.width}`}</span>
                                   </div>
                                 )}
                                 {item.duration && (
@@ -383,7 +383,7 @@ export default async function HomePage() {
               Covering Liverpool &amp; <span className="gradient-text">40 Miles Around</span>
             </h2>
             <p className="section-desc">
-              We run daily routes across Merseyside and cover the wider North West within a 40-mile radius of Liverpool city centre. Enter your postcode below to confirm we reach you.
+              We clean homes across Liverpool and Merseyside, and offer oven cleaning in selected areas up to 40 miles from Liverpool. Please check availability for your postcode.
             </p>
           </div>
 

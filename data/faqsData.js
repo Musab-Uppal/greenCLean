@@ -1,19 +1,19 @@
 export const FAQS = [
   {
     question: "What makes your cleaning products eco-friendly and safe?",
-    answer: "We only use biodegradable, plant-derived, non-caustic cleaning solutions. Unlike traditional caustic chemical cleaners, our formulas produce zero toxic fumes, dangerous residues, or harsh scents. You can cook in your oven immediately after we finish, and your children and pets remain completely safe."
+    answer: "We use eco-friendly cleaning products and choose suitable solutions for each surface. We follow the product instructions carefully. Your oven can be used immediately after cleaning."
   },
   {
-    question: "How long does a typical oven or kitchen clean take?",
-    answer: "A single oven clean usually takes between 40 to 60 minutes. A double or range oven clean takes approximately 1 to 2 hours. Kitchen and house deep cleans vary depending on property size, typically ranging from 2 to 5 hours. We never rush and work diligently until flawless."
+    question: "How long does a cleaning appointment take?",
+    answer: "Cleaning time depends on the service booked, the size of the oven or property, and its condition. We can give you an estimated duration when booking. Larger or heavily soiled ovens and properties may take longer."
   },
   {
     question: "Do I need to be home during the cleaning appointment?",
-    answer: "You are welcome to be at home, but it's not strictly required! Many of our clients let us in, leave a key in a secure lockbox, or have a neighbor provide access. All our technicians are fully DBS vetted, trusted, and carry full liability insurance."
+    answer: "You are welcome to stay at home, but you don’t have to. You can let us in, leave a key in a secure key safe, or arrange for someone to provide access. Please agree access arrangements with us before your appointment. We hold public liability insurance."
   },
   {
     question: "Which areas in and around Liverpool do you cover?",
-    answer: "We proudly cover all of Merseyside (Liverpool, Sefton, Knowsley, St Helens, Wirral) and select surrounding regions of Cheshire (Chester, Warrington, Runcorn), Greater Manchester, and Lancashire. You can check your postcode instantly on our website."
+    answer: "We cover Liverpool and Merseyside, including Wirral, as well as selected surrounding areas. Coverage depends on the service booked. Please contact us with your postcode to confirm availability in your area."
   },
   {
     question: "What payment methods do you accept?",
@@ -21,11 +21,11 @@ export const FAQS = [
   },
   {
     question: "Is there a minimum booking order value?",
-    answer: "Yes, our minimum appointment booking threshold is £50. You can easily bundle smaller items (such as hobs, microwaves, or extractor fans) with an oven or appliance clean to meet this threshold."
+    answer: "Yes, a minimum booking charge of £50 applies to all cleaning services. Standard house cleaning is £22 per hour with a minimum booking of 2 hours, subject to the £50 minimum charge. Smaller appliance cleaning services can be combined to reach £50."
   },
   {
-    question: "What is your End of Tenancy cleaning guarantee?",
-    answer: "Our End of Tenancy service follows rigorous inventory check-out standards approved by major Liverpool letting agents. If your landlord or inventory clerk points out any cleanliness issue within 48 hours, we return and re-clean it free of charge."
+    question: "What if I have a concern after my End of Tenancy clean?",
+    answer: "If you have any concerns after your clean, please contact us promptly with details and photos so we can review the issue and discuss the next steps. We cannot guarantee the return of your tenancy deposit."
   }
 ];
 

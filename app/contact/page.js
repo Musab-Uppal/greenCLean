@@ -156,7 +156,7 @@ export default function ContactPage() {
                     lineHeight: "1.5"
                   }}
                 >
-                  Covering Liverpool, Merseyside, Wirral, Warrington, St Helens, Southport, Chester &amp; surrounding areas.
+                  House cleaning across Liverpool and Merseyside. Oven cleaning also available in selected parts of Cheshire, Greater Manchester and Lancashire. Please contact us to check availability in your area.
                 </p>
 
                 <ServiceAreaMap height="290px" />

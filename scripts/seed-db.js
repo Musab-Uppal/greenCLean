@@ -26,8 +26,8 @@ async function main() {
 
     // Upsert category (with image)
     const category = await prisma.category.upsert({
-      where: { name: cat.title },
-      update: { slug, image },
+      where: { slug },
+      update: { name: cat.title, image },
       create: { name: cat.title, slug, image },
     });
     categoryCount++;

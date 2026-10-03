@@ -41,59 +41,82 @@ const SERVICE_GALLERIES = {
     { src: "/services/kitchen.jpg", title: "Showroom Kitchen Finish", desc: "Eco-friendly treatments safe for cooking right away" },
   ],
   "kitchen-cleaning": [
-    { src: "/services/kitchen.jpg", title: "Complete Kitchen Sanitization", desc: "Deep degreasing of cabinets, tiles, and hood" },
+    { src: "/services/kitchen.jpg", title: "Kitchen Deep Cleaning", desc: "Thorough cleaning of cupboard fronts, worktops and tiles" },
     { src: "/services/kitchen_island.jpg", title: "Island Countertop & Sink", desc: "Mirror finish stainless steel and polished surfaces" },
     { src: "/services/oven.jpg", title: "Appliance Detailing", desc: "Spotless exteriors and sanitised handles" },
   ],
   "appliances-cleaning": [
-    { src: "/services/appliances.jpg", title: "American Style Fridge / Freezer", desc: "Internal deep sanitisation and odour elimination" },
-    { src: "/services/kitchen_island.jpg", title: "Dishwasher & Washing Machine", desc: "Limescale de-scaling and filter clearout" },
-    { src: "/services/gas_hob.jpg", title: "Hobs & Extractor Degreasing", desc: "Grease-free filters and crystal-clear lights" },
+    { src: "/services/appliances.jpg", title: "American-Style Fridge Freezer", desc: "Internal deep sanitisation and odour elimination" },
+    { src: "/services/dishwasher.jpg", title: "Dishwasher & Washing Machine", desc: "Limescale de-scaling and filter clearout" },
+    { src: "/services/standard_fridge.jpg", title: "Standard Fridge Freezer", desc: "Interior cleaning of both the fridge and freezer compartments." },
   ],
   "bbq-cleaning": [
     { src: "/services/bbq.jpg", title: "Deep Carbon Removal", desc: "Heavy-duty eco dipping tank grill restoration" },
     { src: "/services/bbq_grill.jpg", title: "Full Grill & Burner Detail", desc: "Food-safe sanitisation, zero harsh residues" },
-    { src: "/services/gas_hob.jpg", title: "Igniters & Burner Rails", desc: "Optimised gas flow and spotless metal" },
+    { src: "/services/bbq_detail.jpg", title: "BBQ Detail Cleaning", desc: "Careful cleaning of accessible BBQ parts." },
   ],
   "bathroom-cleaning": [
-    { src: "/services/bathroom.jpg", title: "Luxury Tile & Vanity Sparkle", desc: "100% limescale and soap scum removal" },
-    { src: "/services/bathroom_shower.jpg", title: "Streak-Free Glass Shower Screen", desc: "Anti-fog mould prevention treatment" },
-    { src: "/services/house.jpg", title: "Hygienic Home Standard", desc: "Hospital-grade, eco-friendly sanitisation" },
+    { src: "/services/bathroom.jpg", title: "Bathroom Tiles & Basin Cleaning", desc: "Limescale and soap residue removal." },
+    { src: "/services/bathroom_shower.jpg", title: "Shower Screen Cleaning", desc: "Removal of limescale and soap marks from glass." },
+    { src: "/services/bath_toilet.jpg", title: "Bath & Toilet Cleaning", desc: "Thorough cleaning of baths, toilets and surrounding surfaces." },
   ],
   "house-cleaning": [
     { src: "/services/house.jpg", title: "Pristine Living Space & Floors", desc: "Top-to-bottom dusting, vacuuming and polishing" },
-    { src: "/services/house_bedroom.jpg", title: "Fresh & Allergen-Free Bedrooms", desc: "HEPA filtered vacuuming and eco-sprays" },
+    { src: "/services/house_bedroom.jpg", title: "Fresh & Clean Bedrooms", desc: "Dusting, vacuuming and surface cleaning." },
     { src: "/services/kitchen.jpg", title: "Sanitised Kitchen & Living", desc: "Plant-based formulas safe for children & pets" },
   ],
   "end-of-tenancy-cleaning": [
-    { src: "/services/tenancy.jpg", title: "100% Deposit Return Standard", desc: "Full agency checklist certified deep clean" },
-    { src: "/services/kitchen.jpg", title: "Deep Cleaned Kitchen & Oven", desc: "Landlord inspection approved sanitisation" },
+    { src: "/services/tenancy.jpg", title: "Property Handover Cleaning", desc: "Thorough cleaning ready for the next occupants." },
+    { src: "/services/kitchen.jpg", title: "Deep Kitchen Cleaning", desc: "Oven, hob and extractor cleaning available at an extra charge." },
     { src: "/services/bathroom.jpg", title: "Descaled Bathroom & Grout", desc: "Spotless chrome, gleaming tiles and sanitary ware" },
   ]
 };
 
+const GALLERY_CONFIG = {
+  "bathroom-cleaning": {
+    title: "Bathroom Cleaning in Liverpool & Merseyside",
+    subtitle: "Thorough cleaning of baths, showers, toilets, basins and bathroom surfaces. Images are for illustration only.",
+  },
+  "house-cleaning": {
+    title: "House Cleaning Services",
+    subtitle: "We clean living areas, bedrooms and kitchens using eco-friendly cleaning products.",
+  },
+  "end-of-tenancy-cleaning": {
+    title: "End of Tenancy Cleaning Services",
+    subtitle: "Thorough cleaning of living areas, kitchens and bathrooms to prepare your property for handover.",
+  },
+  "bbq-cleaning": {
+    title: "BBQ Cleaning Gallery",
+    subtitle: "Examples of the types of BBQs we clean.",
+  },
+};
+
+const PROCESS_SUBTITLES = {
+  "bathroom-cleaning": "We clean your bathroom carefully, using suitable products for each surface. We check our work before we leave.",
+};
+
 const SERVICE_PROCESSES = {
   "bathroom-cleaning": [
-    { step: "01", title: "Inspection & Protection", desc: "We inspect sanitary ware, tiles, and grout, applying protective waterproof floor coverings." },
-    { step: "02", title: "Limescale & Mould Breakdown", desc: "Targeted eco-friendly descaling agents dissolve tough limescale, soap scum, and mineral stains." },
-    { step: "03", title: "Deep Grout & Tile Scrub", desc: "High-temperature detailing and non-caustic treatments lift grime from grout lines and corners." },
-    { step: "04", title: "Sanitisation & Screen Detailing", desc: "Showers, glass screens, bath basins, and sanitary ware are deeply sanitised and degreased." },
-    { step: "05", title: "Streak-Free Mirror Polish", desc: "Chrome taps, shower heads, glass, and mirrors are polished to a crystal-clear showroom shine." },
-    { step: "06", title: "Final Quality Sign-Off", desc: "We inspect the finished bathroom with you to ensure 100% hygienic perfection before leaving." }
+    { step: "01", title: "Initial Check", desc: "We check the bathroom surfaces and identify areas that need extra attention. We choose suitable products for each material." },
+    { step: "02", title: "Limescale & Soap Residue", desc: "We treat limescale and soap residue with suitable cleaning products. Results depend on the condition of the surfaces and the build-up." },
+    { step: "03", title: "Tiles & Grout Cleaning", desc: "We scrub tiles and grout to remove dirt and build-up. Some permanent stains may remain." },
+    { step: "04", title: "Bath, Shower & Toilet Cleaning", desc: "We thoroughly clean the bath, shower, basin and toilet. Surfaces are rinsed and wiped clean." },
+    { step: "05", title: "Mirrors, Glass & Taps", desc: "We clean mirrors, shower screens and taps. We polish them to remove water marks and streaks." },
+    { step: "06", title: "Final Check", desc: "We check the cleaned areas and finish any remaining details. Your bathroom is left tidy and ready to use." }
   ],
   "oven-cleaning": [
     { step: "01", title: "Inspection & Floor Protection", desc: "We inspect your oven and place protective floor mats to keep your kitchen completely spotless." },
-    { step: "02", title: "Safe Disassembly", desc: "Removable parts (racks, side runners, fan cover, seals, doors) are taken out for deep immersion." },
-    { step: "03", title: "Van-Mounted Dip Tank", desc: "Components soak in our van-mounted heated dip tank with 100% non-toxic, food-safe formula." },
+    { step: "02", title: "Safe Disassembly", desc: "We carefully remove the oven door and removable parts where appropriate. The door itself is cleaned separately and is not soaked." },
+    { step: "03", title: "Van-Mounted Dip Tank", desc: "When needed, glass panels and rubber seals are soaked in our van-mounted dip tank. Lightly soiled glass is cleaned by hand." },
     { step: "04", title: "Interior Body Detailing", desc: "Our specialist details the main oven cavity and split door glass by hand with non-caustic paste." },
     { step: "05", title: "Reassembly & Polish", desc: "Everything is reassembled, buffed to a sparkling showroom shine, and safety checked." },
     { step: "06", title: "Final Quality Sign-Off", desc: "We inspect the gleaming oven together with you. It is ready to cook in immediately!" }
   ],
   "kitchen-cleaning": [
     { step: "01", title: "Assessment & Surface Prep", desc: "We survey surfaces, splashbacks, and appliances, preparing non-toxic degreasing solutions." },
-    { step: "02", title: "High-Level Degreasing", desc: "Top of cupboards, extractor fan covers, and light fixtures are thoroughly degreased." },
-    { step: "03", title: "Cabinet & Drawer Detailing", desc: "Cupboard doors, handles, and framework are wiped down and sanitised inside and out." },
-    { step: "04", title: "Tiles, Hobs & Splashbacks", desc: "Cooktop burners, tiles, and splashbacks are scrubbed free of grease and baked-on food." },
+    { step: "02", title: "High-Level Degreasing", desc: "We remove grease and dust from accessible cupboard tops and other high-level kitchen surfaces." },
+    { step: "03", title: "Cabinet & Drawer Detailing", desc: "We clean cupboard and drawer fronts, handles and interiors. Interior cleaning is included provided cupboards and drawers are empty before we arrive." },
+    { step: "04", title: "Tiles & Splashbacks", desc: "We thoroughly clean tiles and splashbacks to remove grease and food residue." },
     { step: "05", title: "Countertop & Sink Buffing", desc: "Countertops and stainless steel sink units are deep sanitised, descaled, and polished." },
     { step: "06", title: "Floor Clean & Final Inspection", desc: "Floors are vacuumed, sanitised, and mopped to leave your kitchen fresh and spotless." }
   ],
@@ -102,8 +125,8 @@ const SERVICE_PROCESSES = {
     { step: "02", title: "Disassembly of Grates & Trays", desc: "Cooking grates, flavouriser bars, heat shields, and drip trays are disassembled." },
     { step: "03", title: "Eco Dip Tank Immersion", desc: "Parts soak in our van-mounted eco dip tank to dissolve stubborn baked-on carbon." },
     { step: "04", title: "Firebox & Hood Detailing", desc: "The internal hood and firebox are scraped, degreased, and detailed with food-safe formulas." },
-    { step: "05", title: "Reassembly & Gas Flow Test", desc: "Clean grates and shields are reassembled, exterior polished, and burners flame-tested." },
-    { step: "06", title: "Quality Check & Handover", desc: "Final inspection with you. Your BBQ is completely food-safe and ready to grill on!" }
+    { step: "05", title: "Reassembly & Final Clean", desc: "Clean grates, trays and removable parts are put back in place. We wipe down the exterior for a clean finish." },
+    { step: "06", title: "Quality Check & Handover", desc: "We carry out a final check with you. We make sure everything is clean and properly reassembled." }
   ],
   "appliances-cleaning": [
     { step: "01", title: "Appliance Safety Check", desc: "We inspect the appliance, seals, and power before placing protective work mats." },
@@ -118,16 +141,16 @@ const SERVICE_PROCESSES = {
     { step: "02", title: "High-to-Low Dusting", desc: "Ceiling corners, light fixtures, picture frames, and baseboards are dusted systematically." },
     { step: "03", title: "Surface & Furniture Polish", desc: "Surfaces, tables, and doors are detailed using eco-friendly, non-toxic polishes." },
     { step: "04", title: "Kitchen & Bathroom Detailing", desc: "Deep cleaning and sanitisation of high-touch kitchen and bathroom fixtures." },
-    { step: "05", title: "HEPA Vacuuming & Mopping", desc: "All carpets and hard floors vacuumed with allergen-trapping HEPA filters and mopped." },
+    { step: "05", title: "Vacuuming & Floor Mopping", desc: "We vacuum carpets and hard floors, then mop suitable hard floors." },
     { step: "06", title: "Room-by-Room Inspection", desc: "We review every room against our standards to ensure complete satisfaction." }
   ],
   "end-of-tenancy-cleaning": [
-    { step: "01", title: "Agency Checklist Review", desc: "We cross-reference our clean against UK estate agent and landlord inventory checklists." },
-    { step: "02", title: "Kitchen & Oven Deep Immersion", desc: "Oven, hob, extractor, cupboards, and appliances detailed to move-in standard." },
-    { step: "03", title: "Bathroom Limescale & Grout", desc: "Sanitary ware, shower screens, and tiles descaled and mould-treated." },
+    { step: "01", title: "Cleaning Requirements Review", desc: "We discuss your cleaning requirements and any checklist you provide before starting." },
+    { step: "02", title: "Deep Kitchen Cleaning", desc: "We clean kitchen surfaces and cupboards inside and out when empty. Oven, hob and extractor cleaning are charged separately." },
+    { step: "03", title: "Bathroom Cleaning & Descaling", desc: "We clean toilets, sinks, baths, showers and tiles, removing limescale where possible." },
     { step: "04", title: "Internal Windows & Woodwork", desc: "Interior window glass, frames, sills, doors, skirting boards, and switches detailed." },
-    { step: "05", title: "Flooring & Edge Detailing", desc: "Intensive vacuuming along edges, hardwood cleaning, and damp sanitising mop." },
-    { step: "06", title: "Deposit Guarantee Sign-Off", desc: "Final sign-off with our 100% Deposit Return Guarantee backing the clean." }
+    { step: "05", title: "Vacuuming & Floor Mopping", desc: "We vacuum carpets and hard floors, including edges, then mop suitable hard floors." },
+    { step: "06", title: "Final Cleaning Check", desc: "We check the completed work before leaving to make sure the agreed cleaning tasks have been carried out." }
   ]
 };
 
@@ -248,11 +271,85 @@ export default async function ServiceDetailPage({ params }) {
 
         {/* Pricing Options Grid */}
         <div style={{ marginBottom: "60px" }}>
+          {category.slug === "house-cleaning" && (
+            <div style={{ marginBottom: "40px" }}>
+              <div style={{ marginBottom: "20px" }}>
+                <span className="section-pill">Regular Cleaning</span>
+                <h2 style={{ fontSize: "1.85rem", fontWeight: "800", color: "var(--slate-900)" }}>
+                  Regular House Cleaning
+                </h2>
+              </div>
+
+              <div
+                className="glass-card"
+                style={{
+                  padding: "32px",
+                  borderRadius: "var(--radius-lg)",
+                  border: "2px solid var(--emerald-400)",
+                  background: "linear-gradient(135deg, rgba(236,253,245,0.8) 0%, #ffffff 100%)",
+                  boxShadow: "0 10px 30px -5px rgba(5,150,105,0.12)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "20px",
+                  maxWidth: "680px"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
+                  <div>
+                    <span style={{ fontSize: "0.75rem", fontWeight: "700", padding: "4px 10px", borderRadius: "var(--radius-full)", background: "var(--emerald-100)", color: "var(--emerald-800)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      Hourly Rate
+                    </span>
+                    <h3 style={{ fontSize: "1.45rem", fontWeight: "800", color: "var(--slate-900)", marginTop: "10px" }}>
+                      Regular House Cleaning
+                    </h3>
+                  </div>
+
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: "2rem", fontWeight: "900", color: "var(--emerald-700)", lineHeight: 1 }}>
+                      £22
+                      <span style={{ fontSize: "1rem", fontWeight: "600", color: "var(--slate-600)", marginLeft: "4px" }}>
+                        per hour
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "0.95rem", color: "var(--slate-700)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Clock size={18} color="#059669" style={{ flexShrink: 0 }} />
+                    <span><strong>Minimum booking:</strong> 2 hours</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <CheckCircle2 size={18} color="#059669" style={{ flexShrink: 0 }} />
+                    <span>We bring our own equipment and eco-friendly cleaning products.</span>
+                  </div>
+                </div>
+
+                <div style={{ paddingTop: "18px", borderTop: "1px solid var(--emerald-100)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "14px" }}>
+                  <span style={{ fontSize: "0.85rem", color: "var(--slate-500)" }}>
+                    Flexible recurring or one-off sessions
+                  </span>
+                  <Link href={`/book?service=${category.id}`} className="btn btn-primary btn-md">
+                    <span>Book Now</span>
+                    <ArrowRight size={16} />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div style={{ marginBottom: "24px" }}>
             <span className="section-pill">Packages &amp; Options</span>
             <h2 style={{ fontSize: "2rem", fontWeight: "800", color: "var(--slate-900)" }}>
-              Choose Your {category.title} Package
+              {category.slug === "house-cleaning"
+                ? "Choose Your Deep Cleaning Package"
+                : `Choose Your ${category.title} Package`}
             </h2>
+            {category.slug === "end-of-tenancy-cleaning" && (
+              <p style={{ color: "var(--slate-600)", fontSize: "0.95rem", marginTop: "6px" }}>
+                Oven, hob and extractor cleaning are optional extras charged separately.
+              </p>
+            )}
           </div>
 
           <div className="responsive-card-grid" style={{ gap: "20px" }}>
@@ -280,7 +377,17 @@ export default async function ServiceDetailPage({ params }) {
                   </div>
 
                   <div style={{ fontSize: "0.85rem", color: "var(--slate-500)", display: "flex", flexDirection: "column", gap: "6px", marginBottom: "20px" }}>
-                    {item.width && <span>📐 Width: <strong>{item.width}</strong></span>}
+                    {item.width && (
+                      <span>
+                        {item.width.toLowerCase().startsWith("includes") ? item.width : (
+                          category.slug === "end-of-tenancy-cleaning" || category.slug === "house-cleaning" ? (
+                            <>Property type: <strong>{item.width}</strong></>
+                          ) : (
+                            <>📐 Width: <strong>{item.width}</strong></>
+                          )
+                        )}
+                      </span>
+                    )}
                     {item.duration && <span>⏱️ Typical Duration: <strong>{item.duration}</strong></span>}
                     {item.racks ? <span>🔹 Specifications: <strong>{item.racks} racks, {item.doors} door</strong></span> : null}
                   </div>
@@ -304,12 +411,13 @@ export default async function ServiceDetailPage({ params }) {
 
         {/* Real Results & Visual Trust Gallery */}
         <div style={{ marginBottom: "60px" }}>
-          <div style={{ textAlign: "center", maxWidth: "680px", margin: "0 auto 32px" }}>
-            <h2 style={{ fontSize: "2rem", fontWeight: "800", color: "var(--slate-900)" }}>
-              Recent Work in Liverpool &amp; Surrounding Areas
+          <div style={{ marginBottom: "24px" }}>
+            <span className="section-pill">Gallery</span>
+            <h2 style={{ fontSize: "1.85rem", fontWeight: "800", color: "var(--slate-900)" }}>
+              {GALLERY_CONFIG[category.slug]?.title || `${category.title} Gallery`}
             </h2>
-            <p style={{ color: "var(--slate-600)", fontSize: "0.95rem" }}>
-              Photos from recent jobs across Liverpool, Merseyside and nearby areas. Every clean uses fume-free, non-caustic products.
+            <p style={{ color: "var(--slate-600)", fontSize: "0.95rem", marginTop: "6px" }}>
+              {GALLERY_CONFIG[category.slug]?.subtitle || "Examples of our professional cleaning results."}
             </p>
           </div>
 
@@ -332,9 +440,9 @@ export default async function ServiceDetailPage({ params }) {
               <div style={{ display: "inline-flex", padding: "10px", borderRadius: "10px", background: "var(--emerald-100)", color: "var(--emerald-700)", width: "fit-content" }}>
                 <Leaf size={20} />
               </div>
-              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>Non-Caustic, Fume-Free &amp; Biodegradable</h4>
+              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>Eco-Friendly &amp; Non-Caustic</h4>
               <p style={{ fontSize: "0.85rem", color: "var(--slate-600)", lineHeight: "1.5" }}>
-                We don&apos;t use caustic soda or harsh chemicals. Our cleaning products are biodegradable and won&apos;t leave chemical smells in your home.
+                We use eco-friendly oven cleaning products without caustic soda. They help remove grease and burnt-on residue without harsh chemical fumes.
               </p>
             </div>
 
@@ -342,9 +450,21 @@ export default async function ServiceDetailPage({ params }) {
               <div style={{ display: "inline-flex", padding: "10px", borderRadius: "10px", background: "var(--emerald-100)", color: "var(--emerald-700)", width: "fit-content" }}>
                 <Clock size={20} />
               </div>
-              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>Safe to Use Straight After</h4>
+              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>
+                {category.slug === "house-cleaning" || category.slug === "end-of-tenancy-cleaning"
+                  ? "All Equipment Provided"
+                  : category.slug === "bbq-cleaning"
+                  ? "Safe to Use Straight After"
+                  : "Ready to Use After Cleaning"}
+              </h4>
               <p style={{ fontSize: "0.85rem", color: "var(--slate-600)", lineHeight: "1.5" }}>
-                Your oven, fridge or appliance can be used again immediately. No waiting for fumes to clear or surfaces to dry out.
+                {category.slug === "house-cleaning" || category.slug === "end-of-tenancy-cleaning"
+                  ? "We bring our own cleaning equipment and eco-friendly products, so you don’t need to supply anything."
+                  : category.slug === "bbq-cleaning"
+                  ? "Your BBQ can be used straight after cleaning. We use non-caustic products that leave no harsh chemical smells."
+                  : category.slug === "bathroom-cleaning"
+                  ? "Your bathroom is ready to use straight after cleaning."
+                  : "Your kitchen is ready to use once cleaning is complete and surfaces are dry."}
               </p>
             </div>
 
@@ -362,9 +482,19 @@ export default async function ServiceDetailPage({ params }) {
               <div style={{ display: "inline-flex", padding: "10px", borderRadius: "10px", background: "var(--emerald-100)", color: "var(--emerald-700)", width: "fit-content" }}>
                 <Award size={20} />
               </div>
-              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>Gentle on Enamel, Glass &amp; Chrome</h4>
+              <h4 style={{ fontSize: "1rem", fontWeight: "700", color: "var(--slate-900)" }}>
+                {category.slug === "end-of-tenancy-cleaning"
+                  ? "Care for Your Property"
+                  : category.slug === "house-cleaning"
+                  ? "Care for Your Home"
+                  : "Gentle on Enamel, Glass & Chrome"}
+              </h4>
               <p style={{ fontSize: "0.85rem", color: "var(--slate-600)", lineHeight: "1.5" }}>
-                Our products won&apos;t damage enamel linings, rubber seals, glass or chrome fittings &mdash; common with caustic cleaning.
+                {category.slug === "end-of-tenancy-cleaning"
+                  ? "We choose suitable cleaning products for each surface and take care of floors, furniture and fittings."
+                  : category.slug === "house-cleaning"
+                  ? "We choose suitable cleaning products for each surface and take care of your furniture, floors and fittings."
+                  : "We choose suitable products for each surface and take care around enamel, glass, chrome and rubber seals."}
               </p>
             </div>
           </div>
@@ -377,7 +507,7 @@ export default async function ServiceDetailPage({ params }) {
               How We Clean
             </h2>
             <p style={{ color: "var(--slate-600)", fontSize: "0.95rem" }}>
-              We follow the same careful process on every job, from protecting your floors to a final check with you before we leave.
+              {PROCESS_SUBTITLES[category.slug] || "We follow the same careful process on every job, from protecting your floors to a final check with you before we leave."}
             </p>
           </div>
 
@@ -409,8 +539,18 @@ export default async function ServiceDetailPage({ params }) {
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {[
                 "Non-caustic, fume-free and biodegradable cleaning",
-                "Appliances are safe to use immediately after cleaning",
-                "Gentle on enamel, glass, seals and chrome",
+                category.slug === "house-cleaning" || category.slug === "end-of-tenancy-cleaning"
+                  ? "All cleaning equipment and products provided"
+                  : category.slug === "bathroom-cleaning"
+                  ? "Your bathroom is ready to use straight after cleaning."
+                  : category.slug === "bbq-cleaning"
+                  ? "Your BBQ is ready to use immediately after cleaning."
+                  : "Your kitchen is ready to use once cleaning is complete and surfaces are dry.",
+                category.slug === "house-cleaning" || category.slug === "end-of-tenancy-cleaning"
+                  ? "Suitable products for furniture, floors and surfaces"
+                  : category.slug === "bathroom-cleaning"
+                  ? "Suitable cleaning products for enamel, glass and chrome."
+                  : "Gentle on enamel, glass, seals and chrome",
                 "No harsh chemical smells",
                 "Suitable for family homes and pets",
                 "Fully insured",
@@ -428,7 +568,7 @@ export default async function ServiceDetailPage({ params }) {
               Book Online
             </h3>
             <p style={{ fontSize: "0.95rem", color: "var(--slate-600)", marginBottom: "24px" }}>
-              Choose a date and time, enter your address and we&apos;ll confirm your booking. We cover Liverpool and surrounding areas up to 40 miles.
+              Choose a date and time, enter your address and we&apos;ll confirm your booking. House cleaning across Liverpool and Merseyside. Oven cleaning also available in selected parts of Cheshire, Greater Manchester and Lancashire — contact us to check availability.
             </p>
             <Link href={`/book?service=${category.id}`} className="btn btn-primary" style={{ width: "100%" }}>
               <Calendar size={16} />
