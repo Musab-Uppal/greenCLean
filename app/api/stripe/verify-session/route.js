@@ -4,7 +4,12 @@ import {
   prisma,
   createOrder,
   getOrdersByStripeSessionId,
+  saveSubscriber,
 } from "@/lib/db";
+import { subscribeToMailchimp } from "@/lib/mailchimp";
+
+const BOOKING_CONSENT_WORDING =
+  "I'd like to receive cleaning reminders and special offers by email from Green Clean Group. I can unsubscribe at any time.";
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +113,9 @@ export async function GET(request) {
       }
     }
 
+    const hasMarketingConsent = meta.marketing_consent === "true";
+    const consentDate = hasMarketingConsent ? new Date().toISOString() : null;
+
     const orderRes = await createOrder({
       product_service_id: orderItems[0]?.product_service_id,
       customer_email: email,
@@ -120,10 +128,43 @@ export async function GET(request) {
       stripe_session_id: session.id,
       total_amount: totalAmount,
       items: orderItems,
+      marketing_consent: hasMarketingConsent,
+      consent_date: consentDate,
+      consent_wording: hasMarketingConsent ? BOOKING_CONSENT_WORDING : null,
+      consent_source: "booking-stripe",
     });
 
     const orderId = orderRes.lastInsertRowid;
     const bookingRef = `GCG-${orderId + 10000}`;
+
+    // ── Mailchimp + DB: Only subscribe if explicit consent given ──
+    if (email && hasMarketingConsent) {
+      const fullName = meta.customer_name || "";
+      const nameParts = fullName.split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      saveSubscriber({
+        email,
+        firstName,
+        lastName,
+        phone,
+        source: "booking-stripe",
+        marketing_consent: true,
+        consent_date: consentDate,
+        consent_wording: BOOKING_CONSENT_WORDING,
+        consent_source: "booking-stripe",
+      }).catch((err) => console.error("[DB saveSubscriber] Stripe error:", err));
+
+      subscribeToMailchimp({
+        email,
+        firstName,
+        lastName,
+        phone,
+        tags: ["Booked", "Paid Customer", "Stripe", "Booking Form Opt-in"],
+      }).catch((err) => console.error("[Mailchimp] Stripe subscribe failed silently:", err));
+    }
+    // ────────────────────────────────────────────────────────────────────────
 
     return NextResponse.json({
       success: true,

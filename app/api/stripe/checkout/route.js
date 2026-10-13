@@ -62,6 +62,7 @@ export async function POST(request) {
       customer_phone: customer.phone || "",
       customer_address: customer.address,
       customer_postcode: customer.postcode,
+      marketing_consent: String(customer.marketingConsent === true),
       scheduled_date: scheduledDate || "",
       time_slot: selectedTimeSlot || "",
       notes: notes.slice(0, 400),

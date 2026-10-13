@@ -79,7 +79,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
     phone: "",
     email: "",
     address: "",
-    postcode: ""
+    postcode: "",
+    marketingConsent: false
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -350,6 +351,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
         phone: customer.phone,
         address: customer.address,
         postcode: customer.postcode,
+        marketingConsent: customer.marketingConsent,
       },
       scheduledDate: selectedDate,
       selectedTimeSlot,
@@ -412,6 +414,9 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
       body: JSON.stringify({
         email: customer.email,
         phone: customer.phone,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        marketingConsent: customer.marketingConsent,
         address: `${customer.address}, ${customer.postcode}`,
         phoneno: customer.phone,
         items: cartItems.map((item) => ({ id: item.id, db_id: item.db_id, name: item.name, price: item.price })),
@@ -821,6 +826,48 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                     style={{ maxWidth: "200px" }}
                   />
                   {formErrors.postcode && <span style={{ color: "var(--danger-500)", fontSize: "0.8rem" }}>{formErrors.postcode}</span>}
+                </div>
+
+                {/* Email Marketing Consent — GDPR compliant, opt-in only, unchecked by default */}
+                <div style={{
+                  marginTop: "8px",
+                  padding: "16px 18px",
+                  background: customer.marketingConsent
+                    ? "linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(6,95,70,0.05) 100%)"
+                    : "#f8fafc",
+                  border: `1.5px solid ${customer.marketingConsent ? "rgba(16,185,129,0.35)" : "var(--slate-200)"}`,
+                  borderRadius: "var(--radius-md)",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "12px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+                onClick={() => setCustomer((prev) => ({ ...prev, marketingConsent: !prev.marketingConsent }))}
+                >
+                  <input
+                    type="checkbox"
+                    id="booking-marketing-consent"
+                    checked={customer.marketingConsent}
+                    onChange={(e) => setCustomer({ ...customer, marketingConsent: e.target.checked })}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      marginTop: "3px",
+                      width: "18px",
+                      height: "18px",
+                      accentColor: "var(--emerald-600)",
+                      cursor: "pointer",
+                      flexShrink: 0
+                    }}
+                  />
+                  <label htmlFor="booking-marketing-consent" style={{ cursor: "pointer", margin: 0, userSelect: "none" }}>
+                    <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--slate-800)", lineHeight: "1.55", fontWeight: "400" }}>
+                      I&apos;d like to receive cleaning reminders and special offers by email from Green Clean Group. I can unsubscribe at any time.
+                    </p>
+                    <p style={{ margin: "5px 0 0", fontSize: "0.78rem", color: "var(--slate-500)", lineHeight: "1.4" }}>
+                      Optional — you can book without ticking this box.
+                    </p>
+                  </label>
                 </div>
               </div>
             </div>

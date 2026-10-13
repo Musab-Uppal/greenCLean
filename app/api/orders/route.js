@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { createOrder, getOrders } from "@/lib/db";
+import { createOrder, getOrders, saveSubscriber } from "@/lib/db";
+import { subscribeToMailchimp } from "@/lib/mailchimp";
 
 export const dynamic = "force-dynamic";
+
+// Exact consent wording stored alongside the record — must match what the user sees on the form
+const BOOKING_CONSENT_WORDING =
+  "I'd like to receive cleaning reminders and special offers by email from Green Clean Group. I can unsubscribe at any time.";
 
 export async function GET(request) {
   try {
@@ -32,7 +37,11 @@ export async function POST(request) {
       payment_method = "local",
       payment_status = "pending",
       stripe_session_id = null,
-      total_amount = null
+      total_amount = null,
+      firstName = "",
+      lastName = "",
+      // Marketing consent — must be explicitly true; defaults to false
+      marketingConsent = false,
     } = body;
 
     if (!email || !address || !phoneno) {
@@ -41,8 +50,6 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-
-    // Persist order — email and phone stored directly on the order row
 
     // 2. Resolve items for single order
     const orderItems = [];
@@ -84,6 +91,8 @@ export async function POST(request) {
 
     const validStatus = (status || "").toLowerCase().trim() === "completed" ? "completed" : "pending";
 
+    const consentDate = marketingConsent ? new Date().toISOString() : null;
+
     const orderRes = await createOrder({
       product_service_id: orderItems[0]?.product_service_id,
       customer_email: email,
@@ -95,10 +104,51 @@ export async function POST(request) {
       payment_status,
       stripe_session_id,
       total_amount: calculatedTotal,
-      items: orderItems
+      items: orderItems,
+      marketing_consent: !!marketingConsent,
+      consent_date: consentDate,
+      consent_wording: marketingConsent ? BOOKING_CONSENT_WORDING : null,
+      consent_source: "booking-form",
     });
 
     const orderId = orderRes.lastInsertRowid;
+
+    const customerPhone = phone || phoneno || "";
+
+    // ── Only sync to Mailchimp if customer explicitly opted in ──
+    if (marketingConsent && email) {
+      // Save locally to PostgreSQL database with consent record
+      saveSubscriber({
+        email,
+        firstName,
+        lastName,
+        phone: customerPhone,
+        source: "booking-form",
+        marketing_consent: true,
+        consent_date: consentDate,
+        consent_wording: BOOKING_CONSENT_WORDING,
+        consent_source: "booking-form",
+      }).catch((err) => console.error("[DB saveSubscriber] Failed silently:", err));
+
+      // Sync to Mailchimp — respects unsubscribed status
+      subscribeToMailchimp({
+        email,
+        firstName,
+        lastName,
+        phone: customerPhone,
+        tags: ["Booked", `Payment: ${payment_method}`, "Booking Form Opt-in"],
+      }).catch((err) => console.error("[Mailchimp] subscribe failed silently:", err));
+    } else if (email) {
+      // Save to local DB without consent (for order records only, no email marketing)
+      saveSubscriber({
+        email,
+        firstName,
+        lastName,
+        phone: customerPhone,
+        source: "booking-form",
+        marketing_consent: false,
+      }).catch((err) => console.error("[DB saveSubscriber] Failed silently:", err));
+    }
 
     return NextResponse.json({
       success: true,

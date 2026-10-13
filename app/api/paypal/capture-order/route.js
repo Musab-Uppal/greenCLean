@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { capturePayPalOrder } from "@/lib/paypal";
-import { createOrder, prisma } from "@/lib/db";
+import { createOrder, prisma, saveSubscriber } from "@/lib/db";
+import { subscribeToMailchimp } from "@/lib/mailchimp";
+
+const BOOKING_CONSENT_WORDING =
+  "I'd like to receive cleaning reminders and special offers by email from Green Clean Group. I can unsubscribe at any time.";
 
 export const dynamic = "force-dynamic";
 
@@ -125,6 +129,9 @@ export async function GET(request) {
       }
     }
 
+    const hasConsent = searchParams.get("consent") === "true" || searchParams.get("marketingConsent") === "true";
+    const consentDate = hasConsent ? new Date().toISOString() : null;
+
     const orderRes = await createOrder({
       product_service_id: orderItems[0]?.product_service_id,
       customer_email: email,
@@ -137,10 +144,42 @@ export async function GET(request) {
       stripe_session_id: `paypal_${paypalOrderId}`, // reuse field to store PayPal reference
       total_amount: totalAmount,
       items: orderItems,
+      marketing_consent: hasConsent,
+      consent_date: consentDate,
+      consent_wording: hasConsent ? BOOKING_CONSENT_WORDING : null,
+      consent_source: "booking-paypal",
     });
 
     const orderId = orderRes.lastInsertRowid;
     const bookingRef = `GCG-${orderId + 10000}`;
+
+    // ── Mailchimp + DB: Only subscribe if explicit consent given ──
+    if (email && hasConsent) {
+      const nameParts = (name || "").split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      saveSubscriber({
+        email,
+        firstName,
+        lastName,
+        phone: phone || "",
+        source: "booking-paypal",
+        marketing_consent: true,
+        consent_date: consentDate,
+        consent_wording: BOOKING_CONSENT_WORDING,
+        consent_source: "booking-paypal",
+      }).catch((err) => console.error("[DB saveSubscriber] PayPal error:", err));
+
+      subscribeToMailchimp({
+        email,
+        firstName,
+        lastName,
+        phone: phone || "",
+        tags: ["Booked", "Paid Customer", "PayPal", "Booking Form Opt-in"],
+      }).catch((err) => console.error("[Mailchimp] PayPal subscribe failed silently:", err));
+    }
+    // ────────────────────────────────────────────────────────────────────────
 
     return NextResponse.json({
       success: true,

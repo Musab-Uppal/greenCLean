@@ -29,6 +29,7 @@ import ServiceAreaMap from "@/components/ServiceAreaMap";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import FaqAccordion from "@/components/FaqAccordion";
 import JsonLd from "@/components/JsonLd";
+import NewsletterSignup from "@/components/NewsletterSignup";
 import { getDbCategoriesWithServices } from "@/lib/servicesDb";
 import { getLocalBusinessSchema, getFaqSchema } from "@/lib/schema";
 import { FAQS } from "@/data/faqsData";
@@ -456,8 +457,13 @@ export default async function HomePage() {
       </section>
 
       {/* ====================================================================
-          FINAL ACTION BANNER
+          NEWSLETTER BANNER
          ==================================================================== */}
+      <section className="section" style={{ background: "var(--bg-subtle)", paddingTop: "60px", paddingBottom: "60px" }}>
+        <div className="container" style={{ maxWidth: "760px" }}>
+          <NewsletterSignup variant="banner" source="homepage" />
+        </div>
+      </section>
 
     </div>
   );

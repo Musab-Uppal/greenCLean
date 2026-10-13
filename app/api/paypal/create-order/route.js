@@ -60,6 +60,7 @@ export async function POST(request) {
       address: `${customer.address}, ${customer.postcode}`,
       phone: customer.phone || "",
       name: customerName,
+      consent: String(customer.marketingConsent === true),
       date: scheduledDate || "",
       slot: selectedTimeSlot || "",
       total: String(totalAmount),

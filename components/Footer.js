@@ -15,6 +15,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { SERVICE_CATEGORIES } from "@/data/servicesData";
+import NewsletterSignup from "@/components/NewsletterSignup";
 
 export default function Footer({ categories = [] }) {
   const serviceList = categories && categories.length > 0 ? categories : SERVICE_CATEGORIES;
@@ -156,6 +157,10 @@ export default function Footer({ categories = [] }) {
                 <span>Follow us on Facebook</span>
               </a>
             </div>
+          </div>
+          {/* Col 5: Newsletter Signup */}
+          <div>
+            <NewsletterSignup variant="footer" source="footer" />
           </div>
         </div>
 

@@ -39,6 +39,7 @@ model Order {
   id               Int             @id @default(autoincrement())
   productServiceId Int?            @map("product_service_id")
   customerEmail    String          @map("customer_email")
+  customerPhone    String?         @map("customer_phone")
   phoneno          String
   address          String
   status           String          @default("pending")
@@ -48,6 +49,11 @@ model Order {
   stripeSessionId  String?         @map("stripe_session_id")
   totalAmount      Float           @default(0) @map("total_amount")
   createdAt        DateTime        @default(now()) @map("created_at")
+  // Marketing consent fields (GDPR)
+  marketingConsent Boolean         @default(false) @map("marketing_consent")
+  consentDate      DateTime?       @map("consent_date")
+  consentWording   String?         @map("consent_wording")
+  consentSource    String?         @default("booking-form") @map("consent_source")
   productService   ProductService? @relation(fields: [productServiceId], references: [id], onDelete: SetNull)
   orderItems       OrderItem[]
 
@@ -65,3 +71,21 @@ model OrderItem {
 
   @@map("order_items")
 }
+
+model NewsletterSubscriber {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  firstName       String?   @map("first_name")
+  lastName        String?   @map("last_name")
+  phone           String?
+  source          String?   @default("website")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  // Marketing consent fields (GDPR)
+  marketingConsent Boolean  @default(false) @map("marketing_consent")
+  consentDate      DateTime? @map("consent_date")
+  consentWording   String?  @map("consent_wording")
+  consentSource    String?  @default("newsletter-form") @map("consent_source")
+
+  @@map("newsletter_subscribers")
+}
+

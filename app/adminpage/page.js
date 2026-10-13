@@ -16,6 +16,7 @@ import AdminKpiBar from "./components/AdminKpiBar";
 import OrdersTab from "./components/OrdersTab";
 import CategoriesTab from "./components/CategoriesTab";
 import ServicesTab from "./components/ServicesTab";
+import ConsentsTab from "./components/ConsentsTab";
 import RescheduleOrderModal from "./components/RescheduleOrderModal";
 import CategoryModals from "./components/CategoryModals";
 import ServiceModals from "./components/ServiceModals";
@@ -74,6 +75,8 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [categories, setCategories] = useState([]);
   const [services, setServices] = useState([]);
+  const [consents, setConsents] = useState([]);
+  const [consentsLoading, setConsentsLoading] = useState(false);
   const [kpis, setKpis] = useState({
     totalOrders: 0,
     totalRevenue: 0,
@@ -220,6 +223,23 @@ export default function AdminPage() {
       showNotification("error", "Failed to fetch dashboard data.");
     } finally {
       setDataLoading(false);
+    }
+    // Also fetch consents in parallel
+    fetchConsents();
+  };
+
+  const fetchConsents = async () => {
+    setConsentsLoading(true);
+    try {
+      const res = await fetch("/api/admin/consents", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setConsents(data.consents || []);
+      }
+    } catch (err) {
+      console.error("Failed to load consents:", err);
+    } finally {
+      setConsentsLoading(false);
     }
   };
 
@@ -754,6 +774,7 @@ export default function AdminPage() {
         ordersCount={orders.length}
         categoriesCount={categories.length}
         servicesCount={services.length}
+        consentsCount={consents.length}
         handleSaveChanges={handleSaveChanges}
         savingChanges={savingChanges}
         totalPendingCount={totalPendingCount}
@@ -817,6 +838,15 @@ export default function AdminPage() {
             handleStageServicePrice={handleStageServicePrice}
             setEditingService={setEditingService}
             handleDeleteService={handleDeleteService}
+          />
+        )}
+
+        {/* Dashboard 4: Marketing Consents */}
+        {activeTab === "consents" && (
+          <ConsentsTab
+            consents={consents}
+            loading={consentsLoading}
+            onRefresh={fetchConsents}
           />
         )}
 
