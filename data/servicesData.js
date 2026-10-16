@@ -82,6 +82,7 @@ export const SERVICE_CATEGORIES = [
     badge: "Full Care",
     heroImage: "/services/house.jpg",
     items: [
+      { id: "home-cleaning", name: "Home Cleaning", price: 22, width: "Regular clean (per hour)", duration: "1 – 2 hrs", popular: true },
       { id: "house-studio", name: "Studio Apartment", price: 130, width: "Studio flat", duration: "2 – 4 hrs" },
       { id: "house-1bed-apt", name: "1 Bed Apartment", price: 150, width: "1 bed flat", duration: "2 – 4 hrs", popular: true },
       { id: "house-2bed-apt", name: "2 Bed Apartment", price: 170, width: "2 bed flat", duration: "3 – 6 hrs", popular: true },

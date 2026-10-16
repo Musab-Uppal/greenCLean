@@ -75,9 +75,16 @@ export default function SuccessContent() {
     }
 
     // No recognised session
-    setError("No payment session reference detected.");
-    setLoading(false);
-    return () => { isMounted = false; };
+    const timer = setTimeout(() => {
+      if (isMounted) {
+        setError("No payment session reference detected.");
+        setLoading(false);
+      }
+    }, 0);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [sessionId, provider, paypalToken]);
 
   if (loading) {

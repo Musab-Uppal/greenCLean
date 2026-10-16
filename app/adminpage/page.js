@@ -17,6 +17,8 @@ import OrdersTab from "./components/OrdersTab";
 import CategoriesTab from "./components/CategoriesTab";
 import ServicesTab from "./components/ServicesTab";
 import ConsentsTab from "./components/ConsentsTab";
+import CouponsTab from "./components/CouponsTab";
+import CouponModal from "./components/CouponModal";
 import RescheduleOrderModal from "./components/RescheduleOrderModal";
 import CategoryModals from "./components/CategoryModals";
 import ServiceModals from "./components/ServiceModals";
@@ -121,6 +123,11 @@ export default function AdminPage() {
   const [serviceCatFilter, setServiceCatFilter] = useState("all");
   const [serviceSearch, setServiceSearch] = useState("");
 
+  // Coupons state & modal
+  const [coupons, setCoupons] = useState([]);
+  const [showAddCouponModal, setShowAddCouponModal] = useState(false);
+  const [couponActionLoading, setCouponActionLoading] = useState(false);
+
   // Staged / Pending Changes State for Header "Save Changes" Button
   const [pendingOrders, setPendingOrders] = useState({});
   const [pendingServices, setPendingServices] = useState({});
@@ -179,55 +186,6 @@ export default function AdminPage() {
     }, 4000);
   };
 
-  // 1. Check session on mount
-  useEffect(() => {
-    checkAdminSession();
-  }, []);
-
-  const checkAdminSession = async () => {
-    setAuthChecking(true);
-    try {
-      const res = await fetch("/api/admin/me", { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.authenticated) {
-          setIsAuthenticated(true);
-          setAdminUsername(data.user || "admin");
-          fetchAdminData();
-          return;
-        }
-      }
-      setIsAuthenticated(false);
-    } catch {
-      setIsAuthenticated(false);
-    } finally {
-      setAuthChecking(false);
-    }
-  };
-
-  const fetchAdminData = async () => {
-    setDataLoading(true);
-    try {
-      const res = await fetch("/api/admin/data", { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setOrders(data.orders || []);
-        setCategories(data.categories || []);
-        setServices(data.services || []);
-        if (data.kpis) setKpis(data.kpis);
-      } else if (res.status === 401) {
-        setIsAuthenticated(false);
-      }
-    } catch (err) {
-      console.error("Failed to load admin data:", err);
-      showNotification("error", "Failed to fetch dashboard data.");
-    } finally {
-      setDataLoading(false);
-    }
-    // Also fetch consents in parallel
-    fetchConsents();
-  };
-
   const fetchConsents = async () => {
     setConsentsLoading(true);
     try {
@@ -242,6 +200,62 @@ export default function AdminPage() {
       setConsentsLoading(false);
     }
   };
+
+  const fetchAdminData = async () => {
+    setDataLoading(true);
+    try {
+      const res = await fetch("/api/admin/data", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data.orders || []);
+        setCategories(data.categories || []);
+        setServices(data.services || []);
+        setCoupons(data.coupons || []);
+        if (data.kpis) setKpis(data.kpis);
+      } else if (res.status === 401) {
+        setIsAuthenticated(false);
+      }
+    } catch (err) {
+      console.error("Failed to load admin data:", err);
+      showNotification("error", "Failed to fetch dashboard data.");
+    } finally {
+      setDataLoading(false);
+    }
+    // Also fetch consents in parallel
+    fetchConsents();
+  };
+
+  // 1. Check session on mount
+  useEffect(() => {
+    let isMounted = true;
+    fetch("/api/admin/me", { cache: "no-store" })
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.ok) {
+          return res.json().then((data) => {
+            if (!isMounted) return;
+            if (data.authenticated) {
+              setIsAuthenticated(true);
+              setAdminUsername(data.user || "admin");
+              fetchAdminData();
+            } else {
+              setIsAuthenticated(false);
+            }
+          });
+        }
+        setIsAuthenticated(false);
+      })
+      .catch(() => {
+        if (isMounted) setIsAuthenticated(false);
+      })
+      .finally(() => {
+        if (isMounted) setAuthChecking(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // 2. Handle Login
   const handleLogin = async (e) => {
@@ -632,6 +646,73 @@ export default function AdminPage() {
     }
   };
 
+  // Coupon Management Actions
+  const handleAddCoupon = async (couponData) => {
+    setCouponActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/coupons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(couponData),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        showNotification("success", `Coupon "${couponData.code}" created successfully!`);
+        setShowAddCouponModal(false);
+        fetchAdminData();
+      } else {
+        showNotification("error", data.error || "Failed to create coupon.");
+      }
+    } catch {
+      showNotification("error", "Failed to communicate with server.");
+    } finally {
+      setCouponActionLoading(false);
+    }
+  };
+
+  const handleToggleCouponStatus = async (couponId, newStatus) => {
+    try {
+      const res = await fetch("/api/admin/coupons", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: couponId, isActive: newStatus }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setCoupons((prev) =>
+          prev.map((c) => (c.id === couponId ? { ...c, isActive: newStatus } : c))
+        );
+        showNotification("success", `Coupon status ${newStatus ? "activated" : "paused"}.`);
+      } else {
+        showNotification("error", data.error || "Failed to update coupon status.");
+      }
+    } catch {
+      showNotification("error", "Failed to update coupon status.");
+    }
+  };
+
+  const handleDeleteCoupon = async (couponId, couponCode) => {
+    if (!confirm(`Are you sure you want to delete coupon "${couponCode}"?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/coupons?id=${couponId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setCoupons((prev) => prev.filter((c) => c.id !== couponId));
+        showNotification("success", `Coupon "${couponCode}" deleted successfully.`);
+      } else {
+        showNotification("error", data.error || "Failed to delete coupon.");
+      }
+    } catch {
+      showNotification("error", "Failed to delete coupon.");
+    }
+  };
+
   // Master Save Changes Function
   const handleSaveChanges = async () => {
     if (totalPendingCount === 0) {
@@ -775,6 +856,7 @@ export default function AdminPage() {
         categoriesCount={categories.length}
         servicesCount={services.length}
         consentsCount={consents.length}
+        couponsCount={coupons.length}
         handleSaveChanges={handleSaveChanges}
         savingChanges={savingChanges}
         totalPendingCount={totalPendingCount}
@@ -849,6 +931,24 @@ export default function AdminPage() {
             onRefresh={fetchConsents}
           />
         )}
+
+        {/* Dashboard 5: Coupons & Promotions */}
+        {activeTab === "coupons" && (
+          <CouponsTab
+            coupons={coupons}
+            onOpenAddModal={() => setShowAddCouponModal(true)}
+            onToggleStatus={handleToggleCouponStatus}
+            onDeleteCoupon={handleDeleteCoupon}
+          />
+        )}
+
+        {/* Coupon Generation Modal */}
+        <CouponModal
+          isOpen={showAddCouponModal}
+          onClose={() => setShowAddCouponModal(false)}
+          onSave={handleAddCoupon}
+          loading={couponActionLoading}
+        />
 
         {/* Reschedule Order Modal */}
         <RescheduleOrderModal

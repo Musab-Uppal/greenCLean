@@ -10,6 +10,7 @@ export default function AdminHeader({
   categoriesCount,
   servicesCount,
   consentsCount = 0,
+  couponsCount = 0,
   handleSaveChanges,
   savingChanges,
   totalPendingCount,
@@ -72,6 +73,31 @@ export default function AdminHeader({
               <polyline points="10 9 9 9 8 9" />
             </svg>
             <span>Services &amp; Products ({servicesCount})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("coupons")}
+            className={`admin-nav-tab ${activeTab === "coupons" ? "active" : ""}`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+            <span>
+              Coupons
+              {couponsCount > 0 && (
+                <span style={{
+                  marginLeft: "4px",
+                  background: "#10b981",
+                  color: "#fff",
+                  fontSize: "0.68rem",
+                  fontWeight: "800",
+                  padding: "1px 5px",
+                  borderRadius: "10px",
+                }}>{couponsCount}</span>
+              )}
+            </span>
           </button>
 
           <button

@@ -159,6 +159,11 @@ export default function OrdersTab({
                       </td>
                       <td style={{ fontWeight: 700, color: "#10b981", fontSize: "0.95rem" }}>
                         £{Number(order.total_amount ?? order.service_price ?? 0).toFixed(2)}
+                        {order.coupon_code && (
+                          <div style={{ fontSize: "0.72rem", color: "#38bdf8", fontWeight: 600, marginTop: "2px" }}>
+                            🏷️ {order.coupon_code} (-£{Number(order.discount_amount || 0).toFixed(2)})
+                          </div>
+                        )}
                       </td>
                       <td>
                         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>

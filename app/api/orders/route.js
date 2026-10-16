@@ -42,6 +42,8 @@ export async function POST(request) {
       lastName = "",
       // Marketing consent — must be explicitly true; defaults to false
       marketingConsent = false,
+      couponCode = null,
+      discountAmount = 0,
     } = body;
 
     if (!email || !address || !phoneno) {
@@ -109,6 +111,8 @@ export async function POST(request) {
       consent_date: consentDate,
       consent_wording: marketingConsent ? BOOKING_CONSENT_WORDING : null,
       consent_source: "booking-form",
+      coupon_code: couponCode || body.coupon_code || null,
+      discount_amount: discountAmount !== undefined ? discountAmount : (body.discount_amount || 0),
     });
 
     const orderId = orderRes.lastInsertRowid;

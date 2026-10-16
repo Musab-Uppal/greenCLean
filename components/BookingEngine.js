@@ -86,7 +86,9 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
   // Step 4: Coupon, Payment & Notes
   const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, discountType, discountValue, discountAmount }
   const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("local");
@@ -191,26 +193,59 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
   // Calculations
   const cartItems = Object.values(cart);
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
-  const discountAmount = appliedDiscount > 0 ? (subtotal * appliedDiscount) / 100 : 0;
-  const total = Math.max(0, subtotal - discountAmount);
+  const discountAmount = appliedCoupon
+    ? (appliedCoupon.discountType === "fixed"
+        ? Math.min(appliedCoupon.discountValue, subtotal)
+        : Math.round(((subtotal * appliedCoupon.discountValue) / 100) * 100) / 100)
+    : (appliedDiscount > 0 ? (subtotal * appliedDiscount) / 100 : 0);
+  const total = Math.max(0, Math.round((subtotal - discountAmount) * 100) / 100);
   const meetsMinimum = subtotal >= 50;
 
-  // Coupon handling
-  const handleApplyCoupon = (e) => {
-    e.preventDefault();
+  // Coupon handling with live database validation
+  const handleApplyCoupon = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     setCouponError("");
     setCouponSuccess("");
 
     const code = couponCode.trim().toUpperCase();
-    if (code === "ECO10") {
-      setAppliedDiscount(10);
-      setCouponSuccess("Success! 10% Eco discount applied.");
-    } else if (code === "LIVERPOOL5" || code === "CLEAN5") {
-      setAppliedDiscount(5);
-      setCouponSuccess("Success! 5% local loyalty discount applied.");
-    } else {
-      setCouponError("Invalid coupon code. Try 'ECO10' for 10% off!");
+    if (!code) {
+      setCouponError("Please enter a coupon code.");
+      return;
     }
+
+    setCouponLoading(true);
+
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotal }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.valid) {
+        setAppliedCoupon(null);
+        setAppliedDiscount(0);
+        setCouponError(data.error || "Invalid coupon code.");
+        return;
+      }
+
+      setAppliedCoupon(data);
+      setAppliedDiscount(data.discountPercent || 0);
+      setCouponSuccess(data.message || `Success! Coupon "${data.code}" applied.`);
+    } catch {
+      setCouponError("Failed to validate coupon code. Please try again.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setAppliedDiscount(0);
+    setCouponCode("");
+    setCouponError("");
+    setCouponSuccess("");
   };
 
   // Validation
@@ -356,7 +391,9 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
       scheduledDate: selectedDate,
       selectedTimeSlot,
       notes,
-      discountPercent: appliedDiscount,
+      couponCode: appliedCoupon?.code || (appliedDiscount > 0 ? couponCode : null),
+      discountPercent: appliedCoupon?.discountType === "percentage" ? appliedCoupon.discountValue : (subtotal > 0 ? Math.round((discountAmount / subtotal) * 100) : 0),
+      discountAmount,
       totalAmount: total,
     };
 
@@ -424,6 +461,8 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
         status: "pending",
         payment_method: "local",
         payment_status: "pending",
+        couponCode: appliedCoupon?.code || (appliedDiscount > 0 ? couponCode : null),
+        discountAmount: discountAmount,
         total_amount: total
       })
     }).catch((err) => console.error("Failed to persist booking to database:", err));
@@ -882,21 +921,72 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               <div style={{ marginBottom: "32px", padding: "20px", background: "var(--emerald-50)", borderRadius: "var(--radius-md)", border: "1px dashed var(--emerald-300)" }}>
                 <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <Tag size={16} color="#059669" />
-                  <span>Have a promo code? (Try: ECO10)</span>
+                  <span>Have a promo or coupon code?</span>
                 </label>
-                <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
-                  <input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    placeholder="Enter coupon code"
-                    className="form-input"
-                    style={{ textTransform: "uppercase" }}
-                  />
-                  <button type="button" onClick={handleApplyCoupon} className="btn btn-secondary">
-                    Apply
-                  </button>
-                </div>
+
+                {appliedCoupon ? (
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    background: "#ffffff",
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--emerald-400)",
+                    marginTop: "8px"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontWeight: 800, color: "var(--emerald-800)", letterSpacing: "0.5px" }}>
+                        {appliedCoupon.code}
+                      </span>
+                      <span style={{
+                        fontSize: "0.8rem",
+                        color: "#059669",
+                        fontWeight: 700,
+                        background: "#d1fae5",
+                        padding: "2px 8px",
+                        borderRadius: "6px"
+                      }}>
+                        {appliedCoupon.discountType === "fixed"
+                          ? `£${appliedCoupon.discountValue.toFixed(2)} OFF`
+                          : `${appliedCoupon.discountValue}% OFF`}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--danger-500)",
+                        fontSize: "0.82rem",
+                        fontWeight: 600,
+                        cursor: "pointer"
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="Enter coupon code (e.g. ECO20)"
+                      className="form-input"
+                      style={{ textTransform: "uppercase" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={couponLoading}
+                      className="btn btn-secondary"
+                    >
+                      {couponLoading ? "Checking..." : "Apply"}
+                    </button>
+                  </div>
+                )}
                 {couponError && <p style={{ color: "var(--danger-500)", fontSize: "0.85rem", marginTop: "6px" }}>{couponError}</p>}
                 {couponSuccess && <p style={{ color: "var(--emerald-700)", fontWeight: "600", fontSize: "0.85rem", marginTop: "6px" }}>{couponSuccess}</p>}
               </div>
@@ -1276,9 +1366,11 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                     <span>£{subtotal.toFixed(2)}</span>
                   </div>
 
-                  {appliedDiscount > 0 && (
+                  {discountAmount > 0 && (
                     <div style={{ display: "flex", justifyContent: "space-between", color: "var(--emerald-600)", fontWeight: "600" }}>
-                      <span>Eco Promo ({appliedDiscount}%)</span>
+                      <span>
+                        Promo Discount {appliedCoupon ? `(${appliedCoupon.code})` : appliedDiscount > 0 ? `(${appliedDiscount}%)` : ""}
+                      </span>
                       <span>-£{discountAmount.toFixed(2)}</span>
                     </div>
                   )}

@@ -107,11 +107,7 @@ export default function AdminLoginGate({
           </button>
         </form>
 
-        <div style={{ marginTop: "24px", textAlign: "center", borderTop: "1px solid #1e293b", paddingTop: "18px" }}>
-          <span style={{ fontSize: "0.75rem", color: "#475569" }}>
-            Protected 256-bit encrypted administrative gateway
-          </span>
-        </div>
+
       </div>
     </div>
   );

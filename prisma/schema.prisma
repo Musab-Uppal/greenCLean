@@ -54,6 +54,8 @@ model Order {
   consentDate      DateTime?       @map("consent_date")
   consentWording   String?         @map("consent_wording")
   consentSource    String?         @default("booking-form") @map("consent_source")
+  couponCode       String?         @map("coupon_code")
+  discountAmount   Float?          @default(0) @map("discount_amount")
   productService   ProductService? @relation(fields: [productServiceId], references: [id], onDelete: SetNull)
   orderItems       OrderItem[]
 
@@ -87,5 +89,20 @@ model NewsletterSubscriber {
   consentSource    String?  @default("newsletter-form") @map("consent_source")
 
   @@map("newsletter_subscribers")
+}
+
+model Coupon {
+  id             Int       @id @default(autoincrement())
+  code           String    @unique
+  discountType   String    @default("percentage") @map("discount_type") // 'percentage' | 'fixed'
+  discountValue  Float     @map("discount_value")
+  minOrderAmount Float?    @default(0) @map("min_order_amount")
+  maxUses        Int?      @map("max_uses")
+  usedCount      Int       @default(0) @map("used_count")
+  expiresAt      DateTime? @map("expires_at")
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@map("coupons")
 }
 
