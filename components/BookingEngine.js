@@ -48,10 +48,28 @@ const CATEGORY_ICONS = {
   tenancy: KeyRound
 };
 
-export default function BookingEngine({ initialCategory = "oven", initialCategories = [] }) {
+export default function BookingEngine({ initialCategory = "oven", initialCategories = [], initialBlockedDates = [] }) {
   const [categories, setCategories] = useState(initialCategories);
+  const [blockedDates, setBlockedDates] = useState(initialBlockedDates);
   const [step, setStep] = useState(1);
   const [activeCategory, setActiveCategory] = useState(initialCategory);
+  const [cart, setCart] = useState({});
+
+  // Step 2: Date & Time (strictly locked to Europe/London - Liverpool, UK)
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const tmrw = getUkTomorrowDateString();
+    if (initialBlockedDates && initialBlockedDates.includes(tmrw)) {
+      for (let i = 2; i <= 14; i++) {
+        const d = new Date();
+        d.setTime(d.getTime() + i * 24 * 60 * 60 * 1000);
+        const ukDate = getUkDateString(d);
+        if (!initialBlockedDates.includes(ukDate)) return ukDate;
+      }
+    }
+    return tmrw;
+  });
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(UK_TIME_SLOTS[0]);
+  const [dateTimeError, setDateTimeError] = useState("");
 
   useEffect(() => {
     if (!initialCategories || initialCategories.length === 0) {
@@ -64,13 +82,30 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
     }
   }, [initialCategories]);
 
-  // Cart: object of { [itemId]: { ...item, qty: number } }
-  const [cart, setCart] = useState({});
-
-  // Step 2: Date & Time (strictly locked to Europe/London - Liverpool, UK)
-  const [selectedDate, setSelectedDate] = useState(() => getUkTomorrowDateString());
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(UK_TIME_SLOTS[0]);
-  const [dateTimeError, setDateTimeError] = useState("");
+  useEffect(() => {
+    if (!initialBlockedDates || initialBlockedDates.length === 0) {
+      fetch("/api/blocked-dates")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && Array.isArray(data.blockedDates)) {
+            const list = data.blockedDates;
+            setBlockedDates(list);
+            setSelectedDate((curr) => {
+              if (list.includes(curr)) {
+                for (let i = 1; i <= 14; i++) {
+                  const d = new Date();
+                  d.setTime(d.getTime() + i * 24 * 60 * 60 * 1000);
+                  const ukDate = getUkDateString(d);
+                  if (!list.includes(ukDate)) return ukDate;
+                }
+              }
+              return curr;
+            });
+          }
+        })
+        .catch((err) => console.error("Failed to load blocked dates:", err));
+    }
+  }, [initialBlockedDates]);
 
   // Step 3: Contact Info
   const [customer, setCustomer] = useState({
@@ -315,6 +350,10 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
         setDateTimeError("Please select both an appointment date and an arrival time window.");
         return;
       }
+      if (blockedDates.includes(selectedDate)) {
+        setDateTimeError("The selected date is currently unavailable for bookings due to scheduled admin leave. Please choose another date.");
+        return;
+      }
       setDateTimeError("");
       setStep(3);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -475,11 +514,13 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
       const d = new Date();
       d.setTime(d.getTime() + i * 24 * 60 * 60 * 1000);
       const ukDate = getUkDateString(d);
+      const isBlocked = blockedDates.includes(ukDate);
       dates.push({
         full: ukDate,
         dayName: d.toLocaleDateString("en-GB", { timeZone: UK_TIMEZONE, weekday: "short" }),
         dayNum: parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: UK_TIMEZONE, day: "numeric" }).format(d), 10),
-        month: d.toLocaleDateString("en-GB", { timeZone: UK_TIMEZONE, month: "short" })
+        month: d.toLocaleDateString("en-GB", { timeZone: UK_TIMEZONE, month: "short" }),
+        isBlocked,
       });
     }
     return dates;
@@ -689,36 +730,62 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               }}>
                 {getAvailableDates().map((d) => {
                   const isSelected = selectedDate === d.full;
+                  const isBlocked = d.isBlocked;
                   return (
                     <button
                       key={d.full}
                       type="button"
+                      disabled={isBlocked}
                       onClick={() => {
+                        if (isBlocked) return;
                         setSelectedDate(d.full);
                         setDateTimeError("");
                       }}
+                      title={isBlocked ? "Unavailable — Admin Leave / Booked Out" : `Book for ${d.dayName} ${d.dayNum} ${d.month}`}
                       style={{
                         padding: "12px 8px",
                         borderRadius: "var(--radius-md)",
-                        border: `1.5px solid ${isSelected ? "var(--emerald-600)" : "var(--slate-200)"}`,
-                        background: isSelected ? "var(--emerald-600)" : "#ffffff",
-                        color: isSelected ? "#ffffff" : "var(--slate-800)",
+                        border: isBlocked
+                          ? "1.5px dashed #cbd5e1"
+                          : `1.5px solid ${isSelected ? "var(--emerald-600)" : "var(--slate-200)"}`,
+                        background: isBlocked
+                          ? "#f1f5f9"
+                          : (isSelected ? "var(--emerald-600)" : "#ffffff"),
+                        color: isBlocked
+                          ? "#94a3b8"
+                          : (isSelected ? "#ffffff" : "var(--slate-800)"),
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
                         gap: "4px",
-                        cursor: "pointer",
+                        cursor: isBlocked ? "not-allowed" : "pointer",
+                        opacity: isBlocked ? 0.6 : 1,
+                        position: "relative",
                         transition: "all 0.2s"
                       }}
                     >
-                      <span style={{ fontSize: "0.75rem", textTransform: "uppercase", fontWeight: "600", opacity: isSelected ? 0.9 : 0.6 }}>
+                      <span style={{
+                        fontSize: "0.75rem",
+                        textTransform: "uppercase",
+                        fontWeight: "600",
+                        opacity: isSelected ? 0.9 : 0.6
+                      }}>
                         {d.dayName}
                       </span>
-                      <span style={{ fontSize: "1.3rem", fontWeight: "800" }}>
+                      <span style={{
+                        fontSize: "1.3rem",
+                        fontWeight: "800",
+                        textDecoration: isBlocked ? "line-through" : "none"
+                      }}>
                         {d.dayNum}
                       </span>
-                      <span style={{ fontSize: "0.75rem", opacity: isSelected ? 0.9 : 0.6 }}>
-                        {d.month}
+                      <span style={{
+                        fontSize: isBlocked ? "0.65rem" : "0.75rem",
+                        fontWeight: isBlocked ? 700 : 500,
+                        color: isBlocked ? "#dc2626" : undefined,
+                        opacity: isSelected ? 0.9 : 0.75
+                      }}>
+                        {isBlocked ? "Leave / Off" : d.month}
                       </span>
                     </button>
                   );

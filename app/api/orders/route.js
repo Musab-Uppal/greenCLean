@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { createOrder, getOrders, saveSubscriber } from "@/lib/db";
+import { prisma, createOrder, getOrders, saveSubscriber, isDateBlocked } from "@/lib/db";
 import { subscribeToMailchimp } from "@/lib/mailchimp";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +48,14 @@ export async function POST(request) {
     if (!email || !address || !phoneno) {
       return NextResponse.json(
         { error: "Email, address, and phone number are required" },
+        { status: 400 }
+      );
+    }
+
+    // Check if the requested booking date is blocked by admin leave
+    if (scheduled_date && (await isDateBlocked(scheduled_date))) {
+      return NextResponse.json(
+        { error: "The selected date is unavailable for bookings due to scheduled admin leave. Please select another date." },
         { status: 400 }
       );
     }

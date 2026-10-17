@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyAdminToken, ADMIN_COOKIE_NAME } from "@/lib/adminAuth";
-import { getOrders, getCategoriesWithCount, getAllServices, getAllCoupons } from "@/lib/db";
+import { getOrders, getCategoriesWithCount, getAllServices, getAllCoupons, getAllBlockedDates } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +17,12 @@ export async function GET() {
       );
     }
 
-    const [orders, categories, services, coupons] = await Promise.all([
+    const [orders, categories, services, coupons, blockedDates] = await Promise.all([
       getOrders(),
       getCategoriesWithCount(),
       getAllServices(),
       getAllCoupons(),
+      getAllBlockedDates(),
     ]);
 
     // Calculate executive KPIs
@@ -62,12 +63,14 @@ export async function GET() {
       categories,
       services,
       coupons,
+      blockedDates,
       kpis: {
         totalOrders: orders.length,
         totalRevenue: Math.round(totalRevenue * 100) / 100,
         pendingCount,
         completedCount,
         couponsCount: coupons.length,
+        blockedDatesCount: blockedDates.length,
       }
     });
   } catch (error) {

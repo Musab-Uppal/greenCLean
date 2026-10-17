@@ -79,30 +79,39 @@ export default function CouponModal({ isOpen, onClose, onSave, loading }) {
     <div className="admin-modal-backdrop" onClick={onClose}>
       <div
         className="admin-modal-window"
-        style={{ maxWidth: "560px" }}
+        style={{
+          maxWidth: "480px",
+          maxHeight: "calc(100vh - 36px)",
+          overflowY: "auto",
+          padding: "18px 22px",
+          margin: "auto",
+          borderRadius: "14px",
+          boxSizing: "border-box"
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
           <div>
-            <h3 style={{ margin: "0 0 4px", fontSize: "1.3rem", fontWeight: 700, color: "#f8fafc" }}>
+            <h3 style={{ margin: "0 0 2px", fontSize: "1.1rem", fontWeight: 700, color: "#f8fafc" }}>
               Generate Promotional Coupon
             </h3>
-            <p style={{ margin: 0, fontSize: "0.85rem", color: "#94a3b8" }}>
-              Configure coupon code and how much discount to apply.
+            <p style={{ margin: 0, fontSize: "0.75rem", color: "#94a3b8" }}>
+              Create a coupon code and configure discount rate.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close"
             style={{
               background: "none",
               border: "none",
               color: "#64748b",
-              fontSize: "1.4rem",
+              fontSize: "1.3rem",
               cursor: "pointer",
               lineHeight: 1,
-              padding: "4px"
+              padding: "2px 6px"
             }}
           >
             &times;
@@ -110,18 +119,18 @@ export default function CouponModal({ isOpen, onClose, onSave, loading }) {
         </div>
 
         {formError && (
-          <div className="admin-login-alert" style={{ marginBottom: "16px" }}>
+          <div className="admin-login-alert" style={{ marginBottom: "12px", padding: "8px 12px", fontSize: "0.8rem" }}>
             <span>{formError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {/* Coupon Code Input + Random Generator */}
           <div>
-            <label className="admin-form-label">
+            <label className="admin-form-label" style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
               COUPON CODE *
             </label>
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "6px" }}>
               <input
                 type="text"
                 value={code}
@@ -129,44 +138,54 @@ export default function CouponModal({ isOpen, onClose, onSave, loading }) {
                 placeholder="e.g. ECO20, CLEAN10"
                 required
                 className="admin-form-input"
-                style={{ textTransform: "uppercase", fontWeight: 700, letterSpacing: "1px" }}
+                style={{
+                  padding: "7px 10px",
+                  fontSize: "0.88rem",
+                  textTransform: "uppercase",
+                  fontWeight: 700,
+                  letterSpacing: "0.5px"
+                }}
               />
               <button
                 type="button"
                 onClick={generateRandomCode}
                 className="admin-refresh-btn"
-                style={{ flexShrink: 0, padding: "0 14px", fontWeight: 600, fontSize: "0.85rem", color: "#34d399", borderColor: "rgba(16,185,129,0.3)" }}
+                style={{
+                  flexShrink: 0,
+                  padding: "0 10px",
+                  fontWeight: 600,
+                  fontSize: "0.78rem",
+                  color: "#34d399",
+                  borderColor: "rgba(16,185,129,0.3)"
+                }}
               >
                 🎲 Auto-Generate
               </button>
             </div>
-            <span style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "4px", display: "block" }}>
-              Customers will enter this code at checkout. Codes are always uppercase.
-            </span>
           </div>
 
           {/* Discount Type Selector */}
           <div>
-            <label className="admin-form-label">
+            <label className="admin-form-label" style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
               DISCOUNT TYPE
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
               <button
                 type="button"
                 onClick={() => setDiscountType("percentage")}
                 style={{
-                  padding: "10px",
-                  borderRadius: "8px",
+                  padding: "6px 10px",
+                  borderRadius: "6px",
                   border: discountType === "percentage" ? "1px solid #10b981" : "1px solid #334155",
                   background: discountType === "percentage" ? "rgba(16,185,129,0.15)" : "#0f172a",
                   color: discountType === "percentage" ? "#34d399" : "#94a3b8",
                   fontWeight: 600,
-                  fontSize: "0.9rem",
+                  fontSize: "0.8rem",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "6px",
+                  gap: "4px",
                   transition: "all 0.15s"
                 }}
               >
@@ -177,18 +196,18 @@ export default function CouponModal({ isOpen, onClose, onSave, loading }) {
                 type="button"
                 onClick={() => setDiscountType("fixed")}
                 style={{
-                  padding: "10px",
-                  borderRadius: "8px",
+                  padding: "6px 10px",
+                  borderRadius: "6px",
                   border: discountType === "fixed" ? "1px solid #10b981" : "1px solid #334155",
                   background: discountType === "fixed" ? "rgba(16,185,129,0.15)" : "#0f172a",
                   color: discountType === "fixed" ? "#34d399" : "#94a3b8",
                   fontWeight: 600,
-                  fontSize: "0.9rem",
+                  fontSize: "0.8rem",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "6px",
+                  gap: "4px",
                   transition: "all 0.15s"
                 }}
               >
@@ -197,46 +216,50 @@ export default function CouponModal({ isOpen, onClose, onSave, loading }) {
             </div>
           </div>
 
-          {/* Discount Value ("How much discount to apply") */}
+          {/* Discount Value */}
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-              <label className="admin-form-label" style={{ margin: 0 }}>
-                {discountType === "percentage" ? "HOW MUCH DISCOUNT PERCENTAGE (%) *" : "HOW MUCH DISCOUNT AMOUNT (£ GBP) *"}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+              <label className="admin-form-label" style={{ margin: 0, fontSize: "0.7rem" }}>
+                {discountType === "percentage" ? "DISCOUNT PERCENTAGE (%) *" : "DISCOUNT AMOUNT (£ GBP) *"}
               </label>
-              <span style={{ fontSize: "0.75rem", color: "#34d399", fontWeight: 600 }}>
-                {discountType === "percentage" ? `${numVal}% off booking` : `£${numVal.toFixed(2)} off booking`}
+              <span style={{ fontSize: "0.72rem", color: "#34d399", fontWeight: 600 }}>
+                {discountType === "percentage" ? `${numVal}% off` : `£${numVal.toFixed(2)} off`}
               </span>
             </div>
 
             <div style={{ position: "relative" }}>
               <span style={{
                 position: "absolute",
-                left: "14px",
+                left: "12px",
                 top: "50%",
                 transform: "translateY(-50%)",
                 color: "#64748b",
                 fontWeight: 700,
-                fontSize: "1rem"
+                fontSize: "0.88rem"
               }}>
                 {discountType === "percentage" ? "%" : "£"}
               </span>
               <input
                 type="number"
-                step={discountType === "percentage" ? "1" : "0.5"}
-                min="0.1"
+                step="any"
+                min="0"
                 max={discountType === "percentage" ? "100" : undefined}
                 value={discountValue}
                 onChange={(e) => setDiscountValue(e.target.value)}
-                placeholder={discountType === "percentage" ? "e.g. 15 for 15%" : "e.g. 10.00 for £10"}
+                placeholder={discountType === "percentage" ? "15" : "10"}
                 required
                 className="admin-form-input"
-                style={{ paddingLeft: "36px", fontSize: "1.05rem", fontWeight: 700 }}
+                style={{
+                  padding: "7px 10px 7px 30px",
+                  fontSize: "0.95rem",
+                  fontWeight: 700
+                }}
               />
             </div>
 
             {/* Quick Presets */}
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "0.75rem", color: "#64748b" }}>Quick discounts:</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "6px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "0.7rem", color: "#64748b" }}>Quick:</span>
               {discountType === "percentage" ? (
                 [5, 10, 15, 20, 25, 50].map((pct) => (
                   <button
@@ -247,10 +270,10 @@ export default function CouponModal({ isOpen, onClose, onSave, loading }) {
                       background: String(discountValue) === String(pct) ? "#059669" : "rgba(30,41,59,0.8)",
                       border: "1px solid #334155",
                       color: "#f8fafc",
-                      fontSize: "0.75rem",
+                      fontSize: "0.7rem",
                       fontWeight: 600,
-                      padding: "2px 8px",
-                      borderRadius: "6px",
+                      padding: "1px 6px",
+                      borderRadius: "4px",
                       cursor: "pointer"
                     }}
                   >
@@ -267,10 +290,10 @@ export default function CouponModal({ isOpen, onClose, onSave, loading }) {
                       background: String(discountValue) === String(amt) ? "#059669" : "rgba(30,41,59,0.8)",
                       border: "1px solid #334155",
                       color: "#f8fafc",
-                      fontSize: "0.75rem",
+                      fontSize: "0.7rem",
                       fontWeight: 600,
-                      padding: "2px 8px",
-                      borderRadius: "6px",
+                      padding: "1px 6px",
+                      borderRadius: "4px",
                       cursor: "pointer"
                     }}
                   >
@@ -282,43 +305,44 @@ export default function CouponModal({ isOpen, onClose, onSave, loading }) {
 
             {/* Live Calculation Preview Banner */}
             <div style={{
-              marginTop: "10px",
-              padding: "10px 14px",
+              marginTop: "6px",
+              padding: "6px 10px",
               background: "rgba(16,185,129,0.08)",
               border: "1px solid rgba(16,185,129,0.2)",
-              borderRadius: "8px",
-              fontSize: "0.82rem",
+              borderRadius: "6px",
+              fontSize: "0.75rem",
               color: "#34d399",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center"
             }}>
-              <span>Example £100 order discount:</span>
+              <span>Sample £100 order:</span>
               <span style={{ fontWeight: 700 }}>
                 -£{sampleDeduction.toFixed(2)} &rarr; Total £{sampleFinal.toFixed(2)}
               </span>
             </div>
           </div>
 
-          {/* Optional Rules Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+          {/* Optional Rules Grid: Min Spend & Usage Limit */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
             <div>
-              <label className="admin-form-label">
+              <label className="admin-form-label" style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
                 MIN SPEND (£ GBP)
               </label>
               <input
                 type="number"
-                step="5"
+                step="any"
                 min="0"
                 value={minOrderAmount}
                 onChange={(e) => setMinOrderAmount(e.target.value)}
-                placeholder="0 (no minimum)"
+                placeholder="0 (no min)"
                 className="admin-form-input"
+                style={{ padding: "6px 8px", fontSize: "0.82rem" }}
               />
             </div>
 
             <div>
-              <label className="admin-form-label">
+              <label className="admin-form-label" style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
                 USAGE LIMIT (MAX USES)
               </label>
               <input
@@ -327,15 +351,16 @@ export default function CouponModal({ isOpen, onClose, onSave, loading }) {
                 step="1"
                 value={maxUses}
                 onChange={(e) => setMaxUses(e.target.value)}
-                placeholder="Unlimited if empty"
+                placeholder="Unlimited"
                 className="admin-form-input"
+                style={{ padding: "6px 8px", fontSize: "0.82rem" }}
               />
             </div>
           </div>
 
           {/* Expiry Date */}
           <div>
-            <label className="admin-form-label">
+            <label className="admin-form-label" style={{ fontSize: "0.7rem", marginBottom: "4px" }}>
               EXPIRY DATE (OPTIONAL)
             </label>
             <input
@@ -343,34 +368,39 @@ export default function CouponModal({ isOpen, onClose, onSave, loading }) {
               value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
               className="admin-form-input"
+              style={{ padding: "6px 8px", fontSize: "0.82rem" }}
             />
-            <span style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "4px", display: "block" }}>
-              Leave blank if the coupon should never expire.
-            </span>
           </div>
 
           {/* Active Status Checkbox */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "4px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "2px" }}>
             <input
               type="checkbox"
               id="couponActive"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              style={{ width: "18px", height: "18px", accentColor: "#10b981", cursor: "pointer" }}
+              style={{ width: "16px", height: "16px", accentColor: "#10b981", cursor: "pointer" }}
             />
-            <label htmlFor="couponActive" style={{ fontSize: "0.88rem", color: "#e2e8f0", cursor: "pointer" }}>
-              Make coupon active immediately for customer bookings
+            <label htmlFor="couponActive" style={{ fontSize: "0.8rem", color: "#e2e8f0", cursor: "pointer" }}>
+              Make coupon active immediately
             </label>
           </div>
 
           {/* Action Buttons */}
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px", borderTop: "1px solid #1e293b", paddingTop: "16px" }}>
+          <div style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "8px",
+            marginTop: "6px",
+            borderTop: "1px solid #1e293b",
+            paddingTop: "10px"
+          }}>
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
               className="admin-refresh-btn"
-              style={{ padding: "10px 18px", fontSize: "0.9rem" }}
+              style={{ padding: "7px 14px", fontSize: "0.82rem" }}
             >
               Cancel
             </button>
@@ -381,13 +411,14 @@ export default function CouponModal({ isOpen, onClose, onSave, loading }) {
               style={{
                 width: "auto",
                 margin: 0,
-                padding: "10px 24px",
+                padding: "7px 18px",
+                fontSize: "0.82rem",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px"
+                gap: "6px"
               }}
             >
-              {loading ? "Generating Coupon..." : "Generate & Save Coupon"}
+              {loading ? "Generating..." : "Generate Coupon"}
             </button>
           </div>
         </form>

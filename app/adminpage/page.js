@@ -19,6 +19,7 @@ import ServicesTab from "./components/ServicesTab";
 import ConsentsTab from "./components/ConsentsTab";
 import CouponsTab from "./components/CouponsTab";
 import CouponModal from "./components/CouponModal";
+import LeaveTab from "./components/LeaveTab";
 import RescheduleOrderModal from "./components/RescheduleOrderModal";
 import CategoryModals from "./components/CategoryModals";
 import ServiceModals from "./components/ServiceModals";
@@ -128,6 +129,10 @@ export default function AdminPage() {
   const [showAddCouponModal, setShowAddCouponModal] = useState(false);
   const [couponActionLoading, setCouponActionLoading] = useState(false);
 
+  // Leave & Blocked Dates state
+  const [blockedDates, setBlockedDates] = useState([]);
+  const [blockedDatesLoading, setBlockedDatesLoading] = useState(false);
+
   // Staged / Pending Changes State for Header "Save Changes" Button
   const [pendingOrders, setPendingOrders] = useState({});
   const [pendingServices, setPendingServices] = useState({});
@@ -211,6 +216,7 @@ export default function AdminPage() {
         setCategories(data.categories || []);
         setServices(data.services || []);
         setCoupons(data.coupons || []);
+        setBlockedDates(data.blockedDates || []);
         if (data.kpis) setKpis(data.kpis);
       } else if (res.status === 401) {
         setIsAuthenticated(false);
@@ -713,6 +719,55 @@ export default function AdminPage() {
     }
   };
 
+  // Leave & Blocked Dates Handlers
+  const fetchBlockedDates = async () => {
+    setBlockedDatesLoading(true);
+    try {
+      const res = await fetch("/api/admin/blocked-dates", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setBlockedDates(data.blockedDates || []);
+      }
+    } catch (err) {
+      console.error("Failed to load blocked dates:", err);
+    } finally {
+      setBlockedDatesLoading(false);
+    }
+  };
+
+  const handleAddBlockedDate = async (payload) => {
+    const res = await fetch("/api/admin/blocked-dates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to block date.");
+    }
+    showNotification("success", data.message || "Date(s) successfully blocked!");
+    fetchBlockedDates();
+  };
+
+  const handleDeleteBlockedDate = async (id, date) => {
+    if (!confirm(`Are you sure you want to unblock ${date}? This date will become available for customer bookings.`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/blocked-dates?id=${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to unblock date.");
+      }
+      showNotification("success", `Date ${date} unblocked successfully!`);
+      setBlockedDates((prev) => prev.filter((d) => d.id !== id));
+    } catch (err) {
+      showNotification("error", err.message || "Failed to unblock date.");
+    }
+  };
+
   // Master Save Changes Function
   const handleSaveChanges = async () => {
     if (totalPendingCount === 0) {
@@ -857,6 +912,7 @@ export default function AdminPage() {
         servicesCount={services.length}
         consentsCount={consents.length}
         couponsCount={coupons.length}
+        blockedDatesCount={blockedDates.filter((d) => d.date >= getUkDateString(new Date())).length}
         handleSaveChanges={handleSaveChanges}
         savingChanges={savingChanges}
         totalPendingCount={totalPendingCount}
@@ -939,6 +995,16 @@ export default function AdminPage() {
             onOpenAddModal={() => setShowAddCouponModal(true)}
             onToggleStatus={handleToggleCouponStatus}
             onDeleteCoupon={handleDeleteCoupon}
+          />
+        )}
+
+        {/* Dashboard 6: Admin Leave & Blocked Dates */}
+        {activeTab === "leave" && (
+          <LeaveTab
+            blockedDates={blockedDates}
+            onAddBlockedDate={handleAddBlockedDate}
+            onDeleteBlockedDate={handleDeleteBlockedDate}
+            loading={blockedDatesLoading}
           />
         )}
 

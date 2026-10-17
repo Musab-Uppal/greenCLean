@@ -452,14 +452,19 @@
   justify-content: center;
   z-index: 110;
   padding: 16px;
+  overflow-y: auto;
 }
 
 .admin-modal-window {
   background: #0f172a;
   border: 1px solid #334155;
   border-radius: 16px;
-  padding: 26px;
+  padding: 24px;
   width: 100%;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  margin: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
   color: #f8fafc;
 }
