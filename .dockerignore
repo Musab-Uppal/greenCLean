@@ -1,0 +1,40 @@
+# Ignore everything by default
+**
+
+# ── Allow only what Docker needs ─────────────────────────────────────────────
+!package.json
+!package-lock.json
+!next.config.mjs
+!postcss.config.mjs
+!jsconfig.json
+!tailwind.config.*
+
+# Source
+!app/**
+!components/**
+!lib/**
+!data/**
+!public/**
+!scripts/**
+!prisma/**
+
+# ── Always exclude ────────────────────────────────────────────────────────────
+# Large dirs that are rebuilt inside the container
+node_modules
+.next
+.git
+.gitignore
+
+# Secrets — NEVER bake into the image
+.env
+.env.*
+
+# Dev / OS noise
+*.log
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+scratch/
+.agents/
+.gemini/
