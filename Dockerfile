@@ -52,9 +52,17 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
+# Seed script + data (needed at startup to seed the DB)
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/data ./data
+
+# Prisma CLI binary (for migrate deploy at startup)
+COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+
 USER nextjs
 
 EXPOSE 3000
 
-# Run DB migrations then start the server
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node server.js"]
+# Run DB migrations, seed data, then start the server
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node scripts/seed-db.js && node server.js"]
