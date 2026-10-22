@@ -66,5 +66,5 @@ USER nextjs
 
 EXPOSE 3000
 
-# Run DB migrations, seed data, then start the server
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node scripts/seed-db.js && node server.js"]
+# Run DB schema sync, seed data, then start the server
+CMD ["sh", "-c", "node_modules/.bin/prisma db push --accept-data-loss && node scripts/seed-db.js && node server.js"]
