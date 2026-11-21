@@ -193,6 +193,7 @@ export async function GET(request) {
         paymentMethod: "paypal",
         paymentStatus: isPaid ? "paid" : "pending",
         items: orderItems,
+        marketingConsent: hasConsent,
       }).catch((err) => console.error("[Mailchimp sendBookingConfirmationEmails PayPal] error:", err));
     }
     // ────────────────────────────────────────────────────────────────────────

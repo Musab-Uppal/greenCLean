@@ -190,6 +190,7 @@ export async function POST(request) {
       paymentMethod: payment_method,
       paymentStatus: "pending",
       items: orderItems,
+      marketingConsent: !!marketingConsent,
     }).catch((err) => console.error("[Mailchimp sendBookingConfirmationEmails] error:", err));
 
     return NextResponse.json({

@@ -178,6 +178,7 @@ export async function GET(request) {
         paymentMethod: "creditcard",
         paymentStatus: isPaid ? "paid" : "pending",
         items: orderItems,
+        marketingConsent: hasMarketingConsent,
       }).catch((err) => console.error("[Mailchimp sendBookingConfirmationEmails Stripe] error:", err));
     }
     // ────────────────────────────────────────────────────────────────────────
