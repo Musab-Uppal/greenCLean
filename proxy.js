@@ -130,8 +130,8 @@ function applyCors(request, response) {
   return response;
 }
 
-// ─── Middleware ────────────────────────────────────────────────────────────────
-export async function middleware(request) {
+// ─── Proxy (Next.js 16 convention replacing middleware) ─────────────────────────
+export async function proxy(request) {
   const { pathname } = request.nextUrl;
   const ip = getClientIp(request);
 
@@ -236,6 +236,8 @@ export async function middleware(request) {
 
   return response;
 }
+
+export default proxy;
 
 export const config = {
   // Run on all routes (excluding static assets and _next internals)
