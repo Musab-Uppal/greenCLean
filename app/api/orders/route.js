@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma, createOrder, getOrders, saveSubscriber, isDateBlocked } from "@/lib/db";
 import { subscribeToMailchimp } from "@/lib/mailchimp";
+import { sanitizeOrderBody, sanitizeEmail } from "@/lib/sanitize";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +12,11 @@ const BOOKING_CONSENT_WORDING =
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const email = searchParams.get("customerEmail") || searchParams.get("email");
+    const rawEmail = searchParams.get("customerEmail") || searchParams.get("email");
+    // Sanitize query param before passing to DB
+    const email = rawEmail ? sanitizeEmail(rawEmail) : null;
 
-    const orders = await getOrders(email ? email.trim() : null);
+    const orders = await getOrders(email);
     return NextResponse.json(orders);
   } catch (error) {
     console.error("Error retrieving orders from DB:", error);
@@ -23,27 +26,37 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { 
-      email, 
-      phone, 
-      product_service_id, 
-      items = [],
-      address, 
+    const rawBody = await request.json();
+
+    // ── Sanitize & validate all inputs ──────────────────────────────────────
+    const { errors, data: body } = sanitizeOrderBody(rawBody);
+    if (errors.length > 0) {
+      return NextResponse.json({ error: errors[0] }, { status: 400 });
+    }
+
+    const {
+      email,
+      address,
       phoneno,
-      scheduled_date = null,
-      status = "pending",
-      payment_method = "local",
-      payment_status = "pending",
-      stripe_session_id = null,
-      total_amount = null,
-      firstName = "",
-      lastName = "",
-      // Marketing consent — must be explicitly true; defaults to false
-      marketingConsent = false,
-      couponCode = null,
-      discountAmount = 0,
+      scheduled_date,
+      payment_method,
+      coupon_code: couponCode,
+      discount_amount: discountAmount,
+      total_amount,
+      marketingConsent,
+      firstName,
+      lastName,
     } = body;
+
+    // Pull through raw (safe) fields that sanitizeOrderBody doesn't cover
+    const stripe_session_id =
+      typeof rawBody?.stripe_session_id === "string"
+        ? rawBody.stripe_session_id.replace(/[^a-zA-Z0-9_\-]/g, "").slice(0, 200)
+        : null;
+
+    const product_service_id = rawBody?.product_service_id ?? null;
+    const items = Array.isArray(rawBody?.items) ? rawBody.items : [];
+    const phone = rawBody?.phone ?? phoneno;
 
     if (!email || !address || !phoneno) {
       return NextResponse.json(
@@ -60,14 +73,16 @@ export async function POST(request) {
       );
     }
 
-    // 2. Resolve items for single order
+    // 2. Resolve items for single order — validate each item ID against DB
     const orderItems = [];
     if (Array.isArray(items) && items.length > 0) {
       for (const item of items) {
-        let resolvedServiceId = item.db_id;
+        // Only accept numeric db_id or slug strings — no arbitrary injection
+        let resolvedServiceId = item.db_id ? parseInt(item.db_id, 10) : null;
         if (!resolvedServiceId && item.id) {
+          const idStr = String(item.id).replace(/[^a-zA-Z0-9_\-]/g, "").slice(0, 100);
           const serviceRow = await prisma.productService.findFirst({
-            where: { OR: [{ slug: String(item.id) }, { id: Number(item.id) || -1 }] },
+            where: { OR: [{ slug: idStr }, { id: parseInt(idStr, 10) || -1 }] },
             select: { id: true, price: true },
           });
           if (serviceRow) resolvedServiceId = serviceRow.id;
@@ -76,29 +91,31 @@ export async function POST(request) {
         if (resolvedServiceId) {
           orderItems.push({
             product_service_id: resolvedServiceId,
-            price: Number(item.price) || 0
+            price: Math.max(0, Number(item.price) || 0),
           });
         }
       }
     } else if (product_service_id) {
-      orderItems.push({
-        product_service_id,
-        price: Number(total_amount) || 0
-      });
+      const psId = parseInt(String(product_service_id), 10);
+      if (psId > 0) {
+        orderItems.push({
+          product_service_id: psId,
+          price: Math.max(0, Number(total_amount) || 0),
+        });
+      }
     }
 
     if (orderItems.length === 0) {
       return NextResponse.json(
-        { error: "At least one product/service must be specified" },
+        { error: "At least one valid product/service must be specified" },
         { status: 400 }
       );
     }
 
-    const calculatedTotal = total_amount !== null && total_amount !== undefined
-      ? Number(total_amount)
-      : orderItems.reduce((sum, it) => sum + it.price, 0);
-
-    const validStatus = (status || "").toLowerCase().trim() === "completed" ? "completed" : "pending";
+    const calculatedTotal =
+      total_amount !== null && total_amount !== undefined
+        ? Math.max(0, Number(total_amount))
+        : orderItems.reduce((sum, it) => sum + it.price, 0);
 
     const consentDate = marketingConsent ? new Date().toISOString() : null;
 
@@ -107,10 +124,10 @@ export async function POST(request) {
       customer_email: email,
       address,
       phoneno,
-      status: validStatus,
+      status: "pending", // Always pending from public endpoint
       scheduled_date,
       payment_method,
-      payment_status,
+      payment_status: "pending",
       stripe_session_id,
       total_amount: calculatedTotal,
       items: orderItems,
@@ -118,8 +135,8 @@ export async function POST(request) {
       consent_date: consentDate,
       consent_wording: marketingConsent ? BOOKING_CONSENT_WORDING : null,
       consent_source: "booking-form",
-      coupon_code: couponCode || body.coupon_code || null,
-      discount_amount: discountAmount !== undefined ? discountAmount : (body.discount_amount || 0),
+      coupon_code: couponCode || null,
+      discount_amount: Math.max(0, discountAmount),
     });
 
     const orderId = orderRes.lastInsertRowid;
