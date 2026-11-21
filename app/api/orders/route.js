@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma, createOrder, getOrders, saveSubscriber, isDateBlocked } from "@/lib/db";
-import { subscribeToMailchimp } from "@/lib/mailchimp";
+import { subscribeToMailchimp, sendBookingConfirmationEmails } from "@/lib/mailchimp";
 import { sanitizeOrderBody, sanitizeEmail } from "@/lib/sanitize";
 
 export const dynamic = "force-dynamic";
@@ -177,6 +177,20 @@ export async function POST(request) {
         marketing_consent: false,
       }).catch((err) => console.error("[DB saveSubscriber] Failed silently:", err));
     }
+
+    // ── Send Booking Confirmation Emails via Mailchimp to Customer & Admin ──
+    sendBookingConfirmationEmails({
+      orderId,
+      customerEmail: email,
+      customerName: `${firstName || ""} ${lastName || ""}`.trim() || email.split("@")[0],
+      customerPhone,
+      address,
+      scheduledDate: scheduled_date,
+      totalAmount: calculatedTotal,
+      paymentMethod: payment_method,
+      paymentStatus: "pending",
+      items: orderItems,
+    }).catch((err) => console.error("[Mailchimp sendBookingConfirmationEmails] error:", err));
 
     return NextResponse.json({
       success: true,

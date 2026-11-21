@@ -6,7 +6,7 @@ import {
   getOrdersByStripeSessionId,
   saveSubscriber,
 } from "@/lib/db";
-import { subscribeToMailchimp } from "@/lib/mailchimp";
+import { subscribeToMailchimp, sendBookingConfirmationEmails } from "@/lib/mailchimp";
 
 const BOOKING_CONSENT_WORDING =
   "I'd like to receive cleaning reminders and special offers by email from Green Clean Group. I can unsubscribe at any time.";
@@ -163,6 +163,22 @@ export async function GET(request) {
         phone,
         tags: ["Booked", "Paid Customer", "Stripe", "Booking Form Opt-in"],
       }).catch((err) => console.error("[Mailchimp] Stripe subscribe failed silently:", err));
+    }
+
+    // ── Send Booking Confirmation Emails via Mailchimp to Customer & Admin ──
+    if (email) {
+      sendBookingConfirmationEmails({
+        orderId,
+        customerEmail: email,
+        customerName: meta.customer_name || email.split("@")[0],
+        customerPhone: phone || "",
+        address,
+        scheduledDate: scheduled_date,
+        totalAmount,
+        paymentMethod: "creditcard",
+        paymentStatus: isPaid ? "paid" : "pending",
+        items: orderItems,
+      }).catch((err) => console.error("[Mailchimp sendBookingConfirmationEmails Stripe] error:", err));
     }
     // ────────────────────────────────────────────────────────────────────────
 

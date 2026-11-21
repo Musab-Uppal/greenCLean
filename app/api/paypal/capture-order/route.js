@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { capturePayPalOrder } from "@/lib/paypal";
 import { createOrder, prisma, saveSubscriber } from "@/lib/db";
-import { subscribeToMailchimp } from "@/lib/mailchimp";
+import { subscribeToMailchimp, sendBookingConfirmationEmails } from "@/lib/mailchimp";
 
 const BOOKING_CONSENT_WORDING =
   "I'd like to receive cleaning reminders and special offers by email from Green Clean Group. I can unsubscribe at any time.";
@@ -178,6 +178,22 @@ export async function GET(request) {
         phone: phone || "",
         tags: ["Booked", "Paid Customer", "PayPal", "Booking Form Opt-in"],
       }).catch((err) => console.error("[Mailchimp] PayPal subscribe failed silently:", err));
+    }
+
+    // ── Send Booking Confirmation Emails via Mailchimp to Customer & Admin ──
+    if (email) {
+      sendBookingConfirmationEmails({
+        orderId,
+        customerEmail: email,
+        customerName: name || email.split("@")[0],
+        customerPhone: phone || "",
+        address,
+        scheduledDate: scheduled_date,
+        totalAmount,
+        paymentMethod: "paypal",
+        paymentStatus: isPaid ? "paid" : "pending",
+        items: orderItems,
+      }).catch((err) => console.error("[Mailchimp sendBookingConfirmationEmails PayPal] error:", err));
     }
     // ────────────────────────────────────────────────────────────────────────
 
