@@ -3,6 +3,7 @@ import { stripe } from "@/lib/stripe";
 import {
   prisma,
   createOrder,
+  getOrderById,
   getOrdersByStripeSessionId,
   saveSubscriber,
 } from "@/lib/db";
@@ -165,8 +166,18 @@ export async function GET(request) {
       }).catch((err) => console.error("[Mailchimp] Stripe subscribe failed silently:", err));
     }
 
-    // ── Send Booking Confirmation Emails via Mailchimp to Customer & Admin ──
+    // ── Send Booking Confirmation Emails to Customer & Admin ──
     if (email) {
+      let emailItems = orderItems;
+      try {
+        const fullOrder = await getOrderById(orderId);
+        if (fullOrder && Array.isArray(fullOrder.items) && fullOrder.items.length > 0) {
+          emailItems = fullOrder.items;
+        }
+      } catch (fetchErr) {
+        console.warn("[Stripe verify] Could not fetch full order items for email:", fetchErr);
+      }
+
       sendBookingConfirmationEmails({
         orderId,
         customerEmail: email,
@@ -177,9 +188,9 @@ export async function GET(request) {
         totalAmount,
         paymentMethod: "creditcard",
         paymentStatus: isPaid ? "paid" : "pending",
-        items: orderItems,
+        items: emailItems,
         marketingConsent: hasMarketingConsent,
-      }).catch((err) => console.error("[Mailchimp sendBookingConfirmationEmails Stripe] error:", err));
+      }).catch((err) => console.error("[sendBookingConfirmationEmails Stripe] error:", err));
     }
     // ────────────────────────────────────────────────────────────────────────
 

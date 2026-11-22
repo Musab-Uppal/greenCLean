@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { capturePayPalOrder } from "@/lib/paypal";
-import { createOrder, prisma, saveSubscriber } from "@/lib/db";
+import { createOrder, getOrderById, prisma, saveSubscriber } from "@/lib/db";
 import { subscribeToMailchimp, sendBookingConfirmationEmails } from "@/lib/mailchimp";
 
 const BOOKING_CONSENT_WORDING =
@@ -180,8 +180,18 @@ export async function GET(request) {
       }).catch((err) => console.error("[Mailchimp] PayPal subscribe failed silently:", err));
     }
 
-    // ── Send Booking Confirmation Emails via Mailchimp to Customer & Admin ──
+    // ── Send Booking Confirmation Emails to Customer & Admin ──
     if (email) {
+      let emailItems = orderItems;
+      try {
+        const fullOrder = await getOrderById(orderId);
+        if (fullOrder && Array.isArray(fullOrder.items) && fullOrder.items.length > 0) {
+          emailItems = fullOrder.items;
+        }
+      } catch (fetchErr) {
+        console.warn("[PayPal capture] Could not fetch full order items for email:", fetchErr);
+      }
+
       sendBookingConfirmationEmails({
         orderId,
         customerEmail: email,
@@ -192,9 +202,9 @@ export async function GET(request) {
         totalAmount,
         paymentMethod: "paypal",
         paymentStatus: isPaid ? "paid" : "pending",
-        items: orderItems,
+        items: emailItems,
         marketingConsent: hasConsent,
-      }).catch((err) => console.error("[Mailchimp sendBookingConfirmationEmails PayPal] error:", err));
+      }).catch((err) => console.error("[sendBookingConfirmationEmails PayPal] error:", err));
     }
     // ────────────────────────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, createOrder, getOrders, saveSubscriber, isDateBlocked } from "@/lib/db";
+import { prisma, createOrder, getOrders, getOrderById, saveSubscriber, isDateBlocked } from "@/lib/db";
 import { subscribeToMailchimp, sendBookingConfirmationEmails } from "@/lib/mailchimp";
 import { sanitizeOrderBody, sanitizeEmail } from "@/lib/sanitize";
 
@@ -178,7 +178,18 @@ export async function POST(request) {
       }).catch((err) => console.error("[DB saveSubscriber] Failed silently:", err));
     }
 
-    // ── Send Booking Confirmation Emails via Mailchimp to Customer & Admin ──
+    // Fetch complete items with service names from DB so notification emails include clear service titles
+    let emailItems = orderItems;
+    try {
+      const fullOrder = await getOrderById(orderId);
+      if (fullOrder && Array.isArray(fullOrder.items) && fullOrder.items.length > 0) {
+        emailItems = fullOrder.items;
+      }
+    } catch (fetchErr) {
+      console.warn("[Orders route] Could not fetch full order items for email:", fetchErr);
+    }
+
+    // ── Send Booking Confirmation Emails to Customer & Admin ──
     sendBookingConfirmationEmails({
       orderId,
       customerEmail: email,
@@ -189,9 +200,9 @@ export async function POST(request) {
       totalAmount: calculatedTotal,
       paymentMethod: payment_method,
       paymentStatus: "pending",
-      items: orderItems,
+      items: emailItems,
       marketingConsent: !!marketingConsent,
-    }).catch((err) => console.error("[Mailchimp sendBookingConfirmationEmails] error:", err));
+    }).catch((err) => console.error("[sendBookingConfirmationEmails] error:", err));
 
     return NextResponse.json({
       success: true,
