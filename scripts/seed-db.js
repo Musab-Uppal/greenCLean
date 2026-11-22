@@ -82,6 +82,24 @@ async function main() {
       time: s.time,
     }))
   );
+
+  // Clean up legacy test bookings #1 and #2 if they exist
+  try {
+    const testOrders = await prisma.order.findMany({
+      where: { id: { in: [1, 2] } },
+      select: { id: true },
+    });
+    if (testOrders.length > 0) {
+      console.log(`\n🧹 Removing test bookings (#1 and #2)...`);
+      await prisma.$transaction([
+        prisma.orderItem.deleteMany({ where: { orderId: { in: [1, 2] } } }),
+        prisma.order.deleteMany({ where: { id: { in: [1, 2] } } }),
+      ]);
+      console.log(`   - Successfully cleaned up test bookings #1 and #2.`);
+    }
+  } catch (cleanErr) {
+    console.warn("   - Note on test bookings cleanup:", cleanErr.message);
+  }
 }
 
 main()

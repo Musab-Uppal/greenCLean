@@ -378,6 +378,33 @@ export default function AdminPage() {
     }
   };
 
+  // Delete an individual booking permanently
+  const handleDeleteOrder = async (orderId) => {
+    if (!confirm(`Are you sure you want to delete Order #${orderId}? This action cannot be undone.`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/orders?id=${orderId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showNotification("success", `Order #${orderId} deleted successfully.`);
+        // Remove from pending staged changes if present
+        setPendingOrders((prev) => {
+          const next = { ...prev };
+          delete next[orderId];
+          return next;
+        });
+        // Remove from local orders state
+        setOrders((prev) => prev.filter((o) => o.order_id !== orderId));
+      } else {
+        showNotification("error", data.error || "Failed to delete order.");
+      }
+    } catch {
+      showNotification("error", "Network error. Failed to delete order.");
+    }
+  };
+
   // Save reschedule directly to DB from the Reschedule Modal
   const handleSaveReschedule = async () => {
     if (!rescheduleOrder) return;
@@ -947,6 +974,7 @@ export default function AdminPage() {
             handleStageOrderStatus={handleStageOrderStatus}
             handleStageOrderScheduleTime={handleStageOrderScheduleTime}
             handleOpenRescheduleModal={handleOpenRescheduleModal}
+            handleDeleteOrder={handleDeleteOrder}
             parseOrderDateTime={parseOrderDateTime}
           />
         )}

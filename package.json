@@ -11,7 +11,8 @@
     "db:generate": "npx prisma@5 generate",
     "db:migrate": "npx prisma@5 migrate dev",
     "db:push": "npx prisma@5 db push",
-    "db:seed": "node scripts/seed-db.js"
+    "db:seed": "node scripts/seed-db.js",
+    "db:delete-test-bookings": "node scripts/delete-test-bookings.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

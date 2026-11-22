@@ -15,6 +15,7 @@ export default function OrdersTab({
   handleStageOrderStatus,
   handleStageOrderScheduleTime,
   handleOpenRescheduleModal,
+  handleDeleteOrder,
   parseOrderDateTime,
 }) {
   return (
@@ -81,7 +82,7 @@ export default function OrdersTab({
                 <th>Scheduled Date & Time</th>
                 <th>Service Address</th>
                 <th>Status</th>
-                <th style={{ textAlign: "right" }}>Update Status & Time</th>
+                <th style={{ textAlign: "right" }}>Actions &amp; Status</th>
               </tr>
             </thead>
             <tbody>
@@ -410,6 +411,37 @@ export default function OrdersTab({
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                               </svg>
                               <span>Time Locked</span>
+                            </button>
+                          )}
+
+                          {handleDeleteOrder && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteOrder(order.order_id)}
+                              title={`Delete Order #${order.order_id}`}
+                              style={{
+                                background: "rgba(239, 68, 68, 0.12)",
+                                border: "1px solid rgba(239, 68, 68, 0.35)",
+                                color: "#f87171",
+                                padding: "6px 10px",
+                                borderRadius: "6px",
+                                fontSize: "0.78rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                whiteSpace: "nowrap",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                <line x1="10" y1="11" x2="10" y2="17" />
+                                <line x1="14" y1="11" x2="14" y2="17" />
+                              </svg>
+                              <span>Delete</span>
                             </button>
                           )}
                         </div>
