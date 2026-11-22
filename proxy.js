@@ -3,6 +3,8 @@ import { verifyAdminToken, ADMIN_COOKIE_NAME } from "@/lib/adminAuth";
 
 // ─── In-memory rate limit store ───────────────────────────────────────────────
 // Key: "ip:endpoint-group" → { count, resetAt }
+// Memory bounded to MAX_RATE_LIMIT_KEYS to prevent Out-Of-Memory (OOM) under flood attacks
+const MAX_RATE_LIMIT_KEYS = 5000;
 const rateLimitStore = new Map();
 
 /**
@@ -16,6 +18,11 @@ function isRateLimited(key, limit, windowMs) {
   const entry = rateLimitStore.get(key);
 
   if (!entry || now > entry.resetAt) {
+    // If store reaches capacity, evict the oldest key (FIFO eviction)
+    if (rateLimitStore.size >= MAX_RATE_LIMIT_KEYS) {
+      const oldestKey = rateLimitStore.keys().next().value;
+      if (oldestKey) rateLimitStore.delete(oldestKey);
+    }
     rateLimitStore.set(key, { count: 1, resetAt: now + windowMs });
     return false;
   }
@@ -26,13 +33,13 @@ function isRateLimited(key, limit, windowMs) {
   return false;
 }
 
-// Prune stale entries periodically (every 5 min) so the Map doesn't grow forever
+// Prune stale entries periodically (every 3 min) so the Map doesn't hold expired records
 setInterval(() => {
   const now = Date.now();
   for (const [key, entry] of rateLimitStore.entries()) {
     if (now > entry.resetAt) rateLimitStore.delete(key);
   }
-}, 5 * 60 * 1000);
+}, 3 * 60 * 1000);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getClientIp(request) {
@@ -182,18 +189,54 @@ export async function proxy(request) {
     }
   }
 
-  // ── Protect /adminpage/* routes ───────────────────────────────────────────
-  // These are server-rendered pages — redirect unauthenticated users to login
-  if (pathname.startsWith("/adminpage")) {
-    // Always redirect /adminpage root to login (the actual auth check is done client-side via /api/admin/me)
-    // We additionally verify the cookie here at the edge so bots get a hard redirect
+  // ── Protect /adminpage & /adminpage/* routes ─────────────────────────────
+  if (pathname === "/adminpage" || pathname.startsWith("/adminpage/")) {
     const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
     const payload = token ? verifyAdminToken(token) : null;
+    const isAuthenticated = payload && payload.role === "admin";
 
-    if (!payload || payload.role !== "admin") {
-      // Redirect to adminpage (the page itself has a login gate)
-      // but block direct API probing of admin routes without a valid cookie
-      const response = NextResponse.redirect(new URL("/adminpage", request.url));
+    // Stealth Mode: If ADMIN_ACCESS_KEY is set in environment, hide the admin portal behind a secret key
+    const stealthKey = process.env.ADMIN_ACCESS_KEY;
+    let gateCookieSet = false;
+
+    if (stealthKey) {
+      const providedKey = request.nextUrl.searchParams.get("key");
+      const gateCookie = request.cookies.get("gc_admin_gate")?.value;
+      const hasStealthAccess = (providedKey && providedKey === stealthKey) || (gateCookie && gateCookie === stealthKey);
+
+      if (!isAuthenticated && !hasStealthAccess) {
+        // Return indistinguishable 404 Not Found to scanners and bots
+        return applySecurityHeaders(
+          new NextResponse("Not Found", { status: 404 })
+        );
+      }
+
+      // If key was provided in query string, remember it in a short-lived HTTP-only gate cookie (15 mins)
+      if (providedKey === stealthKey) {
+        gateCookieSet = true;
+      }
+    }
+
+    // For deeper nested pages under /adminpage/*, redirect unauthenticated users to /adminpage root
+    if (!isAuthenticated && pathname !== "/adminpage") {
+      const loginUrl = new URL("/adminpage", request.url);
+      if (stealthKey && request.nextUrl.searchParams.get("key")) {
+        loginUrl.searchParams.set("key", request.nextUrl.searchParams.get("key"));
+      }
+      return applySecurityHeaders(NextResponse.redirect(loginUrl));
+    }
+
+    if (gateCookieSet) {
+      const response = NextResponse.next();
+      response.cookies.set({
+        name: "gc_admin_gate",
+        value: stealthKey,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/adminpage",
+        maxAge: 60 * 15, // 15-minute gate window to complete login
+      });
       return applySecurityHeaders(response);
     }
   }

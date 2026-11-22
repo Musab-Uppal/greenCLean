@@ -9,6 +9,8 @@ export default function AdminLoginGate({
   setPasswordInput,
   showPassword,
   setShowPassword,
+  rememberMe,
+  setRememberMe,
   loginLoading,
   loginError,
   handleLogin,
@@ -98,6 +100,37 @@ export default function AdminLoginGate({
             </div>
           </div>
 
+          {/* Remember Me Option */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "2px" }}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                fontSize: "0.84rem",
+                color: "#cbd5e1",
+                cursor: "pointer",
+                userSelect: "none",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{
+                  cursor: "pointer",
+                  width: "16px",
+                  height: "16px",
+                  accentColor: "#10b981",
+                }}
+              />
+              <span>Remember me on this trusted device (8 hours)</span>
+            </label>
+            <p style={{ fontSize: "0.74rem", color: "#64748b", margin: "2px 0 0 26px", lineHeight: "1.3" }}>
+              Leave unchecked if on a shared or public computer. Unchecked sessions terminate when your browser closes or after 20 minutes of inactivity.
+            </p>
+          </div>
+
           <button
             type="submit"
             disabled={loginLoading}
@@ -106,8 +139,6 @@ export default function AdminLoginGate({
             {loginLoading ? "Authenticating Session..." : "Sign In to Admin Page"}
           </button>
         </form>
-
-
       </div>
     </div>
   );

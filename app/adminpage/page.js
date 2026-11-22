@@ -67,6 +67,7 @@ export default function AdminPage() {
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
 
@@ -276,6 +277,7 @@ export default function AdminPage() {
         body: JSON.stringify({
           username: usernameInput,
           password: passwordInput,
+          rememberMe,
         }),
       });
 
@@ -307,8 +309,45 @@ export default function AdminPage() {
       setOrders([]);
       setCategories([]);
       setServices([]);
+      setConsents([]);
     }
   };
+
+  // 4. Inactivity Auto-Lock: Log out automatically after 20 minutes of no user activity
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const INACTIVITY_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
+    let timeoutId;
+
+    const triggerInactivityLogout = async () => {
+      try {
+        await fetch("/api/admin/logout", { method: "POST" });
+      } catch {
+        // silent
+      }
+      setIsAuthenticated(false);
+      setOrders([]);
+      setCategories([]);
+      setServices([]);
+      setConsents([]);
+      setLoginError("Session locked due to 20 minutes of inactivity. Please sign in again.");
+    };
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(triggerInactivityLogout, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    activityEvents.forEach((evt) => window.addEventListener(evt, resetTimer, { passive: true }));
+    resetTimer();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      activityEvents.forEach((evt) => window.removeEventListener(evt, resetTimer));
+    };
+  }, [isAuthenticated]);
 
   // 4. Order Management Actions
   const handleStageOrderStatus = (orderId, newStatus) => {
@@ -919,6 +958,8 @@ export default function AdminPage() {
         setPasswordInput={setPasswordInput}
         showPassword={showPassword}
         setShowPassword={setShowPassword}
+        rememberMe={rememberMe}
+        setRememberMe={setRememberMe}
         loginLoading={loginLoading}
         loginError={loginError}
         handleLogin={handleLogin}
