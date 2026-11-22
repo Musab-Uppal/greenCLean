@@ -49,29 +49,33 @@ export default function ContactPage() {
     setSubmitError("");
 
     try {
-      // If subscribed to newsletter, add them to Mailchimp
-      if (form.subscribe) {
-        await fetch("/api/mailchimp/subscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: form.email.trim(),
-            firstName: form.firstName.trim(),
-            lastName: form.lastName.trim(),
-            phone: form.phone.trim(),
-            source: "contact-form",
-          }),
-        });
-      }
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          message: form.message.trim(),
+          subscribe: form.subscribe,
+        }),
+      });
 
-      // Simulate form submission success
-      // TODO: Hook this up to your own contact/email sending endpoint if needed
-      await new Promise((r) => setTimeout(r, 800));
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setSubmitError(
+          data.error || "Failed to deliver message. Please try again or call us on 07359068284."
+        );
+        setSubmitStatus("error");
+        return;
+      }
 
       setSubmitStatus("success");
       setForm({ firstName: "", lastName: "", email: "", phone: "", message: "", subscribe: false });
     } catch {
-      setSubmitError("Something went wrong. Please try again or call us directly.");
+      setSubmitError("Network connection error. Please try again or call us on 07359068284.");
       setSubmitStatus("error");
     }
   };
