@@ -37,6 +37,7 @@ import {
   normalizeTimeSlot,
 } from "@/lib/dateUtils";
 import { SERVICE_AREAS } from "@/data/faqsData";
+import BookingCalendar from "./BookingCalendar";
 
 const CATEGORY_ICONS = {
   oven: Flame,
@@ -507,25 +508,6 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
     }).catch((err) => console.error("Failed to persist booking to database:", err));
   };
 
-  // Available upcoming 14 days strictly locked to Europe/London (Liverpool, UK)
-  const getAvailableDates = () => {
-    const dates = [];
-    for (let i = 1; i <= 14; i++) {
-      const d = new Date();
-      d.setTime(d.getTime() + i * 24 * 60 * 60 * 1000);
-      const ukDate = getUkDateString(d);
-      const isBlocked = blockedDates.includes(ukDate);
-      dates.push({
-        full: ukDate,
-        dayName: d.toLocaleDateString("en-GB", { timeZone: UK_TIMEZONE, weekday: "short" }),
-        dayNum: parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: UK_TIMEZONE, day: "numeric" }).format(d), 10),
-        month: d.toLocaleDateString("en-GB", { timeZone: UK_TIMEZONE, month: "short" }),
-        isBlocked,
-      });
-    }
-    return dates;
-  };
-
   return (
     <div style={{ position: "relative" }}>
       {/* 5-Step Progress Stepper */}
@@ -721,76 +703,16 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                 </p>
               </div>
 
-              {/* Date Pills Slider */}
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
-                gap: "10px",
-                marginBottom: "32px"
-              }}>
-                {getAvailableDates().map((d) => {
-                  const isSelected = selectedDate === d.full;
-                  const isBlocked = d.isBlocked;
-                  return (
-                    <button
-                      key={d.full}
-                      type="button"
-                      disabled={isBlocked}
-                      onClick={() => {
-                        if (isBlocked) return;
-                        setSelectedDate(d.full);
-                        setDateTimeError("");
-                      }}
-                      title={isBlocked ? "Unavailable — Admin Leave / Booked Out" : `Book for ${d.dayName} ${d.dayNum} ${d.month}`}
-                      style={{
-                        padding: "12px 8px",
-                        borderRadius: "var(--radius-md)",
-                        border: isBlocked
-                          ? "1.5px dashed #cbd5e1"
-                          : `1.5px solid ${isSelected ? "var(--emerald-600)" : "var(--slate-200)"}`,
-                        background: isBlocked
-                          ? "#f1f5f9"
-                          : (isSelected ? "var(--emerald-600)" : "#ffffff"),
-                        color: isBlocked
-                          ? "#94a3b8"
-                          : (isSelected ? "#ffffff" : "var(--slate-800)"),
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: "4px",
-                        cursor: isBlocked ? "not-allowed" : "pointer",
-                        opacity: isBlocked ? 0.6 : 1,
-                        position: "relative",
-                        transition: "all 0.2s"
-                      }}
-                    >
-                      <span style={{
-                        fontSize: "0.75rem",
-                        textTransform: "uppercase",
-                        fontWeight: "600",
-                        opacity: isSelected ? 0.9 : 0.6
-                      }}>
-                        {d.dayName}
-                      </span>
-                      <span style={{
-                        fontSize: "1.3rem",
-                        fontWeight: "800",
-                        textDecoration: isBlocked ? "line-through" : "none"
-                      }}>
-                        {d.dayNum}
-                      </span>
-                      <span style={{
-                        fontSize: isBlocked ? "0.65rem" : "0.75rem",
-                        fontWeight: isBlocked ? 700 : 500,
-                        color: isBlocked ? "#dc2626" : undefined,
-                        opacity: isSelected ? 0.9 : 0.75
-                      }}>
-                        {isBlocked ? "Leave / Off" : d.month}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              {/* Interactive Multi-Month Booking Calendar (Up to 6 Months Ahead) */}
+              <BookingCalendar
+                selectedDate={selectedDate}
+                onSelectDate={(newDate) => {
+                  setSelectedDate(newDate);
+                  setDateTimeError("");
+                }}
+                blockedDates={blockedDates}
+                maxMonthsAhead={6}
+              />
 
               <div style={{ marginBottom: "20px" }}>
                 <h3 style={{ fontSize: "1.35rem", fontWeight: "800", color: "var(--slate-900)", marginBottom: "6px" }}>
