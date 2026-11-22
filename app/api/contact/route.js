@@ -6,7 +6,9 @@ import { subscribeToMailchimp, sendNewsletterWelcomeEmail } from "@/lib/mailchim
 
 export const dynamic = "force-dynamic";
 
-const ADMIN_EMAIL_DEFAULT = "info@greencleangroup.co.uk";
+const ADMIN_EMAIL_DEFAULT = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || "info@greencleangroup.co.uk";
+const FROM_EMAIL_DEFAULT = process.env.FROM_EMAIL || "noreply@greencleangroup.co.uk";
+const REPLY_TO_DEFAULT = process.env.REPLY_TO_EMAIL || "info@greencleangroup.co.uk";
 
 function buildAdminContactEmailHtml({ fullName, cleanEmail, cleanPhone, cleanMessage, subscribe }) {
   return `
@@ -160,6 +162,8 @@ export async function POST(request) {
       subject: `📩 New Contact Form Message from ${fullName}`,
       html: adminHtml,
       text: `New contact form submission from ${fullName} (${cleanEmail}, Phone: ${cleanPhone || "N/A"}):\n\n${cleanMessage}`,
+      fromEmail: FROM_EMAIL_DEFAULT,
+      replyTo: cleanEmail,
     });
 
     // 2. Dispatch auto-reply confirmation to the customer
@@ -173,6 +177,8 @@ export async function POST(request) {
       subject: "We've received your message — Green Clean Group",
       html: customerHtml,
       text: `Hi ${cleanFirstName},\n\nThank you for reaching out to Green Clean Group. We have received your message and will reply within 2 hours during business hours.\n\nYour message:\n${cleanMessage}\n\nPhone: 07359 068284\nEmail: info@greencleangroup.co.uk`,
+      fromEmail: FROM_EMAIL_DEFAULT,
+      replyTo: REPLY_TO_DEFAULT,
     }).catch((custErr) => {
       console.warn("[Contact Route] Customer auto-reply warning:", custErr?.message);
     });
