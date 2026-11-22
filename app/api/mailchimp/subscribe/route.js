@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
-import { subscribeToMailchimp } from "@/lib/mailchimp";
-import { saveSubscriber } from "@/lib/db";
+import { subscribeToMailchimp, recordMailchimpEvent, sendNewsletterWelcomeEmail } from "@/lib/mailchimp";
+import { saveSubscriber, ensureWelcomeCoupon } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 // Exact consent wording for the standalone newsletter signup form
 const NEWSLETTER_CONSENT_WORDING =
   "I'd like to receive cleaning reminders and special offers by email from Green Clean Group. I can unsubscribe at any time.";
+
+const WELCOME_DISCOUNT_CODE = "WELCOME10";
 
 /**
  * POST /api/mailchimp/subscribe
@@ -50,36 +52,70 @@ export async function POST(request) {
       console.error("[Subscribe route] DB saveSubscriber error:", dbErr);
     }
 
-    // 2. Sync to Mailchimp (respects unsubscribed status — won't re-subscribe)
+    // 2. Ensure the 10% welcome coupon exists and is active in DB
+    try {
+      await ensureWelcomeCoupon(WELCOME_DISCOUNT_CODE, 10);
+    } catch (couponErr) {
+      console.warn("[Subscribe route] Note on welcome coupon:", couponErr?.message);
+    }
+
+    // 3. Sync to Mailchimp Audience with tags
     const result = await subscribeToMailchimp({
       email,
       firstName,
       lastName,
       phone,
-      tags: ["Newsletter Signup", `Source: ${source}`],
+      tags: ["Newsletter Signup", "10% Discount Claimed", `Source: ${source}`],
     });
 
+    // 4. Record custom event in Mailchimp to trigger any Customer Journey automations
+    recordMailchimpEvent({
+      email,
+      eventName: "newsletter_subscribed",
+      properties: {
+        promo_code: WELCOME_DISCOUNT_CODE,
+        discount: "10%",
+        source,
+      },
+    }).catch((eventErr) =>
+      console.warn("[Subscribe route] Mailchimp event warning:", eventErr?.message)
+    );
+
+    // 5. Send automated welcome email with the 10% discount voucher code
+    sendNewsletterWelcomeEmail({
+      email,
+      discountCode: WELCOME_DISCOUNT_CODE,
+    }).catch((mailErr) =>
+      console.error("[Subscribe route] Welcome email error:", mailErr)
+    );
+
     if (!result.ok) {
-      // If Mailchimp isn't configured yet, still return success so the form doesn't break
+      // If Mailchimp isn't configured yet or temporary warning, local subscriber & email still delivered
       if (result.error === "Mailchimp not configured") {
-        console.warn("[Mailchimp] Signup attempted but Mailchimp is not configured yet.");
-        return NextResponse.json({ success: true, pending: true });
+        console.warn("[Mailchimp] Signup saved locally; Mailchimp is not configured yet.");
+        return NextResponse.json({
+          success: true,
+          pending: true,
+          discountCode: WELCOME_DISCOUNT_CODE,
+          message: `Subscribed! Your 10% discount code is ${WELCOME_DISCOUNT_CODE}.`,
+        });
       }
-      return NextResponse.json(
-        { error: "Failed to subscribe. Please try again." },
-        { status: 500 }
-      );
     }
 
     if (result.skipped) {
       // Contact is unsubscribed in Mailchimp — we respect that
       return NextResponse.json({
         success: true,
+        discountCode: WELCOME_DISCOUNT_CODE,
         message: "Your preferences have been recorded.",
       });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      discountCode: WELCOME_DISCOUNT_CODE,
+      message: `Subscribed! Your 10% discount code is ${WELCOME_DISCOUNT_CODE}.`,
+    });
   } catch (err) {
     console.error("[Subscribe route] Error:", err);
     return NextResponse.json(

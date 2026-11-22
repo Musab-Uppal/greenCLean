@@ -17,6 +17,7 @@ export default function NewsletterSignup({ variant = "footer", source = "footer"
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [errorMsg, setErrorMsg] = useState("");
+  const [discountCode, setDiscountCode] = useState("WELCOME10");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,6 +44,9 @@ export default function NewsletterSignup({ variant = "footer", source = "footer"
         return;
       }
 
+      if (data.discountCode) {
+        setDiscountCode(data.discountCode);
+      }
       setStatus("success");
       setEmail("");
     } catch {
@@ -103,13 +107,24 @@ export default function NewsletterSignup({ variant = "footer", source = "footer"
 
           {status === "success" ? (
             <div style={{
-              display: "inline-flex", alignItems: "center", gap: "10px",
-              background: "rgba(16,185,129,0.2)", color: "#6ee7b7",
-              padding: "14px 24px", borderRadius: "var(--radius-full)",
-              fontWeight: "700", fontSize: "1rem"
+              background: "rgba(16,185,129,0.2)",
+              border: "1.5px solid rgba(110,231,183,0.4)",
+              borderRadius: "var(--radius-xl)",
+              padding: "20px 24px",
+              textAlign: "center",
+              maxWidth: "480px",
+              margin: "0 auto",
             }}>
-              <CheckCircle2 size={22} />
-              You&apos;re subscribed! Check your inbox 🎉
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", color: "#6ee7b7", fontWeight: "700", fontSize: "1.1rem", marginBottom: "8px" }}>
+                <CheckCircle2 size={24} />
+                You&apos;re subscribed! 🎉
+              </div>
+              <p style={{ color: "#ffffff", fontSize: "0.95rem", margin: "0 0 10px 0" }}>
+                Use voucher code <strong style={{ background: "rgba(255,255,255,0.2)", padding: "3px 10px", borderRadius: "6px", letterSpacing: "1.5px", color: "#6ee7b7", fontSize: "1.05rem" }}>{discountCode}</strong> for 10% off your first clean.
+              </p>
+              <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "0.82rem", margin: 0 }}>
+                We&apos;ve also sent your discount code and details straight to your inbox!
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{
@@ -187,15 +202,20 @@ export default function NewsletterSignup({ variant = "footer", source = "footer"
 
       {status === "success" ? (
         <div style={{
-          display: "flex", alignItems: "center", gap: "8px",
+          display: "flex", flexDirection: "column", gap: "6px",
           color: "#6ee7b7", fontSize: "0.875rem", fontWeight: "600",
-          padding: "10px 14px",
+          padding: "12px 14px",
           background: "rgba(16,185,129,0.1)",
           borderRadius: "var(--radius-md)",
-          border: "1px solid rgba(16,185,129,0.2)"
+          border: "1px solid rgba(16,185,129,0.25)"
         }}>
-          <CheckCircle2 size={18} />
-          Subscribed! Check your inbox 🎉
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <CheckCircle2 size={18} />
+            Subscribed! Use code <strong>{discountCode}</strong> for 10% off.
+          </div>
+          <span style={{ fontSize: "0.78rem", color: "var(--slate-400)", fontWeight: "normal" }}>
+            Check your inbox for your 10% discount welcome email!
+          </span>
         </div>
       ) : (
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
