@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -49,28 +49,90 @@ const CATEGORY_ICONS = {
   tenancy: KeyRound
 };
 
-export default function BookingEngine({ initialCategory = "oven", initialCategories = [], initialBlockedDates = [] }) {
+export default function BookingEngine({
+  initialCategory = "oven",
+  initialCategories = [],
+  initialBlockedDates = [],
+  initialBookedSlots = {},
+}) {
   const [categories, setCategories] = useState(initialCategories);
   const [blockedDates, setBlockedDates] = useState(initialBlockedDates);
+  const [bookedSlots, setBookedSlots] = useState(initialBookedSlots);
   const [step, setStep] = useState(1);
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [cart, setCart] = useState({});
 
+  const fullyBookedDates = useMemo(() => {
+    return Object.entries(bookedSlots || {})
+      .filter(([, slots]) => Array.isArray(slots) && UK_TIME_SLOTS.every((s) => slots.includes(s)))
+      .map(([date]) => date);
+  }, [bookedSlots]);
+
   // Step 2: Date & Time (strictly locked to Europe/London - Liverpool, UK)
   const [selectedDate, setSelectedDate] = useState(() => {
     const tmrw = getUkTomorrowDateString();
-    if (initialBlockedDates && initialBlockedDates.includes(tmrw)) {
-      for (let i = 2; i <= 14; i++) {
+    const isDateUnavailable = (dStr) =>
+      (initialBlockedDates && initialBlockedDates.includes(dStr)) ||
+      (initialBookedSlots &&
+        Array.isArray(initialBookedSlots[dStr]) &&
+        UK_TIME_SLOTS.every((s) => initialBookedSlots[dStr].includes(s)));
+
+    if (isDateUnavailable(tmrw)) {
+      for (let i = 2; i <= 30; i++) {
         const d = new Date();
         d.setTime(d.getTime() + i * 24 * 60 * 60 * 1000);
         const ukDate = getUkDateString(d);
-        if (!initialBlockedDates.includes(ukDate)) return ukDate;
+        if (!isDateUnavailable(ukDate)) return ukDate;
       }
     }
     return tmrw;
   });
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(UK_TIME_SLOTS[0]);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(() => {
+    const tmrw = getUkTomorrowDateString();
+    const bookedForInitial = initialBookedSlots?.[tmrw] || [];
+    return UK_TIME_SLOTS.find((slot) => !bookedForInitial.includes(slot)) || "";
+  });
   const [dateTimeError, setDateTimeError] = useState("");
+
+  const refreshBookedSlots = useCallback(async () => {
+    try {
+      const res = await fetch("/api/booked-slots", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.bookedSlots && typeof data.bookedSlots === "object") {
+        setBookedSlots(data.bookedSlots);
+      }
+    } catch (err) {
+      console.error("Failed to load booked slots:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/booked-slots", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data && data.bookedSlots && typeof data.bookedSlots === "object") {
+          setBookedSlots(data.bookedSlots);
+        }
+      })
+      .catch((err) => console.error("Failed to load booked slots:", err));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const bookedForSelectedDate = useMemo(
+    () => bookedSlots[selectedDate] || [],
+    [bookedSlots, selectedDate]
+  );
+
+  const effectiveTimeSlot = useMemo(() => {
+    if (selectedTimeSlot && !bookedForSelectedDate.includes(selectedTimeSlot)) {
+      return selectedTimeSlot;
+    }
+    return UK_TIME_SLOTS.find((slot) => !bookedForSelectedDate.includes(slot)) || "";
+  }, [selectedTimeSlot, bookedForSelectedDate]);
 
   useEffect(() => {
     if (!initialCategories || initialCategories.length === 0) {
@@ -344,15 +406,20 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
     if (step === 1) {
       if (!meetsMinimum) return;
+      refreshBookedSlots();
       setStep(2);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else if (step === 2) {
-      if (!selectedDate || !selectedTimeSlot) {
-        setDateTimeError("Please select both an appointment date and an arrival time window.");
+      if (!selectedDate || !effectiveTimeSlot) {
+        setDateTimeError("Please select both an appointment date and an available arrival time window.");
         return;
       }
       if (blockedDates.includes(selectedDate)) {
         setDateTimeError("The selected date is currently unavailable for bookings due to scheduled admin leave. Please choose another date.");
+        return;
+      }
+      if (bookedForSelectedDate.includes(effectiveTimeSlot)) {
+        setDateTimeError("This time slot is already booked by another customer. Please choose another available time slot.");
         return;
       }
       setDateTimeError("");
@@ -389,8 +456,20 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    if (!selectedDate || !selectedTimeSlot) {
-      setDateTimeError("Please select both an appointment date and an arrival time window.");
+    if (!selectedDate || !effectiveTimeSlot) {
+      setDateTimeError("Please select both an appointment date and an available arrival time window.");
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (blockedDates.includes(selectedDate)) {
+      setDateTimeError("The selected date is currently unavailable for bookings due to scheduled admin leave. Please choose another date.");
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (bookedForSelectedDate.includes(effectiveTimeSlot)) {
+      setDateTimeError("This time slot is already booked by another customer. Please choose another available time slot.");
       setStep(2);
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -429,7 +508,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
         marketingConsent: customer.marketingConsent,
       },
       scheduledDate: selectedDate,
-      selectedTimeSlot,
+      selectedTimeSlot: effectiveTimeSlot,
       notes,
       couponCode: appliedCoupon?.code || (appliedDiscount > 0 ? couponCode : null),
       discountPercent: appliedCoupon?.discountType === "percentage" ? appliedCoupon.discountValue : (subtotal > 0 ? Math.round((discountAmount / subtotal) * 100) : 0),
@@ -447,7 +526,10 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
           body: JSON.stringify(onlinePayload),
         });
         const data = await res.json();
-        if (!res.ok || data.error) throw new Error(data.error || "Failed to create Stripe checkout session.");
+        if (!res.ok || data.error) {
+          if (res.status === 409) refreshBookedSlots();
+          throw new Error(data.error || "Failed to create Stripe checkout session.");
+        }
         if (!data.url) throw new Error("No checkout URL returned from Stripe.");
         window.location.href = data.url;
       } catch (err) {
@@ -468,7 +550,10 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
           body: JSON.stringify(onlinePayload),
         });
         const data = await res.json();
-        if (!res.ok || data.error) throw new Error(data.error || "Failed to create PayPal order.");
+        if (!res.ok || data.error) {
+          if (res.status === 409) refreshBookedSlots();
+          throw new Error(data.error || "Failed to create PayPal order.");
+        }
         if (!data.url) throw new Error("No approval URL returned from PayPal.");
         window.location.href = data.url;
       } catch (err) {
@@ -480,32 +565,46 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
     }
 
     // Option A: Pay Locally (Cash or Card upon arrival)
-    const randomNum = Math.floor(10000 + Math.random() * 90000);
-    setBookingRef(`GCG-${randomNum}`);
-    setShowConfirmation(true);
-
-    // Persist order and customer to database
-    fetch("/api/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: customer.email,
-        phone: customer.phone,
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-        marketingConsent: customer.marketingConsent,
-        address: `${customer.address}, ${customer.postcode}`,
-        phoneno: customer.phone,
-        items: cartItems.map((item) => ({ id: item.id, db_id: item.db_id, name: item.name, price: item.price })),
-        scheduled_date: `${selectedDate} ${selectedTimeSlot}`,
-        status: "pending",
-        payment_method: "local",
-        payment_status: "pending",
-        couponCode: appliedCoupon?.code || (appliedDiscount > 0 ? couponCode : null),
-        discountAmount: discountAmount,
-        total_amount: total
-      })
-    }).catch((err) => console.error("Failed to persist booking to database:", err));
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: customer.email,
+          phone: customer.phone,
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          marketingConsent: customer.marketingConsent,
+          address: `${customer.address}, ${customer.postcode}`,
+          phoneno: customer.phone,
+          items: cartItems.map((item) => ({ id: item.id, db_id: item.db_id, name: item.name, price: item.price })),
+          scheduled_date: `${selectedDate} ${effectiveTimeSlot}`,
+          status: "pending",
+          payment_method: "local",
+          payment_status: "pending",
+          couponCode: appliedCoupon?.code || (appliedDiscount > 0 ? couponCode : null),
+          discountAmount: discountAmount,
+          total_amount: total
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 409) {
+          refreshBookedSlots();
+        }
+        throw new Error(data.error || "Failed to confirm booking. Please try again.");
+      }
+      const orderNum = data.orderId ? Number(data.orderId) + 10000 : Math.floor(10000 + Math.random() * 90000);
+      setBookingRef(`GCG-${orderNum}`);
+      setShowConfirmation(true);
+      refreshBookedSlots();
+    } catch (err) {
+      console.error("Failed to persist booking to database:", err);
+      setCheckoutError(err.message || "Failed to confirm booking. Please try again.");
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   return (
@@ -711,6 +810,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                   setDateTimeError("");
                 }}
                 blockedDates={blockedDates}
+                fullyBookedDates={fullyBookedDates}
                 maxMonthsAhead={6}
               />
 
@@ -725,19 +825,48 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
 
               <div className="time-slots-grid">
                 {UK_TIME_SLOTS.map((slot) => {
-                  const isSelected = selectedTimeSlot === slot;
+                  const isBooked = bookedForSelectedDate.includes(slot);
+                  const isSelected = !isBooked && effectiveTimeSlot === slot;
                   return (
                     <button
                       key={slot}
                       type="button"
+                      disabled={isBooked}
+                      aria-disabled={isBooked}
+                      title={isBooked ? "This time slot is already booked" : `Select ${slot}`}
                       onClick={() => {
+                        if (isBooked) return;
                         setSelectedTimeSlot(slot);
                         setDateTimeError("");
                       }}
-                      className={`time-slot-btn ${isSelected ? "selected" : ""}`}
+                      className={`time-slot-btn ${isSelected ? "selected" : ""} ${isBooked ? "booked" : ""}`}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                      }}
                     >
-                      <Clock size={16} style={{ display: "inline", verticalAlign: "middle", marginRight: "6px" }} />
-                      <span>{slot}</span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        {isBooked ? <Lock size={14} /> : <Clock size={16} />}
+                        <span>{slot}</span>
+                      </span>
+                      {isBooked && (
+                        <span
+                          style={{
+                            fontSize: "0.7rem",
+                            fontWeight: "700",
+                            color: "#dc2626",
+                            background: "#fee2e2",
+                            padding: "2px 8px",
+                            borderRadius: "9999px",
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          Already Booked
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -1187,7 +1316,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
                     </button>
                   </div>
                   <p style={{ fontSize: "0.95rem", color: "var(--emerald-800)", fontWeight: "600" }}>
-                    📅 {formatUkDate(selectedDate, true)} | ⏰ {selectedTimeSlot}
+                    📅 {formatUkDate(selectedDate, true)} | ⏰ {effectiveTimeSlot}
                   </p>
                 </div>
 
@@ -1585,7 +1714,7 @@ export default function BookingEngine({ initialCategory = "oven", initialCategor
               >
                 <span style={{ color: "#64748b", fontWeight: "500" }}>Date &amp; Slot:</span>
                 <strong style={{ color: "#1e293b", fontWeight: "600", textAlign: "right" }}>
-                  {formatUkDate(selectedDate, true)} ({selectedTimeSlot})
+                  {formatUkDate(selectedDate, true)} ({effectiveTimeSlot})
                 </strong>
               </div>
               <div

@@ -1,6 +1,8 @@
 import BookingEngine from "@/components/BookingEngine";
 import { getDbCategoriesWithServices } from "@/lib/servicesDb";
-import { getBlockedDateStrings } from "@/lib/db";
+import { getBlockedDateStrings, getBookedSlotsMap } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Book a Service Online | Green Clean Group Liverpool",
@@ -10,9 +12,10 @@ export const metadata = {
 export default async function BookPage({ searchParams }) {
   const sp = await searchParams;
   const serviceQuery = sp?.service || "oven";
-  const [categories, blockedDates] = await Promise.all([
+  const [categories, blockedDates, bookedSlots] = await Promise.all([
     getDbCategoriesWithServices(),
     getBlockedDateStrings().catch(() => []),
+    getBookedSlotsMap().catch(() => ({})),
   ]);
 
   return (
@@ -23,6 +26,7 @@ export default async function BookPage({ searchParams }) {
           initialCategory={serviceQuery}
           initialCategories={categories}
           initialBlockedDates={blockedDates}
+          initialBookedSlots={bookedSlots}
         />
       </div>
     </div>

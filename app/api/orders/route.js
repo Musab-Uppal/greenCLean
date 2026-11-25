@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, createOrder, getOrders, getOrderById, saveSubscriber, isDateBlocked } from "@/lib/db";
+import { prisma, createOrder, getOrders, getOrderById, saveSubscriber, isDateBlocked, isSlotBooked } from "@/lib/db";
 import { subscribeToMailchimp, sendBookingConfirmationEmails } from "@/lib/mailchimp";
 import { sanitizeOrderBody, sanitizeEmail } from "@/lib/sanitize";
 
@@ -70,6 +70,14 @@ export async function POST(request) {
       return NextResponse.json(
         { error: "The selected date is unavailable for bookings due to scheduled admin leave. Please select another date." },
         { status: 400 }
+      );
+    }
+
+    // Check if the requested date + time slot is already booked
+    if (scheduled_date && (await isSlotBooked(scheduled_date))) {
+      return NextResponse.json(
+        { error: "This time slot is already booked. Please select another available time slot." },
+        { status: 409 }
       );
     }
 

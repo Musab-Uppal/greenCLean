@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { isDateBlocked, isSlotBooked } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,21 @@ export async function POST(request) {
       return NextResponse.json(
         { error: "Customer details and Liverpool service address are required." },
         { status: 400 }
+      );
+    }
+
+    if (scheduledDate && (await isDateBlocked(scheduledDate))) {
+      return NextResponse.json(
+        { error: "The selected date is unavailable for bookings due to scheduled admin leave. Please choose another date." },
+        { status: 400 }
+      );
+    }
+
+    const combinedSlot = scheduledDate && selectedTimeSlot ? `${scheduledDate} ${selectedTimeSlot}` : scheduledDate;
+    if (combinedSlot && (await isSlotBooked(combinedSlot))) {
+      return NextResponse.json(
+        { error: "This time slot has already been booked by another customer. Please go back and choose another slot." },
+        { status: 409 }
       );
     }
 

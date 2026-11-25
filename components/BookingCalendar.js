@@ -10,6 +10,7 @@ export default function BookingCalendar({
   selectedDate,
   onSelectDate,
   blockedDates = [],
+  fullyBookedDates = [],
   maxMonthsAhead = 6,
 }) {
   const minDateStr = useMemo(() => getUkTomorrowDateString(), []);
@@ -74,9 +75,10 @@ export default function BookingCalendar({
       const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
       const isPast = dateStr < minDateStr;
       const isBlocked = blockedDates.includes(dateStr);
+      const isFullyBooked = fullyBookedDates.includes(dateStr);
       const isSelected = selectedDate === dateStr;
       const isToday = dateStr === todayStr;
-      const disabled = isPast || isBlocked;
+      const disabled = isPast || isBlocked || isFullyBooked;
 
       days.push({
         key: dateStr,
@@ -84,6 +86,7 @@ export default function BookingCalendar({
         dateStr,
         isPast,
         isBlocked,
+        isFullyBooked,
         isSelected,
         isToday,
         disabled,
@@ -92,7 +95,7 @@ export default function BookingCalendar({
     }
 
     return days;
-  }, [viewYear, viewMonth, minDateStr, todayStr, blockedDates, selectedDate]);
+  }, [viewYear, viewMonth, minDateStr, todayStr, blockedDates, fullyBookedDates, selectedDate]);
 
   return (
     <div className="booking-calendar-root" style={{ width: "100%", maxWidth: "560px", margin: "0 auto 32px" }}>
@@ -210,7 +213,7 @@ export default function BookingCalendar({
             return <div key={cell.key} style={{ minHeight: "44px" }} />;
           }
 
-          const { dayNum, dateStr, disabled, isBlocked, isPast, isSelected, isToday } = cell;
+          const { dayNum, dateStr, disabled, isBlocked, isFullyBooked, isPast, isSelected, isToday } = cell;
 
           return (
             <button
@@ -223,6 +226,8 @@ export default function BookingCalendar({
               title={
                 isBlocked
                   ? "Unavailable — Admin Leave / Booked Out"
+                  : isFullyBooked
+                  ? "Unavailable — All time slots are already booked"
                   : isPast
                   ? "Past date — unavailable"
                   : `Book for ${formatUkDate(dateStr, true)}`
@@ -234,12 +239,12 @@ export default function BookingCalendar({
                   ? "2px solid var(--emerald-600)"
                   : isToday
                   ? "1.5px solid #a7f3d0"
-                  : isBlocked
+                  : isBlocked || isFullyBooked
                   ? "1px dashed #cbd5e1"
                   : "1px solid #e2e8f0",
                 background: isSelected
                   ? "var(--emerald-600)"
-                  : isBlocked
+                  : isBlocked || isFullyBooked
                   ? "#f8fafc"
                   : isPast
                   ? "#f1f5f9"
@@ -248,7 +253,7 @@ export default function BookingCalendar({
                   : "#ffffff",
                 color: isSelected
                   ? "#ffffff"
-                  : isBlocked
+                  : isBlocked || isFullyBooked
                   ? "#94a3b8"
                   : isPast
                   ? "#cbd5e1"
@@ -281,7 +286,20 @@ export default function BookingCalendar({
                   Leave
                 </span>
               )}
-              {isToday && !isSelected && !isBlocked && (
+              {!isBlocked && isFullyBooked && (
+                <span
+                  style={{
+                    fontSize: "0.62rem",
+                    fontWeight: "700",
+                    color: "#d97706",
+                    lineHeight: 1,
+                    marginTop: "2px",
+                  }}
+                >
+                  Booked
+                </span>
+              )}
+              {isToday && !isSelected && !isBlocked && !isFullyBooked && (
                 <span
                   style={{
                     fontSize: "0.62rem",
