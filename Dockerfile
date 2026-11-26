@@ -54,8 +54,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
-# Seed script + data (needed at startup to seed the DB)
-COPY --from=builder /app/scripts ./scripts
+# Static data (needed at runtime for fallback service categories)
 COPY --from=builder /app/data ./data
 
 # Prisma CLI binary (for migrate deploy at startup)
@@ -67,4 +66,4 @@ USER nextjs
 EXPOSE 3000
 
 # Run DB schema sync, seed data, then start the server
-CMD ["sh", "-c", "node_modules/.bin/prisma db push --accept-data-loss && node scripts/seed-db.js && node server.js"]
+CMD ["sh", "-c", "node_modules/.bin/prisma db push --accept-data-loss && node server.js"]
