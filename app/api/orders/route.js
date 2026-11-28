@@ -198,19 +198,23 @@ export async function POST(request) {
     }
 
     // ── Send Booking Confirmation Emails to Customer & Admin ──
-    sendBookingConfirmationEmails({
-      orderId,
-      customerEmail: email,
-      customerName: `${firstName || ""} ${lastName || ""}`.trim() || email.split("@")[0],
-      customerPhone,
-      address,
-      scheduledDate: scheduled_date,
-      totalAmount: calculatedTotal,
-      paymentMethod: payment_method,
-      paymentStatus: "pending",
-      items: emailItems,
-      marketingConsent: !!marketingConsent,
-    }).catch((err) => console.error("[sendBookingConfirmationEmails] error:", err));
+    try {
+      await sendBookingConfirmationEmails({
+        orderId,
+        customerEmail: email,
+        customerName: `${firstName || ""} ${lastName || ""}`.trim() || email.split("@")[0],
+        customerPhone,
+        address,
+        scheduledDate: scheduled_date,
+        totalAmount: calculatedTotal,
+        paymentMethod: payment_method,
+        paymentStatus: "pending",
+        items: emailItems,
+        marketingConsent: !!marketingConsent,
+      });
+    } catch (err) {
+      console.error("[sendBookingConfirmationEmails] error:", err);
+    }
 
     return NextResponse.json({
       success: true,

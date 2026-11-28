@@ -192,19 +192,23 @@ export async function GET(request) {
         console.warn("[PayPal capture] Could not fetch full order items for email:", fetchErr);
       }
 
-      sendBookingConfirmationEmails({
-        orderId,
-        customerEmail: email,
-        customerName: name || email.split("@")[0],
-        customerPhone: phone || "",
-        address,
-        scheduledDate: scheduled_date,
-        totalAmount,
-        paymentMethod: "paypal",
-        paymentStatus: isPaid ? "paid" : "pending",
-        items: emailItems,
-        marketingConsent: hasConsent,
-      }).catch((err) => console.error("[sendBookingConfirmationEmails PayPal] error:", err));
+      try {
+        await sendBookingConfirmationEmails({
+          orderId,
+          customerEmail: email,
+          customerName: name || email.split("@")[0],
+          customerPhone: phone || "",
+          address,
+          scheduledDate: scheduled_date,
+          totalAmount,
+          paymentMethod: "paypal",
+          paymentStatus: isPaid ? "paid" : "pending",
+          items: emailItems,
+          marketingConsent: hasConsent,
+        });
+      } catch (err) {
+        console.error("[sendBookingConfirmationEmails PayPal] error:", err);
+      }
     }
     // ────────────────────────────────────────────────────────────────────────
 

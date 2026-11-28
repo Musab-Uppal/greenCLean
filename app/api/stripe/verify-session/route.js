@@ -178,19 +178,23 @@ export async function GET(request) {
         console.warn("[Stripe verify] Could not fetch full order items for email:", fetchErr);
       }
 
-      sendBookingConfirmationEmails({
-        orderId,
-        customerEmail: email,
-        customerName: meta.customer_name || email.split("@")[0],
-        customerPhone: phone || "",
-        address,
-        scheduledDate: scheduled_date,
-        totalAmount,
-        paymentMethod: "creditcard",
-        paymentStatus: isPaid ? "paid" : "pending",
-        items: emailItems,
-        marketingConsent: hasMarketingConsent,
-      }).catch((err) => console.error("[sendBookingConfirmationEmails Stripe] error:", err));
+      try {
+        await sendBookingConfirmationEmails({
+          orderId,
+          customerEmail: email,
+          customerName: meta.customer_name || email.split("@")[0],
+          customerPhone: phone || "",
+          address,
+          scheduledDate: scheduled_date,
+          totalAmount,
+          paymentMethod: "creditcard",
+          paymentStatus: isPaid ? "paid" : "pending",
+          items: emailItems,
+          marketingConsent: hasMarketingConsent,
+        });
+      } catch (err) {
+        console.error("[sendBookingConfirmationEmails Stripe] error:", err);
+      }
     }
     // ────────────────────────────────────────────────────────────────────────
 
